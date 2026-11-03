@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<!--
+  PhyWear UI v2 设计稿（390x450 手表画布）
+  ------------------------------------------------------------------
+  这是"设计目标稿"，不是真机截图。数据来源：
+    · third_party/ui-ux-pro-max/data/colors-lvgl.csv      → 色板 token
+    · third_party/ui-ux-pro-max/data/typography-lvgl.csv  → 字号层级
+    · third_party/ui-ux-pro-max/data/motion-lvgl.csv      → 时长/曲线约束（≤320ms、不循环、单对象）
+    · third_party/ui-ux-pro-max/stacks/lvgl.csv           → 本板硬约束（禁阴影/模糊/变换、圆角走 CPU）
+  设计系统推荐（scripts/design_system.py "smartwatch realtime sensor dashboard dark"）给的是
+  Glassmorphism + 上面这套暗色板；模糊本板不支持，故用"分层纯色 + 1px 描边 + 强调色小块"翻译。
+  渲染方式：google-chrome --headless --screenshot=... --window-size=... 本文件
+-->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>PhyWear UI v2 设计稿</title>
+<style>
+  :root{
+    /* 色板：与 third_party/ui-ux-pro-max/data/colors-lvgl.csv 对应 */
+    --bg:#0F172A;          /* Background */
+    --card:#1B2336;        /* Card */
+    --muted:#272F42;       /* Muted （按压/高亮） */
+    --fg:#F8FAFC;          /* Foreground */
+    --dim:#94A3B8;         /* Muted Foreground，对底 6.96:1 */
+    --faint:#64748B;       /* 三级文字 */
+    --border:rgba(71,85,105,.55);  /* Border #475569 */
+    --border-strong:rgba(71,85,105,.95);
+    --accent:#22C55E;      /* 上游 Accent/CTA：状态绿 */
+    --warn:#F59E0B;
+    --danger:#EF4444;
+    /* 板块强调色（沿用既有语义色） */
+    --acc-raw:#4FC3F7; --acc-mech:#81C784; --acc-acou:#FFB74D; --acc-tool:#BA68C8;
+    --acc-time:#4DD0E1; --acc-every:#FF8A65; --acc-ai:#F06292;
+
+    /* 字号层级：对应设备位图字体 28/24/20/16/14 */
+    --fs-display:28px; --fs-title:20px; --fs-body:16px; --fs-cap:14px;
+
+    /* 间距：8 的倍数（设备侧同步使用） */
+    --gut:12px; --gap:12px; --pad:14px; --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#070B14;color:var(--fg);
+       font-family:"Noto Sans CJK SC","Source Han Sans SC","PingFang SC",system-ui,sans-serif;
+       padding:28px;display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+  .wrap{display:flex;flex-direction:column;gap:10px}
+  .cap{font-size:13px;color:#7C8AA0;letter-spacing:.04em}
+  .watch{width:390px;height:450px;background:var(--bg);position:relative;overflow:hidden;
+         border-radius:26px;border:1px solid #22304A;box-shadow:0 18px 40px rgba(0,0,0,.55)}
+
+  /* ---------- 顶栏 ---------- */
+  .topbar{height:54px;display:flex;align-items:center;padding:0 var(--gut);position:relative}
+  .back{width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+        color:var(--dim);font-size:24px}
+  .title{position:absolute;left:0;right:0;text-align:center;font-size:var(--fs-title);font-weight:600;
+         letter-spacing:.01em}
+  .clock{position:absolute;right:var(--gut);font-size:var(--fs-cap);color:var(--faint);
+         font-variant-numeric:tabular-nums}
+
+  /* ---------- 内容 ---------- */
+  .content{padding:0 var(--gut) var(--gut);display:flex;flex-direction:column;gap:var(--gap)}
+
+  /* 区块标签：小号 + 强调色 + 细分隔线，替代"再来一张卡片" */
+  .seclabel{display:flex;align-items:center;gap:8px;font-size:var(--fs-cap);color:var(--dim);
+            letter-spacing:.06em;margin-top:2px}
+  .seclabel .bar{width:3px;height:12px;border-radius:2px;background:var(--accent)}
+  .seclabel .rule{flex:1;height:1px;background:var(--border);opacity:.6}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+        padding:var(--pad)}
+  .rowcard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+           display:flex;align-items:center;gap:10px;padding:0 14px;height:76px}
+  .stripe{width:3px;height:44px;border-radius:2px;flex:none}
+  .grow{flex:1;min-width:0}
+  .name{font-size:var(--fs-title);font-weight:600}
+  .desc{font-size:var(--fs-cap);color:var(--dim);margin-top:4px}
+  .chev{color:var(--faint);font-size:18px}
+  .pill{font-size:12px;color:var(--dim);background:var(--muted);border:1px solid var(--border);
+        border-radius:999px;padding:3px 10px}
+
+  /* 主页 tile：图标块 + 名称 + 计数 */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap)}
+  .tile{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+        padding:12px;display:flex;flex-direction:column;gap:9px;height:92px}
+  .tile .hd{display:flex;align-items:center;gap:9px}
+  .chip{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+        font-size:15px;flex:none}
+  .tile .nm{font-size:var(--fs-title);font-weight:600;letter-spacing:.01em}
+  .tile .sub{font-size:var(--fs-cap);color:var(--dim)}
+  .tile.off{opacity:.45}
+
+  /* 读数：大数字 + 小单位 + 极简单位标签（tabular 数字） */
+  .readout{display:flex;align-items:baseline;gap:8px}
+  .val{font-size:var(--fs-display);font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+  .unit{font-size:var(--fs-cap);color:var(--dim)}
+  .kv{display:flex;justify-content:space-between;align-items:baseline;
+      padding:9px 0;border-bottom:1px solid var(--border)}
+  .kv:last-child{border-bottom:0}
+  .kv .k{font-size:var(--fs-cap);color:var(--dim)}
+  .kv .v{font-size:var(--fs-title);font-variant-numeric:tabular-nums}
+  .mono{font-variant-numeric:tabular-nums}
+
+  /* 状态点 + 文案：替代纯文字状态 */
+  .status{display:inline-flex;align-items:center;gap:7px;font-size:var(--fs-cap);color:var(--dim)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none}
+  .dot.idle{background:var(--faint)}
+
+  /* 图表：细网格 + 强调色折线 + 轴标 */
+  .chart{position:relative;height:150px;border-radius:10px;overflow:hidden;
+         background:linear-gradient(180deg,rgba(39,47,66,.55),rgba(27,35,54,.25));
+         border:1px solid var(--border)}
+  .chart .gl{position:absolute;left:0;right:0;height:1px;background:var(--border);opacity:.55}
+  .chart .axis{position:absolute;left:8px;bottom:6px;font-size:12px;color:var(--faint)}
+  .chart svg{position:absolute;inset:0;width:100%;height:100%}
+
+  .bottombar{position:absolute;left:0;right:0;bottom:0;height:44px;display:flex;
+             align-items:center;justify-content:center;gap:7px;
+             background:linear-gradient(180deg,rgba(15,23,42,0),rgba(15,23,42,.92) 45%)}
+  .pdot{width:7px;height:7px;border-radius:50%;background:var(--muted);border:1px solid var(--border)}
+  .pdot.on{background:var(--accent);border-color:var(--accent);width:18px;border-radius:4px}
+
+  .hint{font-size:var(--fs-cap);color:var(--faint);text-align:center;padding-top:2px}
+</style>
+</head>
+<body>
+
+<!-- ============================ 1. 主页 ============================ -->
+<div class="wrap">
+  <div class="cap">① 主页 · 2×4 宫格（分类入口）</div>
+  <div class="watch">
+    <div class="topbar">
+      <div class="title" style="text-align:left;left:var(--gut);font-size:24px;font-weight:700">PhyWear</div>
+      <div class="clock">腕上物理工坊</div>
+      <div class="clock" style="right:var(--gut);top:34px;font-size:20px">···</div>
+    </div>
+    <div class="content" style="padding-top:2px">
+      <div class="grid">
+        <div class="tile">
+          <div class="hd"><div class="chip" style="background:rgba(79,195,247,.16);color:var(--acc-raw)">◉</div>
+            <div class="nm">原始传感器</div></div>
+          <div class="sub">6 页实时数据</div>
+        </div>
+        <div class="tile">
+          <div class="hd"><div class="chip" style="background:rgba(129,199,132,.16);color:var(--acc-mech)">◍</div>
+            <div class="nm">力学</div></div>
+          <div class="sub">3 可用 · 1 规划</div>
+        </div>
+        <div class="tile">
+          <div class="hd"><div class="chip" style="background:rgba(255,183,77,.16);color:var(--acc-acou)">♪</div>
+            <div class="nm">声学</div></div>
+          <div class="sub">2 可用 · 2 规划</div>
+        </div>
+        <div class="tile">
+          <div class="hd"><div class="chip" style="background:rgba(186,104,200,.16);color:var(--acc-tool)">✎</div>
+            <div class="nm">工具</div></div>
+          <div class="sub">5 个可用</div>
+        </div>
+        <div class="tile">
+          <div class="hd"><div class="chip" style="background:rgba(77,208,225,.16);color:var(--acc-time)">◔</div>
+            <div class="nm">计时器</div></div>
+          <div class="sub">3 个可用</div>
+        </div>
+        <div class="tile">
+          <div class="hd"><div class="chip" style="background:rgba(255,138,101,.16);color:var(--acc-every)">⌂</div>
+            <div class="nm">生活</div></div>
+          <div class="sub">1 个可用</div>
+        </div>
+        <div class="tile off">
+          <div class="hd"><div class="chip" style="background:rgba(100,116,139,.16);color:var(--faint)">＋</div>
+            <div class="nm">自定义</div></div>
+          <div class="sub">构建器规划中</div>
+        </div>
+        <div class="tile">
+          <div class="hd"><div class="chip" style="background:rgba(240,98,146,.16);color:var(--acc-ai)">⋯</div>
+            <div class="nm">AI 教练</div></div>
+          <div class="sub">端侧 Agent</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ 2. 板块列表 ============================ -->
+<div class="wrap">
+  <div class="cap">② 板块列表（工具板，5 项全列出）</div>
+  <div class="watch">
+    <div class="topbar">
+      <div class="back">‹</div>
+      <div class="title">工具</div>
+      <div class="clock">1:11</div>
+    </div>
+    <div class="content">
+      <div class="seclabel"><span class="bar" style="background:var(--acc-tool)"></span>5 个可用<span class="rule"></span></div>
+      <div class="rowcard"><div class="stripe" style="background:var(--acc-tool)"></div>
+        <div class="grow"><div class="name">加速度频谱</div><div class="desc">FFT 主频与谐波</div></div>
+        <div class="chev">›</div></div>
+      <div class="rowcard"><div class="stripe" style="background:var(--acc-tool)"></div>
+        <div class="grow"><div class="name">倾角</div><div class="desc">斜面角度测量</div></div>
+        <div class="chev">›</div></div>
+      <div class="rowcard"><div class="stripe" style="background:var(--acc-tool)"></div>
+        <div class="grow"><div class="name">磁性标尺</div><div class="desc">磁铁计数与阈值</div></div>
+        <div class="chev">›</div></div>
+      <div class="rowcard"><div class="stripe" style="background:var(--acc-tool)"></div>
+        <div class="grow"><div class="name">磁力计频谱</div><div class="desc">磁场频谱分析</div></div>
+        <div class="chev">›</div></div>
+      <div class="rowcard"><div class="stripe" style="background:var(--acc-tool)"></div>
+        <div class="grow"><div class="name">惯性标尺</div><div class="desc">姿态与位移标定</div></div>
+        <div class="chev">›</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ 3. 读数页 ============================ -->
+<div class="wrap">
+  <div class="cap">③ 读数页（原始传感器 · 加速度计）</div>
+  <div class="watch">
+    <div class="topbar">
+      <div class="back">‹</div>
+      <div class="title">原始传感器</div>
+      <div class="clock">0:42</div>
+    </div>
+    <div class="content">
+      <div class="seclabel"><span class="bar" style="background:var(--acc-raw)"></span>加速度计<span class="rule"></span>
+        <span class="status"><span class="dot"></span>采集中</span></div>
+      <div class="card" style="padding:6px 14px">
+        <div class="kv"><span class="k">X 轴</span><span class="v mono">−0.28 <span class="unit">g</span></span></div>
+        <div class="kv"><span class="k">Y 轴</span><span class="v mono">−0.24 <span class="unit">g</span></span></div>
+        <div class="kv"><span class="k">Z 轴</span><span class="v mono">−0.99 <span class="unit">g</span></span></div>
+      </div>
+      <div class="seclabel"><span class="bar" style="background:var(--acc-raw)"></span>合矢量<span class="rule"></span></div>
+      <div class="card">
+        <div class="readout"><span class="val mono">1.07</span><span class="unit">g</span>
+          <span style="flex:1"></span><span class="unit">≈ 1 g 静止</span></div>
+      </div>
+      <div class="chart">
+        <div class="gl" style="top:33%"></div><div class="gl" style="top:66%"></div>
+        <svg viewBox="0 0 366 150" preserveAspectRatio="none">
+          <polyline fill="none" stroke="#4FC3F7" stroke-width="2"
+            points="0,96 22,94 44,97 66,92 88,95 110,90 132,93 154,88 176,92 198,86 220,90 242,84 264,88 286,82 308,86 330,80 366,84"/>
+        </svg>
+        <div class="axis">最近 2.4 s</div>
+      </div>
+      <div class="hint">左右滑动切换 6 个传感器 · 点击图表按钮看曲线</div>
+    </div>
+    <div class="bottombar">
+      <span class="pdot on"></span><span class="pdot"></span><span class="pdot"></span>
+      <span class="pdot"></span><span class="pdot"></span><span class="pdot"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ 4. 图表/频谱页 ============================ -->
+<div class="wrap">
+  <div class="cap">④ 频谱页（工具 · 修掉文字压图表）</div>
+  <div class="watch">
+    <div class="topbar">
+      <div class="back">‹</div>
+      <div class="title">加速度频谱</div>
+      <div class="clock">1:11</div>
+    </div>
+    <div class="content">
+      <div class="seclabel"><span class="bar" style="background:var(--acc-tool)"></span>主频<span class="rule"></span>
+        <span class="status"><span class="dot idle"></span>待采样</span></div>
+      <div class="card" style="padding:10px 14px">
+        <div class="readout"><span class="val mono">--</span><span class="unit">Hz</span>
+          <span style="flex:1"></span>
+          <span class="unit mono">X -- · Y -- · Z --</span></div>
+      </div>
+      <div class="chart" style="height:158px">
+        <div class="gl" style="top:25%"></div><div class="gl" style="top:50%"></div><div class="gl" style="top:75%"></div>
+        <div class="gl" style="left:25%;top:0;bottom:0;width:1px;height:auto"></div>
+        <div class="gl" style="left:50%;top:0;bottom:0;width:1px;height:auto"></div>
+        <div class="gl" style="left:75%;top:0;bottom:0;width:1px;height:auto"></div>
+        <svg viewBox="0 0 366 158" preserveAspectRatio="none">
+          <polyline fill="none" stroke="#BA68C8" stroke-width="2"
+            points="0,150 30,148 60,146 90,140 120,132 150,120 180,128 210,138 240,142 270,146 300,148 330,150 366,150"/>
+        </svg>
+        <div class="axis">频率轴 · 0 → 面板 60 Hz 上限的一半</div>
+      </div>
+      <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px">
+        <div class="card" style="padding:9px;text-align:center;font-size:var(--fs-cap);color:var(--dim)">X−</div>
+        <div class="card" style="padding:9px;text-align:center;font-size:var(--fs-cap)">X＋</div>
+        <div class="card" style="padding:9px;text-align:center;font-size:var(--fs-cap)">拟合</div>
+      </div>
+      <div class="hint">敲桌子 - 观察峰值</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ 动效规范 ============================ -->
+<div class="wrap" style="width:420px">
+  <div class="cap">⑤ 交互动效规范 v2（全部 ≤320ms / 单次 / 不循环 / 单对象）</div>
+  <div class="card" style="width:420px;line-height:1.75;font-size:14px">
+    <div><b>按压反馈</b>（所有可点对象统一）</div>
+    <div style="color:var(--dim)">按下 90ms C4：y+3px · 卡片底 → Muted · 描边 → 强调色 40%<br>
+      抬起 170ms C4 回位；连点/滑出用 PRESS_LOST 兜底</div>
+    <div style="margin-top:10px"><b>切屏转场</b>（每个页面统一，pw_topbar 一处挂钩）</div>
+    <div style="color:var(--dim)">内容区 +16px → 0，C2 260ms；顶栏标题不动（避免文字重排）</div>
+    <div style="margin-top:10px"><b>列表入场</b></div>
+    <div style="color:var(--dim)">每行 +12px → 0，C2 240ms，逐项 +40ms；先把 y 落到起点再动画（防跳）</div>
+    <div style="margin-top:10px"><b>多页屏切换</b></div>
+    <div style="color:var(--dim)">横向滚动改带动画（LV_ANIM_ON）+ 圆点激活脉冲 220ms</div>
+    <div style="margin-top:10px"><b>数值变化</b></div>
+    <div style="color:var(--dim)">读数标签 D1 脉冲 180ms（100%→60%→100%），仅在数值真的变化时触发</div>
+    <div style="margin-top:10px"><b>禁止</b>（EPIC/本板约束）</div>
+    <div style="color:var(--dim)">阴影 · 模糊 · 变换(transform) · 圆角走 EPIC · 循环动画 · 同屏多对象并发</div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<manifest>
+  <!--
+    Team repo manifest. Includes the full openvela base project set
+    (openvela.xml in this same repo) and adds this team repo as a self-ref
+    project, exposing its work-form subdirectories to openvela working-tree
+    locations via <linkfile>. remote/default come from the included openvela.xml.
+  -->
+  <include name="openvela.xml"/>
+
+  <project path="contest2026_427_xinpingqihe" name="contest2026_427_xinpingqihe">
+    <linkfile src="app/phywear" dest="apps/examples/phywear"/>
+  </project>
+</manifest>

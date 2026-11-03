@@ -1,0 +1,43 @@
+[central] adapter = /org/bluez/hci0
+[central] PASS  找到蓝牙适配器  /org/bluez/hci0
+[central] 开始扫描，找名字含 'PhyWear' 的设备 ……
+[central] 找到：'PhyWear' @ /org/bluez/hci0/dev_5A_58_62_96_E7_57（UUID 命中=True）
+[central] PASS  扫描到 PhyWear  /org/bluez/hci0/dev_5A_58_62_96_E7_57
+[central] 发起连接（第 1 次）……
+[central] 已连接且服务已解析（5A:58:62:96:E7:57）
+[central] PASS  连接成功且服务已解析  
+[central] PASS  找到服务 e0f1a000-…  /org/bluez/hci0/dev_5A_58_62_96_E7_57/service000e
+[central] PASS  找到 sensor 特征 …a001  
+[central] PASS  找到 cmd 特征 …a002  
+[central] PASS  读 …a001 得到 16 B  16 B
+[central] PASS  解出加速度且 |a| 合理(300~3000mg)  ax=486 ay=-155 az=-862 mg |a|=1002 mg
+[central] PASS  Notify 收到 >= 2 个包  收到 2 个，首个 e90165ffa9fc6900effe690003000100
+[central] PASS  写 …a002 'ping' 成功  
+[central] PASS  找到 text 特征 …a003  
+[central] PASS  读 …a003 得到状态串  PhyWear bt conn=1 sub=0 rx=1 tx=0 echo=0 mtu=517 itv=24 lat=0 sto=400
+[central] PASS  写文本后收到设备 echo（双向连通）  写 'hello-1789735664' → 收到 ['echo: hello-1789735664']
+[central] PASS  echo 内容与所写一致  echo: hello-1789735664
+[central] PASS  往返延迟（中位/最小/最大）  90.5 / 86.8 / 109.9 ms（20/20 次成功）
+[central] PASS  定长往返吞吐  40 条 / 3.60 s = 11.1 条/s（每条 12 B 载荷）
+
+判定    检查项                        说明
+------------------------------------------------------------------------------
+PASS  找到蓝牙适配器                    /org/bluez/hci0
+PASS  扫描到 PhyWear                /org/bluez/hci0/dev_5A_58_62_96_E7_57
+PASS  连接成功且服务已解析                 
+PASS  找到服务 e0f1a000-…            /org/bluez/hci0/dev_5A_58_62_96_E7_57/service000e
+PASS  找到 sensor 特征 …a001         
+PASS  找到 cmd 特征 …a002            
+PASS  读 …a001 得到 16 B            16 B
+PASS  解出加速度且 |a| 合理(300~3000mg)  ax=486 ay=-155 az=-862 mg |a|=1002 mg
+PASS  Notify 收到 >= 2 个包          收到 2 个，首个 e90165ffa9fc6900effe690003000100
+PASS  写 …a002 'ping' 成功          
+PASS  找到 text 特征 …a003           
+PASS  读 …a003 得到状态串              PhyWear bt conn=1 sub=0 rx=1 tx=0 echo=0 mtu=517 itv=24 lat=0 sto=400
+PASS  写文本后收到设备 echo（双向连通）        写 'hello-1789735664' → 收到 ['echo: hello-1789735664']
+PASS  echo 内容与所写一致               echo: hello-1789735664
+PASS  往返延迟（中位/最小/最大）             90.5 / 86.8 / 109.9 ms（20/20 次成功）
+PASS  定长往返吞吐                     40 条 / 3.60 s = 11.1 条/s（每条 12 B 载荷）
+------------------------------------------------------------------------------
+结论：✅ 宿主侧 BLE 中心设备全过（B3 设备侧 + 空口均成立）
+central_exit=0

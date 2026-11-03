@@ -1,0 +1,4 @@
+calib selftest: rc=0 worst_rel_err=0.0628
+ahrs selftest: rc=0 max_attitude_err=0.879 deg
+ahrs selftest: rc=0 max_attitude_err=0.879 deg
+ahrs done: 300 samples, 0 with mag

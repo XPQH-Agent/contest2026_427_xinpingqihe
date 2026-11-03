@@ -1,0 +1,4 @@
+[hosttest] CC=gcc
+pw_ahrs_selftest  rc=0  max_attitude_err=0.881 deg   OK
+pw_calib_selftest rc=0  worst_rel_err=0.0628            OK
+ALL OK

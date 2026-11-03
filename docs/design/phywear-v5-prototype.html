@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<!--
+  PhyWear v5 原型 —— 适配「手表」形态（网页仿真，上板前评审）
+  ==================================================================
+  用户反馈：v4 的 Swiss/Data-Dense 工业仪表语言"放到手表上有点奇怪"。
+  改成同一份 styles.csv 里**适配穿戴**的实名风格（关键词为 CSV 原文）：
+    · Dark Mode (OLED)        deep black, power efficient, eye-friendly       → 基底
+    · Exaggerated Minimalism  Bold minimalism, oversized typography, high contrast → 大数字/聚焦标题
+    · Executive Dashboard     High-level KPIs, large key metrics, minimal detail   → 每屏一件事
+    · Bento Box Grid          Modular cards, asymmetric grid, varied sizes, Apple-style → 主页宫格
+  保留 v4 已被认可的纪律（taste-skill）：**全局 1 个强调色**（Emerald #22C55E）、无装饰渐变、无阴影、
+  只动 transform/opacity、支持 prefers-reduced-motion。
+  按「手表」修正：
+    ① 形状从"零圆角"改为**一套圆角尺度**（卡片 18 / 交互全圆 999）——§4.4 允许"有文档规则的混合系统"；
+       EPIC 上圆角走 CPU，但 P0 真机 A/B 实测圆角 14→0 **零 fps 增益**（docs/evidence/p0-20260916），故代价可接受。
+    ② 字号整体上调：不再用 11px 微字（表上不可读），最小 13px，主数值 40px（对应板上 montserrat_48）。
+    ③ 每屏信息量下调：主页每格只留「名称 + 一个计数」，去掉"项数/可用"双指标。
+    ④ 分页/状态点回到圆润形（胶囊 + 圆点），符合穿戴直觉。
+-->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>PhyWear v5 原型 · 手表形态（OLED + 大字体 + 圆润）</title>
+<style>
+  :root{
+    --bg:#000000; --card:#141414; --card-2:#1D1D1D; --line:#2A2A2A;
+    --fg:#FFFFFF; --fg-2:#B9B9B9; --fg-3:#8A8A8A;
+    --accent:#22C55E; --accent-ink:#04160B;
+    --r-card:18px; --r-pill:999px;      /* 文档化的圆角尺度：卡片 18 / 交互全圆 */
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none}
+  html,body{background:#000}
+  body{color:var(--fg);font-family:"DejaVu Sans","Noto Sans CJK SC","Source Han Sans SC",system-ui,sans-serif;
+       padding:24px 28px;display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap}
+  .mono{font-family:"DejaVu Sans Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+  h1{font-size:17px;font-weight:600}
+  h1 span{color:var(--fg-3);font-size:12px;margin-left:8px}
+  .hint{margin-top:8px;font-size:12.5px;color:var(--fg-3);line-height:1.75;max-width:620px}
+  .hint b{color:var(--fg-2);font-weight:500}
+
+  .stage{display:flex;flex-direction:column;gap:12px;align-items:center}
+  .watch{width:390px;height:450px;background:var(--bg);position:relative;overflow:hidden;
+         border:1px solid var(--line);border-radius:40px;transform:scale(1.3);transform-origin:top center;
+         touch-action:none}
+  .pad{height:140px}
+  .screen{position:absolute;inset:0;display:none;overflow:hidden}
+  .screen.on{display:block}
+
+  /* 顶栏：大、圆润、少 */
+  .bar{height:58px;display:flex;align-items:center;padding:0 16px;position:relative;z-index:6}
+  .bar .id{font-size:20px;font-weight:700;letter-spacing:.02em}
+  .bar .sub{position:absolute;right:16px;font-size:13px;color:var(--fg-3)}
+  .back{width:46px;height:46px;display:flex;align-items:center;justify-content:center;
+        border-radius:var(--r-pill);color:var(--fg-2);font-size:22px;margin-left:-8px}
+  .back:active{background:var(--card-2)}
+  .bar .ttl{font-size:17px;font-weight:600;margin-left:6px}
+  .bar .t{position:absolute;right:16px;font-size:13px;color:var(--fg-2)}
+
+  /* 聚焦卡（Executive Dashboard：一屏讲一件事） */
+  .focuscard{margin:2px 14px 0;padding:12px 14px;border-radius:var(--r-card);background:var(--card);
+             border:1px solid var(--line)}
+  .focuscard .nm{font-size:22px;font-weight:700;letter-spacing:-.01em}
+  .focuscard .ds{font-size:13px;color:var(--fg-2);margin-top:4px;line-height:1.45}
+  .focuscard .rt{display:flex;align-items:center;gap:7px;margin-top:8px;font-size:13px;color:var(--accent)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none}
+  .dot.off{background:#3A3A3A}
+
+  /* 8 格（Bento：圆润模块卡，单一强调色） */
+  .grid{position:absolute;left:0;right:0;top:162px;height:252px;padding:0;touch-action:none}
+  .tile{position:absolute;background:var(--card);border:1px solid var(--line);border-radius:16px;
+        padding:9px 12px;display:flex;flex-direction:column;gap:4px;
+        transition:transform .16s cubic-bezier(.22,1,.36,1)}
+  .tile .gl{font-size:16px;color:var(--fg-2);line-height:1}
+  .tile .nm{font-size:15.5px;font-weight:600;line-height:1.15}
+  .tile .ct{font-size:12.5px;color:var(--fg-3);margin-top:auto}
+  .tile .spark{position:absolute;left:0;right:0;bottom:0;height:22px;opacity:.55;pointer-events:none}
+  .tile .spark polyline{fill:none;stroke:var(--accent);stroke-width:1.6}
+  .tile.focus .spark{opacity:.95}
+  .tile .ct.pulse{animation:none}
+  .ct.live{color:var(--accent);font-weight:600}
+  /* 按压：先缩、回弹过冲（C3 观感）；松手一次性涟漪 */
+  .tile.press,.row.press{transform:scale(.965)}
+  .tile.pop,.row.pop{transform:scale(1.035)}
+  .ring{position:absolute;inset:0;border:2px solid var(--accent);border-radius:inherit;
+        opacity:0;pointer-events:none;transform-origin:center}
+  /* 数值变化脉冲（D1：只在数值真的变化时闪一次） */
+  @keyframes d1{0%{opacity:1}35%{opacity:.45}100%{opacity:1}}
+  .d1{animation:d1 .18s ease-out 1}
+  .tile.focus{background:var(--card-2);border-color:var(--accent);transform:scale(1.03)}
+  .tile.dim{opacity:.55}
+
+  /* 液态分页：圆角胶囊 + scaleX（只动 transform） */
+  .segs{position:absolute;left:0;right:0;bottom:14px;height:20px;display:flex;align-items:center;
+        justify-content:center;gap:6px}
+  .segs i{width:7px;height:7px;border-radius:50%;background:#333}
+  .segs i.on{background:var(--accent);width:22px;border-radius:var(--r-pill);transition:width .18s}
+
+  /* 板块页：圆润行卡 */
+  .catwrap{padding:0 14px;margin-top:2px}
+  .cathead{margin-bottom:12px}
+  .cathead .nm{font-size:28px;font-weight:700;letter-spacing:-.01em}
+  .cathead .ds{font-size:13.5px;color:var(--fg-2);margin-top:8px;line-height:1.5}
+  .cathead .cnt{font-size:13px;color:var(--accent);margin-top:10px}
+  .row{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+       border-radius:16px;height:60px;padding:0 15px;margin-bottom:9px;transition:transform .13s,background .13s}
+  .row:active{transform:scale(.985);background:var(--card-2)}    /* §4.5 触感反馈 */
+  .row .tx{flex:1;min-width:0}
+  .row .nm{display:block;font-size:16.5px;font-weight:600}
+  .row .mt{display:block;font-size:13px;color:var(--fg-3);margin-top:3px}
+  .row .go{font-size:13px;color:var(--accent)}
+  .row.off .nm{color:#6E6E6E}
+  .row.off .mt{color:#575757}
+  .row.off .go{color:#575757}
+
+  /* 读数页：超大数字（Exaggerated Minimalism） */
+  .page{position:absolute;inset:0;padding:58px 14px 0;will-change:transform}
+  .rd .nm{font-size:17px;font-weight:600;color:var(--fg)}
+  .rd .sub{font-size:13px;color:var(--fg-3);margin-top:4px}
+  .big{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);
+       padding:6px 16px}
+  .tr{display:flex;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line)}
+  .tr:last-child{border-bottom:0}
+  .tr .k{font-size:14px;color:var(--fg-3);width:26px}
+  .tr .v{margin-left:auto;font-size:40px;font-weight:700;letter-spacing:-.02em;line-height:1.05}
+  .tr .u{font-size:14px;color:var(--fg-3);width:44px;text-align:right;margin-left:6px}
+  .live{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--accent);margin-top:12px}
+  .chart{position:relative;height:104px;margin-top:12px;border-radius:16px;overflow:hidden;
+         background:var(--card);border:1px solid var(--line)}
+  .chart .gl{position:absolute;left:0;right:0;height:1px;background:var(--line);opacity:.7}
+  .chart .tap{position:absolute;right:12px;bottom:8px;font-size:13px;color:var(--fg-3)}
+
+  .full{position:absolute;inset:0;background:#000;z-index:20;display:none;padding:16px 14px 0}
+  .full.on{display:block}
+  .full .hd{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--fg-2)}
+  .full .box{position:relative;height:290px;margin-top:14px;border-radius:var(--r-card);overflow:hidden;
+             background:var(--card);border:1px solid var(--line)}
+  .full .ax{position:absolute;left:12px;right:12px;bottom:10px;display:flex;justify-content:space-between;
+            font-size:13px;color:var(--fg-3)}
+  .flip{position:absolute;z-index:30;pointer-events:none;background:var(--card-2);transform-origin:top left;
+        display:none;border-radius:18px}
+
+  .switch{display:flex;gap:6px}
+  .switch button{background:#141414;color:var(--fg-3);border:1px solid var(--line);border-radius:var(--r-pill);
+                 padding:8px 14px;font-size:12.5px;cursor:pointer}
+  .switch button.on{color:var(--accent-ink);background:var(--accent);border-color:var(--accent);font-weight:600}
+
+  .spec{width:540px;max-width:100%}
+  .spec h2{font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin:0 0 10px}
+  .spec table{border-collapse:collapse;width:100%;font-size:12.5px;line-height:1.6}
+  .spec th,.spec td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
+  .spec th{background:#101010;color:var(--fg-3);font-weight:500}
+  .spec td.k{width:120px;color:var(--fg)}
+  .yes{color:var(--accent)}.no{color:#FF7A7A}
+  .note{margin-top:14px;font-size:12.5px;color:var(--fg-3);line-height:1.85}
+  .note b{color:var(--fg-2);font-weight:600}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div>
+    <h1>PhyWear v5 原型 <span>手表形态 · OLED + 大字体 + 圆润</span></h1>
+    <div class="hint"><b>主页</b>按住滑动聚焦 · 抬起进入；<b>板块页</b>右拖返回；<b>读数页</b>左右拖翻页、点图表放大。</div>
+  </div>
+
+  <div class="watch" id="watch">
+    <section class="screen on" id="scr-home">
+      <div class="bar"><div class="id">PhyWear</div><div class="sub">腕上物理工坊</div></div>
+      <div class="focuscard">
+        <div class="nm" id="fName">原始传感器</div>
+        <div class="ds" id="fDesc">加速度 / 陀螺 / 磁场 / 光 / 麦克风 / 扬声器</div>
+        <div class="rt"><span class="dot"></span><span id="fCount">6 个实验</span></div>
+      </div>
+      <div class="grid" id="grid"></div>
+      <div class="segs" id="segsHome"></div>
+    </section>
+
+    <section class="screen" id="scr-cat">
+      <div class="bar"><div class="back" id="catBack">‹</div><div class="ttl" id="catTtl">工具</div><div class="t">1:11</div></div>
+      <div class="catwrap">
+        <div class="cathead">
+          <div class="nm" id="hName">工具</div>
+          <div class="ds" id="hDesc">频谱 / 倾角 / 标尺 / 磁场 / 惯性</div>
+          <div class="cnt" id="hCnt">5 个可用</div>
+        </div>
+        <div id="rows"></div>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:14px;text-align:center;font-size:12.5px;color:#5E5E5E">右拖返回</div>
+    </section>
+
+    <section class="screen" id="scr-read">
+      <div class="bar"><div class="back" id="readBack">‹</div><div class="ttl">原始传感器</div>
+        <div class="t mono" id="readIdx">1 / 6</div></div>
+      <div id="pages"></div>
+      <div class="segs" id="segsRead"></div>
+    </section>
+
+    <div class="full" id="full">
+      <div class="hd"><span class="dot"></span><span id="fullName">加速度计 · 合矢量</span>
+        <span style="flex:1"></span><span style="color:var(--fg-3)">下拉收起</span></div>
+      <div class="box" id="fullBox">
+        <div class="gl" style="top:25%"></div><div class="gl" style="top:50%"></div><div class="gl" style="top:75%"></div>
+        <svg viewBox="0 0 366 290" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+          <polyline id="fullLine" fill="none" stroke="#22C55E" stroke-width="2.5" points=""/>
+        </svg>
+        <div class="ax"><span class="mono">−2.4 s</span><span class="mono">0 s</span></div>
+      </div>
+    </div>
+
+    <div class="flip" id="flipLayer"></div>
+  </div>
+
+  <div class="pad"></div>
+  <div class="switch">
+    <button data-scr="home" class="on">主页</button>
+    <button data-scr="cat">板块页</button>
+    <button data-scr="read">读数页</button>
+    <button id="resetBtn">回到初始</button>
+  </div>
+</div>
+
+<aside class="spec">
+  <h2>风格来源（third_party/ui-ux-pro-max/data/styles.csv）</h2>
+  <table>
+    <tr><th>实名风格</th><th>CSV 关键词</th><th>用在哪</th></tr>
+    <tr><td class="k">Dark Mode (OLED)</td><td>deep black, power efficient, eye-friendly</td><td>纯黑基底（AMOLED 省电、暗处不刺眼）</td></tr>
+    <tr><td class="k">Exaggerated Minimalism</td><td>Bold minimalism, oversized typography, high contrast</td><td>读数页 40px 大数字、聚焦标题 24px</td></tr>
+    <tr><td class="k">Executive Dashboard</td><td>High-level KPIs, large key metrics, minimal detail</td><td>每屏只讲一件事（每页 1 个主数值组）</td></tr>
+    <tr><td class="k">Bento Box Grid</td><td>Modular cards, asymmetric grid, varied sizes, Apple-style</td><td>主页 8 个模块的圆润模块卡</td></tr>
+  </table>
+
+  <h2 style="margin-top:16px">相对 v4：哪些"手表不该有"的被撤掉</h2>
+  <table>
+    <tr><th>问题</th><th>v4（工业仪表语言）</th><th>v5（手表形态）</th></tr>
+    <tr><td class="k">形状</td><td class="no">一律零圆角，表上像控制面板</td>
+        <td class="yes">一套圆角尺度：卡片 18px / 交互全圆 999（§4.4 允许"有文档规则的混合"）；EPIC 上圆角走 CPU，但 P0 真机实测圆角 14→0 **零 fps 增益**，代价可接受</td></tr>
+    <tr><td class="k">字号</td><td class="no">11px 微字（运动中的手腕根本看不清）</td>
+        <td class="yes">最小 13px；主数值 40px（对应板上 montserrat_48）；标题 24–28px</td></tr>
+    <tr><td class="k">信息量</td><td class="no">每格"项数 6 · 可用 6"双指标 + 序号 + 表头</td>
+        <td class="yes">每格只留「名称 + 一个计数」；每屏一个焦点（Executive Dashboard）</td></tr>
+    <tr><td class="k">列表</td><td class="no">细线表格化（像数据表）</td><td class="yes">圆润行卡 + 大名称 + 单一状态词</td></tr>
+    <tr><td class="k">分页/状态</td><td class="no">矩形段 + 方块点</td><td class="yes">圆点 + 胶囊（穿戴直觉）</td></tr>
+    <tr><td class="k">保留的纪律</td><td colspan="2" class="yes">全局 1 个强调色 Emerald #22C55E · 无装饰渐变 · 无阴影 · 只动 transform/opacity · prefers-reduced-motion 退化（taste-skill §4.2/§0.D/§6.A/§6.B）</td></tr>
+  </table>
+
+  <div class="note">
+    <b>请重点看</b>：① 圆润 + 大字号之后，是不是终于"像手表"了；② 主页 8 格一屏仍全可点；③ 读数页 40px 数字的密度与对齐。<br>
+    点头后上板：先做主屏 + 板块页（同口径帧率 A/B + SRAM 核对 + 真机截图），再铺读数页与其余页。
+  </div>
+</aside>
+
+<script>
+const $=s=>document.querySelector(s);
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const STILL=location.search.indexOf('still')>=0;
+const D=(REDUCED||STILL)?0:1;
+
+const BOARDS=[
+  {n:'原始传感器', d:'加速度 / 陀螺 / 磁场 / 光 / 麦克风 / 扬声器', g:'◉',
+   items:[['加速度计','三轴 · 折线'],['陀螺仪','角速度'],['磁力计','三轴磁场'],['光线','环境光'],['麦克风','声压'],['扬声器','回放']]},
+  {n:'力学', d:'单摆 / 弹簧 / 向心力', g:'◍',
+   items:[['单摆','测重力加速度'],['弹簧','测频率'],['向心力','测半径'],['碰撞','规划中',0]]},
+  {n:'声学', d:'频谱 / 音调 / 音高 / 多普勒', g:'♪',
+   items:[['频谱','主频与谐波'],['音调','已知频率'],['音高','规划中',0],['多普勒','规划中',0]]},
+  {n:'工具', d:'频谱 / 倾角 / 标尺 / 磁场 / 惯性', g:'✎',
+   items:[['加速度频谱','FFT · 3 轴'],['倾角','重力倾斜'],['磁性标尺','峰值计数'],['磁场频谱','磁场 FFT'],['惯性标尺','姿态标定']]},
+  {n:'计时器', d:'运动秒表 / 光门 / 声门', g:'◔',
+   items:[['运动秒表','计时与阈值'],['光门','遮光计时'],['声门','声响计时']]},
+  {n:'生活', d:'掌声测量', g:'⌂', items:[['掌声','强度与次数']]},
+  {n:'自定义', d:'自己拼一个实验', g:'＋', items:[['构建器','规划中',0]]},
+  {n:'AI 教练', d:'描述现象，Agent 选实验并跑', g:'⋯', items:[['开始对话','端侧 Agent']]},
+];
+function on(i){ return BOARDS[i].items.filter(x=>x[2]!==0).length; }
+
+function tween(from,to,cb,dur=300){
+  if(!D){ cb(to); return; }
+  const t0=performance.now();
+  const tick=now=>{ const p=Math.min(1,(now-t0)/dur);
+    const e=1-Math.cos(p*Math.PI*1.02)*Math.exp(-p*3.6);
+    cb(from+(to-from)*Math.min(1.02,e));
+    if(p<1) requestAnimationFrame(tick); else cb(to); };
+  requestAnimationFrame(tick);
+}
+function wave(seed,w=366,h=104){
+  let p=[];
+  for(let i=0;i<=24;i++){
+    const y=h/2+Math.sin((i+seed*3)*.55)*h*.14+Math.sin((i+seed)*.17)*h*.07;
+    p.push(`${Math.round(i*w/24)},${Math.round(y)}`);
+  }
+  return p.join(' ');
+}
+function sparkPts(seed,t=0){
+  let p=[];
+  for(let i=0;i<=20;i++){
+    const y=11+Math.sin(i*0.62+seed*1.7+t)*7+Math.sin(i*0.21+seed+t*1.6)*3;
+    p.push(`${i*5},${Math.round(y)}`);
+  }
+  return p.join(' ');
+}
+function pager(el,n){
+  el.innerHTML=''; const d=[];
+  for(let i=0;i<n;i++){ const s=document.createElement('i'); el.appendChild(s); d.push(s); }
+  return { set(i){ d.forEach((s,k)=>s.classList.toggle('on',k===i)); } };
+}
+
+const G={w:175,h:57,gx:12,gy:8,x0:14,y0:162};
+const grid=$('#grid'), pgHome=pager($('#segsHome'),8);
+let focus=0; const tiles=[];
+BOARDS.forEach((b,i)=>{
+  const col=i%2,row=(i/2)|0;
+  const el=document.createElement('div');
+  el.className='tile';
+  el.style.left=(G.x0+col*(G.w+G.gx))+'px';
+  el.style.top=(row*(G.h+G.gy))+'px';
+  el.style.width=G.w+'px'; el.style.height=G.h+'px';
+  el.innerHTML=`<span style="display:flex;align-items:center;gap:7px"><span class="gl">${b.g}</span><span class="nm">${b.n}</span></span>
+    <span class="ct">${on(i)?on(i)+" 个实验":"规划中"}</span>
+    <svg class="spark" viewBox="0 0 100 22" preserveAspectRatio="none"><polyline points="${sparkPts(i)}"/></svg>
+    <span class="ring"></span>`;
+  if(D){ el.style.opacity='0'; el.style.transform='translateY(10px) scale(.96)';
+         setTimeout(()=>{ el.style.transition='transform .3s cubic-bezier(.22,1,.36,1),opacity .3s';
+                          el.style.opacity='1'; el.style.transform='translateY(0) scale(1)'; }, 40+i*35); }
+  grid.appendChild(el); tiles.push(el);
+});
+function renderFocus(){
+  tiles.forEach((el,i)=>{
+    el.classList.toggle('focus',i===focus);
+    el.classList.toggle('dim',i!==focus);
+  });
+  const b=BOARDS[focus];
+  $('#fName').textContent=b.n; $('#fDesc').textContent=b.d;
+  $('#fCount').textContent=on(focus)+' 个实验';
+  /* 聚焦切换：名称与计数做一次 D1 脉冲（数据/交互驱动，不是常驻循环） */
+  ['#fName','#fCount'].forEach(sel=>{ const e=$(sel); e.classList.remove('d1'); void e.offsetWidth; e.classList.add('d1'); });
+  pgHome.set(focus);
+}
+const watch=$('#watch');
+function loc(e){ const r=watch.getBoundingClientRect(),k=r.width/390;
+  return {x:(e.clientX-r.left)/k,y:(e.clientY-r.top)/k}; }
+function hit(p){
+  for(let i=0;i<8;i++){
+    const col=i%2,row=(i/2)|0;
+    const x=G.x0+col*(G.w+G.gx), y=G.y0+row*(G.h+G.gy);
+    if(p.x>=x-4&&p.x<=x+G.w+4&&p.y>=y-4&&p.y<=y+G.h+4) return i;
+  }
+  return -1;
+}
+let hold=false,startF=0;
+function pressPop(el){
+  if(!D) return;
+  el.classList.add('press');
+  setTimeout(()=>{ el.classList.remove('press'); el.classList.add('pop');
+    setTimeout(()=>el.classList.remove('pop'),150); },90);
+  const ring=el.querySelector('.ring');
+  if(ring){ ring.style.transition='none'; ring.style.opacity='.9'; ring.style.transform='scale(1)';
+    requestAnimationFrame(()=>{ ring.style.transition='transform .34s cubic-bezier(.22,1,.36,1),opacity .34s';
+      ring.style.transform='scale(1.06)'; ring.style.opacity='0'; }); }
+}
+grid.addEventListener('pointerdown',e=>{ grid.setPointerCapture(e.pointerId); hold=true; startF=focus;
+  const i=hit(loc(e)); if(i>=0){ focus=i; renderFocus(); pressPop(tiles[i]); } });
+grid.addEventListener('pointermove',e=>{ if(!hold) return;
+  const i=hit(loc(e)); if(i>=0&&i!==focus){ focus=i; renderFocus(); } });
+grid.addEventListener('pointerup',e=>{ if(!hold) return; hold=false;
+  const i=hit(loc(e));
+  if(i>=0){ focus=i; renderFocus(); openBoard(i); }
+  else { focus=startF; renderFocus(); } });
+
+const flip=$('#flipLayer');
+function flipTo(src,to,cb){
+  if(!D){ cb&&cb(); return; }
+  const r=watch.getBoundingClientRect(),k=r.width/390;
+  const s={l:(src.left-r.left)/k,t:(src.top-r.top)/k,w:src.width/k,h:src.height/k};
+  const t={l:(to.left-r.left)/k,t:(to.top-r.top)/k,w:to.width/k,h:to.height/k};
+  flip.style.display='block'; flip.style.left=s.l+'px'; flip.style.top=s.t+'px';
+  flip.style.width=s.w+'px'; flip.style.height=s.h+'px'; flip.style.transform='translate(0,0) scale(1,1)';
+  flip.style.opacity='1'; flip.getBoundingClientRect();
+  flip.style.transition='transform .32s cubic-bezier(.22,1,.36,1),opacity .32s';
+  requestAnimationFrame(()=>{ flip.style.transform=`translate(${t.l-s.l}px,${t.t-s.t}px) scale(${t.w/s.w},${t.h/s.h})`; });
+  setTimeout(()=>{ cb&&cb(); flip.style.opacity='0'; },180);
+  setTimeout(()=>{ flip.style.display='none'; },320);
+}
+let stack=['home'];
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==='scr-'+id));
+  document.querySelectorAll('.switch button[data-scr]').forEach(b=>b.classList.toggle('on',b.dataset.scr===id));
+}
+function openBoard(i){
+  const b=BOARDS[i];
+  $('#catTtl').textContent=b.n; $('#hName').textContent=b.n; $('#hDesc').textContent=b.d;
+  const nA=on(i), nP=b.items.length-nA;
+  $('#hCnt').textContent=nP?`${nA} 个可用 · ${nP} 个规划`:`${nA} 个可用`;
+  const rows=$('#rows'); rows.innerHTML='';
+  b.items.forEach((it,k)=>{
+    const off=it[2]===0;
+    const r=document.createElement('div');
+    r.className='row'+(off?' off':'');
+    r.innerHTML=`<span class="tx"><span class="nm">${it[0]}</span><span class="mt">${it[1]}</span></span>
+      <span class="go">${off?'规划中':'开始 ›'}</span>`;
+    rows.appendChild(r);
+    if(!D) return;
+    r.style.opacity=0; r.style.transform='translateY(8px)';
+    setTimeout(()=>{ r.style.transition='transform .22s cubic-bezier(.22,1,.36,1),opacity .22s';
+                     r.style.opacity=1; r.style.transform='translateY(0)'; },20+k*35);
+  });
+  flipTo(tiles[i].getBoundingClientRect(),{left:0,top:0,width:390,height:450},()=>show('cat'));
+  stack.push('cat');
+}
+let catX=0,catP=null;
+watch.addEventListener('pointerdown',e=>{ if($('#scr-cat').classList.contains('on')) catP=e; });
+watch.addEventListener('pointermove',e=>{
+  if(!catP) return;
+  const r=watch.getBoundingClientRect(),k=r.width/390;
+  catX=Math.max(0,(e.clientX-catP.clientX)/k);
+  const pull=catX>55?(catX-55)*.35:0;
+  const dx=Math.min(catX+pull,300);
+  $('#scr-cat').style.transition='none'; $('#scr-cat').style.transform=`translateX(${dx}px)`;
+  $('#scr-home').style.transition='none'; $('#scr-home').style.transform=`translateX(${-36+dx*.14}px)`;
+});
+watch.addEventListener('pointerup',()=>{
+  if(!catP) return;
+  const done=catX>125, from=catX;
+  tween(from,done?390:0,x=>{ $('#scr-cat').style.transform=`translateX(${x}px)`;
+    $('#scr-home').style.transform=`translateX(${-36+(x/390)*36}px)`; },done?250:290);
+  setTimeout(()=>{ $('#scr-cat').style.transition=''; $('#scr-home').style.transition='';
+    if(done){ stack.pop(); show('home'); $('#scr-home').style.transform=''; $('#scr-cat').style.transform=''; } },done?260:300);
+  catX=0; catP=null;
+});
+$('#catBack').addEventListener('click',()=>{ stack.pop(); show('home');
+  $('#scr-home').style.transform=''; $('#scr-cat').style.transform=''; });
+
+const SENSORS=[
+  {n:'加速度计', sub:'三轴 + 合矢量', u:'g',    v:['−0.19','−0.32','−0.95']},
+  {n:'陀螺仪',   sub:'角速度',       u:'dps',  v:['+1.2','−0.4','+0.1']},
+  {n:'磁力计',   sub:'三轴磁场',     u:'mG',   v:['−131','+47','−318']},
+  {n:'光线',     sub:'环境光',       u:'lx',   v:['+128']},
+  {n:'麦克风',   sub:'声压电平',     u:'dBFS', v:['−42.5']},
+  {n:'扬声器',   sub:'回放电平',     u:'dBFS', v:['−58.0']},
+];
+const N=SENSORS.length, pgRead=pager($('#segsRead'),N);
+let pageX=0,pageIdx=0;
+$('#pages').innerHTML=SENSORS.map((s,i)=>{
+  const rows=s.v.map((v,k)=>`<div class="tr"><span class="k">${['X','Y','Z'][k]||'—'}</span>
+      <span class="v mono">${v}</span><span class="u mono">${s.u}</span></div>`).join('');
+  return `<div class="page" data-i="${i}" style="transform:translateX(${i*390}px)">
+    <div class="rd">
+      <div class="nm">${s.n}</div><div class="sub">${s.sub}</div>
+      <div class="big">${rows}</div>
+      <div class="live"><span class="dot"></span>实时更新</div>
+      <div class="chart" data-chart="${i}">
+        <div class="gl" style="top:33%"></div><div class="gl" style="top:66%"></div>
+        <svg viewBox="0 0 366 104" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+          <polyline fill="none" stroke="#22C55E" stroke-width="2.5" points="${wave(i)}"/></svg>
+        <div class="tap">点一下放大 ›</div>
+      </div>
+    </div></div>`;
+}).join('');
+document.querySelectorAll('.chart').forEach(c=>c.addEventListener('click',ev=>{ ev.stopPropagation(); openFull(+c.dataset.chart); }));
+function renderRead(){
+  document.querySelectorAll('#pages .page').forEach(p=>{
+    const i=+p.dataset.i, dist=i-(pageX/390), k=Math.max(0,1-Math.abs(dist)*.7);
+    p.style.transform=`translateX(${i*390-pageX}px)`; p.style.opacity=String(.3+.7*k);
+  });
+  const cur=Math.max(0,Math.min(N-1,Math.round(pageX/390)));
+  pgRead.set(cur); $('#readIdx').textContent=(cur+1)+' / '+N;
+}
+let readP=null;
+watch.addEventListener('pointerdown',e=>{ if($('#scr-read').classList.contains('on')) readP=e; });
+watch.addEventListener('pointermove',e=>{
+  if(!readP) return;
+  const r=watch.getBoundingClientRect(),k=r.width/390;
+  const dx=(e.clientX-readP.clientX)/k;
+  pageX=Math.max(-40,Math.min((N-1)*390+40,pageIdx*390-dx)); renderRead();
+});
+watch.addEventListener('pointerup',e=>{
+  if(!readP) return;
+  const r=watch.getBoundingClientRect(),k=r.width/390;
+  const dx=(e.clientX-readP.clientX)/k;
+  let idx=Math.round((pageIdx*390-dx+(dx>0?90:-90))/390);
+  idx=Math.max(0,Math.min(N-1,idx));
+  const from=pageX,to=idx*390;
+  tween(from,to,x=>{ pageX=x; renderRead(); },270);
+  pageIdx=idx; readP=null;
+});
+
+let fullOpen=false,fullY=0;
+function openFull(i){
+  const s=SENSORS[i];
+  const src=document.querySelector(`.page[data-i="${i}"] .chart`).getBoundingClientRect();
+  $('#fullLine').setAttribute('points',wave(i,366,290));
+  $('#fullName').textContent=s.n+' · '+s.sub;
+  fullOpen=true; $('#full').classList.add('on');
+  flipTo(src,{left:0,top:56,width:390,height:290});
+}
+$('#full').addEventListener('pointerdown',e=>{ $('#full').dataset.y=e.clientY; });
+$('#full').addEventListener('pointermove',e=>{
+  if(!fullOpen) return;
+  const dy=Math.max(0,e.clientY-+$('#full').dataset.y); fullY=dy;
+  $('#fullBox').style.transform=`translateY(${dy*.6}px) scale(${1-dy/3000})`;
+  $('#fullBox').style.opacity=String(1-dy/400);
+});
+$('#full').addEventListener('pointerup',()=>{
+  if(!fullOpen) return;
+  const done=fullY>90, from=fullY;
+  tween(from,0,x=>{ $('#fullBox').style.transform=`translateY(${x*.6}px) scale(${1-x/3000})`;
+    $('#fullBox').style.opacity=String(1-x/400); },220);
+  setTimeout(()=>{ $('#fullBox').style.transform=''; $('#fullBox').style.opacity='';
+    if(done){ fullOpen=false; $('#full').classList.remove('on'); } },230);
+  fullY=0;
+});
+document.querySelectorAll('.switch button[data-scr]').forEach(b=>b.addEventListener('click',()=>{
+  const id=b.dataset.scr;
+  if(id==='cat') openBoard(focus); else { $('#full').classList.remove('on'); show(id); }
+}));
+$('#readBack').addEventListener('click',()=>show('home'));
+$('#resetBtn').addEventListener('click',()=>{ focus=0; pageX=0; pageIdx=0;
+  $('#scr-home').style.transform=''; $('#scr-cat').style.transform=''; $('#full').classList.remove('on');
+  show('home'); renderFocus(); renderRead(); });
+renderFocus(); renderRead();
+
+/* 数据心跳：真实设备上是 10~15 Hz 采样，这里用 600 ms 模拟；
+   只推进波形与"聚焦格的实时读数"，不做装饰性无限动画（§0.D）。 */
+const DEMO=[['−0.19','g'],['0.50','m'],['−58','dBFS'],['21.4','°'],['1.02','s'],['86','dB'],['—',''],['…','']];
+let tickN=0;
+setInterval(()=>{
+  tickN++;
+  tiles.forEach((el,i)=>{ const pl=el.querySelector('.spark polyline');
+    if(pl) pl.setAttribute('points',sparkPts(i,tickN*0.35)); });
+  const el=tiles[focus], ct=el.querySelector('.ct');
+  const d=DEMO[focus];
+  if(d && d[0]!=='—' && d[0]!=='…'){
+    const jitter=(Math.sin(tickN*1.3+focus)*0.02).toFixed(2);
+    ct.textContent=(parseFloat(d[0])+parseFloat(jitter)).toFixed(2)+' '+d[1];
+    ct.classList.add('live');
+  }
+  ct.classList.remove('d1'); void ct.offsetWidth; ct.classList.add('d1');   /* D1：数值变化脉冲 */
+},600);
+
+const H=(location.hash||'').replace('#','');
+if(H==='cat') openBoard(3); else if(H==='read'){ stack.push('read'); show('read'); }
+</script>
+</body>
+</html>

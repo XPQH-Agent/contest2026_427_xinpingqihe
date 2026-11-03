@@ -1,0 +1,6 @@
+RESULT root run1 [phywear] alive t=30s loops/s=75 fps=3
+RESULT root run1 [phywear] alive t=60s loops/s=80 fps=3
+RESULT root run2 [phywear] alive t=30s loops/s=75 fps=3
+RESULT root run2 [phywear] alive t=60s loops/s=80 fps=3
+RESULT imu run1 [phywear] alive t=30s loops/s=26 fps=26
+RESULT imu run1 [phywear] alive t=60s loops/s=28 fps=28

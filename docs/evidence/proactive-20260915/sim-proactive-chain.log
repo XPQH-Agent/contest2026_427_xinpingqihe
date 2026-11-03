@@ -1,0 +1,1458 @@
+RUN /home/xpqh/openvela/prebuilts/emulator/linux-x86_64/emulator -show-kernel -verbose -no-window -no-audio -qemu -device virtio-snd,bus=virtio-mmio-bus.2 -allow-host-audio
+INFO    | Android emulator version 32.1.15.0 (build_id 20251216) (CL:N/A)
+INFO    | Crashreporting disabled, not reporting crashes.
+INFO    | Duplicate loglines will be removed, if you wish to see each indiviudal line launch with the -log-nofilter flag.
+VERBOSE | found Android build root: /home/xpqh/openvela
+VERBOSE | found Android build out:  /home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear
+VERBOSE | Cannot find boot properties file: /home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/boot.prop
+VERBOSE | Could not find SDK version in build.prop, default is: 10000
+VERBOSE | autoconfig: -skin xiaomi_smart_screen_10
+VERBOSE | autoconfig: -skindir /home/xpqh/openvela/prebuilts/emulator/skins/
+VERBOSE | autoconfig: -kernel /home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/nuttx
+VERBOSE | Target arch = 'arm64'
+VERBOSE | autoconfig: -sysdir /home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear
+VERBOSE | Using initial vela_system image: /home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/vela_system.bin
+VERBOSE | autoconfig: -data /home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/vela_data.bin
+VERBOSE | INFO: ignore sdcard for arm at api level >= 30
+VERBOSE | Increasing RAM size to 2048MB
+VERBOSE | VM heap size 0MB is below hardware specified minimum of 512MB,setting it to that value
+VERBOSE | System image is read only
+VERBOSE | autoconfig: -no-snapshot from AVD config.ini
+VERBOSE | Found 3 DNS servers:
+VERBOSE | 	8.8.8.8
+VERBOSE | 	114.114.114.114
+VERBOSE | 	223.5.5.5
+VERBOSE | trying to load skin file '/home/xpqh/openvela/prebuilts/emulator/skins//xiaomi_smart_screen_10/layout'
+WARNING | userdata partition is resized from 256 M to 10240 M
+ERROR   | resizing partition e2fsck failed with exit code 8
+WARNING | encryption is off
+VERBOSE | Creating empty ext4 cache partition: /tmp/android-xpqh/emulator-7k6EH9
+Creating filesystem with parameters:
+    Size: 69206016
+    Block size: 4096
+    Blocks per group: 32768
+    Inodes per group: 4224
+    Inode size: 256
+    Journal blocks: 1024
+    Label: 
+    Blocks: 16896
+    Block groups: 1
+    Reserved block group size: 7
+Created filesystem with 11/4224 inodes and 1302/16896 blocks
+WARNING | Unknown Image type 3
+WARNING | Unknown Image type 5
+WARNING | Unknown Image type 4
+WARNING | Unknown Image type 1
+WARNING | Could not setup modem simulator config files, modem simulator disabled.
+VERBOSE | feeding guest with passive gps data, in headless mode
+VERBOSE |  no root specified: 
+VERBOSE |  no root specified: 
+VERBOSE | Path:/usr/bin/adb protocol version: 41
+VERBOSE | Found: 1 adb executables
+VERBOSE | Adb: /usr/bin/adb
+VERBOSE | Path:/usr/bin/adb protocol version: 41
+VERBOSE | GPU emulation enabled using 'swiftshader_indirect' mode
+VERBOSE | Initializing hardware OpenGLES emulation support
+VERBOSE | create display 0
+VERBOSE | setDisplayPose 0 x 0 y 0 w 1280 h 800 dpi 0
+VERBOSE | In test environment or ICD set to swiftshader, using Swiftshader ICD libvk_swiftshader.so
+VERBOSE | Swiftshader library doesn't exist, trying launcher path
+VERBOSE | Swiftshader library found in launcher path
+VERBOSE | setIcdPath: path doesn't exist: /home/xpqh/openvela/prebuilts/emulator/linux-x86_64/qemu/linux-x86_64/lib64/vulkan/vk_swiftshader_icd.json:/home/xpqh/openvela/prebuilts/emulator/linux-x86_64/lib64/vulkan/vk_swiftshader_icd.json
+VERBOSE | Not in test environment. Using loader: /home/xpqh/openvela/prebuilts/emulator/linux-x86_64/qemu/linux-x86_64/lib64/vulkan/libvulkan.so
+WARNING | cannot add library /home/xpqh/openvela/prebuilts/emulator/linux-x86_64/qemu/linux-x86_64/lib64/vulkan/libvulkan.so: failed
+VERBOSE | Not in test environment. Using loader: /home/xpqh/openvela/prebuilts/emulator/linux-x86_64/lib64/vulkan/libvulkan.so
+INFO    | added library /home/xpqh/openvela/prebuilts/emulator/linux-x86_64/lib64/vulkan/libvulkan.so
+VERBOSE | has extension: VK_KHR_device_group_creation
+VERBOSE | has extension: VK_KHR_external_fence_capabilities
+VERBOSE | has extension: VK_KHR_external_memory_capabilities
+VERBOSE | has extension: VK_KHR_external_semaphore_capabilities
+VERBOSE | has extension: VK_KHR_get_physical_device_properties2
+VERBOSE | has extension: VK_EXT_debug_utils
+VERBOSE | has extension: VK_EXT_headless_surface
+VERBOSE | has extension: VK_KHR_surface
+VERBOSE | has extension: VK_EXT_debug_report
+VERBOSE | needed extension: VK_KHR_external_memory_capabilities found: 1
+VERBOSE | needed extension: VK_KHR_get_physical_device_properties2 found: 1
+VERBOSE | global loader has vkEnumerateInstanceVersion.
+VERBOSE | global loader has vkEnumerateInstanceVersion returning >= 1.1.
+VERBOSE | Creating instance, asking for version 1.1.0 ...
+VERBOSE | Found 1 Vulkan physical devices.
+VERBOSE | Considering Vulkan physical device 0: SwiftShader Device (LLVM 10.0.0)
+VERBOSE | has extension: VK_KHR_driver_properties
+VERBOSE | has extension: VK_KHR_bind_memory2
+VERBOSE | has extension: VK_KHR_create_renderpass2
+VERBOSE | has extension: VK_KHR_dedicated_allocation
+VERBOSE | has extension: VK_KHR_descriptor_update_template
+VERBOSE | has extension: VK_KHR_device_group
+VERBOSE | has extension: VK_KHR_external_fence
+VERBOSE | has extension: VK_KHR_external_memory
+VERBOSE | has extension: VK_KHR_external_semaphore
+VERBOSE | has extension: VK_KHR_get_memory_requirements2
+VERBOSE | has extension: VK_KHR_maintenance1
+VERBOSE | has extension: VK_KHR_maintenance2
+VERBOSE | has extension: VK_KHR_maintenance3
+VERBOSE | has extension: VK_KHR_multiview
+VERBOSE | has extension: VK_KHR_relaxed_block_layout
+VERBOSE | has extension: VK_KHR_sampler_ycbcr_conversion
+VERBOSE | has extension: VK_KHR_separate_depth_stencil_layouts
+VERBOSE | has extension: VK_EXT_depth_clip_enable
+VERBOSE | has extension: VK_EXT_custom_border_color
+VERBOSE | has extension: VK_EXT_load_store_op_none
+VERBOSE | has extension: VK_KHR_storage_buffer_storage_class
+VERBOSE | has extension: VK_EXT_queue_family_foreign
+VERBOSE | has extension: VK_EXT_line_rasterization
+VERBOSE | has extension: VK_EXT_shader_stencil_export
+VERBOSE | has extension: VK_EXT_image_robustness
+VERBOSE | has extension: VK_EXT_4444_formats
+VERBOSE | has extension: VK_EXT_blend_operation_advanced
+VERBOSE | has extension: VK_KHR_swapchain
+VERBOSE | has extension: VK_KHR_external_semaphore_fd
+VERBOSE | has extension: VK_KHR_external_memory_fd
+VERBOSE | has extension: VK_EXT_external_memory_host
+VERBOSE | has extension: VK_EXT_provoking_vertex
+VERBOSE | has extension: VK_GOOGLE_sampler_filtering_precision
+VERBOSE | has extension: VK_EXT_depth_range_unrestricted
+VERBOSE | has extension: VK_EXT_host_query_reset
+VERBOSE | has extension: VK_EXT_scalar_block_layout
+VERBOSE | has extension: VK_EXT_separate_stencil_usage
+VERBOSE | has extension: VK_KHR_depth_stencil_resolve
+VERBOSE | has extension: VK_KHR_image_format_list
+VERBOSE | has extension: VK_KHR_imageless_framebuffer
+VERBOSE | has extension: VK_KHR_shader_float_controls
+VERBOSE | has extension: VK_KHR_shader_subgroup_extended_types
+VERBOSE | has extension: VK_KHR_spirv_1_4
+VERBOSE | has extension: VK_KHR_uniform_buffer_standard_layout
+VERBOSE | has extension: VK_KHR_timeline_semaphore
+VERBOSE | has extension: VK_EXT_extended_dynamic_state
+VERBOSE | has extension: VK_EXT_inline_uniform_block
+VERBOSE | has extension: VK_EXT_pipeline_creation_cache_control
+VERBOSE | has extension: VK_EXT_pipeline_creation_feedback
+VERBOSE | has extension: VK_EXT_private_data
+VERBOSE | has extension: VK_EXT_shader_demote_to_helper_invocation
+VERBOSE | has extension: VK_KHR_shader_terminate_invocation
+VERBOSE | has extension: VK_EXT_subgroup_size_control
+VERBOSE | has extension: VK_EXT_tooling_info
+VERBOSE | has extension: VK_KHR_copy_commands2
+VERBOSE | has extension: VK_KHR_dynamic_rendering
+VERBOSE | has extension: VK_KHR_format_feature_flags2
+VERBOSE | has extension: VK_KHR_maintenance4
+VERBOSE | has extension: VK_KHR_shader_integer_dot_product
+VERBOSE | has extension: VK_KHR_shader_non_semantic_info
+VERBOSE | has extension: VK_KHR_synchronization2
+VERBOSE | has extension: VK_KHR_zero_initialize_workgroup_memory
+VERBOSE | has extension: VK_GOOGLE_decorate_string
+VERBOSE | has extension: VK_GOOGLE_hlsl_functionality1
+VERBOSE | has extension: VK_GOOGLE_user_type
+VERBOSE | has extension: VK_KHR_vulkan_memory_model
+VERBOSE | has extension: VK_KHR_sampler_mirror_clamp_to_edge
+VERBOSE | has extension: VK_KHR_swapchain_mutable_format
+VERBOSE | needed extension: VK_KHR_dedicated_allocation found: 1
+VERBOSE | needed extension: VK_KHR_get_memory_requirements2 found: 1
+VERBOSE | needed extension: VK_KHR_external_memory found: 1
+VERBOSE | needed extension: VK_KHR_external_memory_fd found: 1
+VERBOSE | Graphics queue family index: 0
+VERBOSE | Compute queue family index: 0
+VERBOSE | Supported: VK_FORMAT_R8G8B8A8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8G8B8A8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8G8B8A8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8G8B8A8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8G8B8A8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8G8B8A8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8G8B8A8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8G8B8A8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R5G6B5_UNORM_PACK16 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R5G6B5_UNORM_PACK16 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R5G6B5_UNORM_PACK16 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R5G6B5_UNORM_PACK16 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R5G6B5_UNORM_PACK16 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R5G6B5_UNORM_PACK16 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R5G6B5_UNORM_PACK16 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R5G6B5_UNORM_PACK16 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R16G16B16A16_SFLOAT VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R16G16B16A16_SFLOAT VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R16G16B16A16_SFLOAT VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R16G16B16A16_SFLOAT VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R16G16B16A16_SFLOAT VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R16G16B16A16_SFLOAT VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R16G16B16A16_SFLOAT VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R16G16B16A16_SFLOAT VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_B8G8R8A8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_B8G8R8A8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_B8G8R8A8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_B8G8R8A8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_B8G8R8A8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_B8G8R8A8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_B8G8R8A8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_B8G8R8A8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2R10G10B10_UINT_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2R10G10B10_UINT_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2R10G10B10_UINT_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2R10G10B10_UINT_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2R10G10B10_UINT_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2R10G10B10_UINT_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2R10G10B10_UINT_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2R10G10B10_UINT_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2R10G10B10_UNORM_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2R10G10B10_UNORM_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2R10G10B10_UNORM_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2R10G10B10_UNORM_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2R10G10B10_UNORM_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2R10G10B10_UNORM_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2R10G10B10_UNORM_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2R10G10B10_UNORM_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2B10G10R10_UNORM_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2B10G10R10_UNORM_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2B10G10R10_UNORM_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2B10G10R10_UNORM_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2B10G10R10_UNORM_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2B10G10R10_UNORM_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2B10G10R10_UNORM_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_A2B10G10R10_UNORM_PACK32 VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_ETC2_R8G8B8A8_UNORM_BLOCK VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_ETC2_R8G8B8A8_UNORM_BLOCK VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_ETC2_R8G8B8A8_UNORM_BLOCK VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_ETC2_R8G8B8A8_UNORM_BLOCK VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_ETC2_R8G8B8A8_UNORM_BLOCK VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_ASTC_4x4_UNORM_BLOCK VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_ASTC_4x4_UNORM_BLOCK VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_ASTC_4x4_UNORM_BLOCK VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_ASTC_4x4_UNORM_BLOCK VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_ASTC_4x4_UNORM_BLOCK VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_G8_B8R8_2PLANE_420_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_G8_B8R8_2PLANE_420_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_G8_B8R8_2PLANE_420_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_G8_B8R8_2PLANE_420_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_G8_B8R8_2PLANE_420_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_G8_B8R8_2PLANE_420_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_G8_B8_R8_3PLANE_420_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_G8_B8_R8_3PLANE_420_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_G8_B8_R8_3PLANE_420_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_G8_B8_R8_3PLANE_420_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_G8_B8_R8_3PLANE_420_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_G8_B8_R8_3PLANE_420_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8G8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8G8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8G8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_LINEAR VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8G8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8G8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8G8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_SAMPLED_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8G8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_SRC_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Supported: VK_FORMAT_R8G8_UNORM VK_IMAGE_TYPE_2D VK_IMAGE_TILING_OPTIMAL VK_IMAGE_USAGE_TRANSFER_DST_BIT supportsExternalMemory? 1 requiresDedicated? 0
+VERBOSE | Vulkan device found: SwiftShader Device (LLVM 10.0.0)
+VERBOSE | Version: 1.2.0
+VERBOSE | Has graphics queue? 1
+VERBOSE | Has external memory support? 1
+VERBOSE | Has compute queue? 1
+VERBOSE | Vulkan logical device created and extension functions obtained.
+VERBOSE | Vulkan device queue obtained.
+VERBOSE | Vulkan global emulation state successfully initialized.
+VERBOSE | Using deferred Vulkan commands: 1
+VERBOSE | Using deferred Vulkan commands: 1
+VERBOSE | Enable ASTC LDR emulation: 1
+VERBOSE | Setting gl interop support for Vk to: 0
+INFO    | Setting vsync to 60 hz
+VERBOSE | Verified boot params were not found.
+VERBOSE | Found 3 DNS servers:
+VERBOSE | 	8.8.8.8
+VERBOSE | 	114.114.114.114
+VERBOSE | 	223.5.5.5
+INFO    | Content of hardware configuration file:
+INFO    | 	hw.cpu.arch = arm64
+INFO    | 	hw.cpu.ncore = 4
+INFO    | 	hw.ramSize = 2048
+INFO    | 	hw.screen = touch
+INFO    | 	hw.mainKeys = false
+INFO    | 	hw.trackBall = true
+INFO    | 	hw.keyboard = true
+INFO    | 	hw.keyboard.lid = false
+INFO    | 	hw.keyboard.charmap = qwerty2
+INFO    | 	hw.dPad = false
+INFO    | 	hw.rotaryInput = false
+INFO    | 	hw.gsmModem = true
+INFO    | 	hw.gps = true
+INFO    | 	hw.battery = true
+INFO    | 	hw.accelerometer = true
+INFO    | 	hw.accelerometer_uncalibrated = true
+INFO    | 	hw.gyroscope = true
+INFO    | 	hw.audioInput = true
+INFO    | 	hw.audioOutput = true
+INFO    | 	hw.sdCard = true
+INFO    | 	disk.cachePartition = false
+INFO    | 	disk.cachePartition.path = /tmp/android-xpqh/emulator-7k6EH9
+INFO    | 	disk.cachePartition.size = 66m
+INFO    | 	test.quitAfterBootTimeOut = -1
+INFO    | 	test.delayAdbTillBootComplete = 0
+INFO    | 	test.monitorAdb = 0
+INFO    | 	hw.lcd.width = 1280
+INFO    | 	hw.lcd.height = 800
+INFO    | 	hw.lcd.depth = 16
+INFO    | 	hw.lcd.circular = false
+INFO    | 	hw.lcd.density = 420
+INFO    | 	hw.lcd.backlight = true
+INFO    | 	hw.lcd.vsync = 60
+INFO    | 	hw.lcd.shape = rect
+INFO    | 	hw.gltransport = pipe
+INFO    | 	hw.gltransport.asg.writeBufferSize = 1048576
+INFO    | 	hw.gltransport.asg.writeStepSize = 4096
+INFO    | 	hw.gltransport.asg.dataRingSize = 32768
+INFO    | 	hw.gltransport.drawFlushInterval = 800
+INFO    | 	hw.displayRegion.0.1.xOffset = -1
+INFO    | 	hw.displayRegion.0.1.yOffset = -1
+INFO    | 	hw.displayRegion.0.1.width = 0
+INFO    | 	hw.displayRegion.0.1.height = 0
+INFO    | 	hw.displayRegion.0.2.xOffset = -1
+INFO    | 	hw.displayRegion.0.2.yOffset = -1
+INFO    | 	hw.displayRegion.0.2.width = 0
+INFO    | 	hw.displayRegion.0.2.height = 0
+INFO    | 	hw.displayRegion.0.3.xOffset = -1
+INFO    | 	hw.displayRegion.0.3.yOffset = -1
+INFO    | 	hw.displayRegion.0.3.width = 0
+INFO    | 	hw.displayRegion.0.3.height = 0
+INFO    | 	hw.display1.width = 0
+INFO    | 	hw.display1.height = 0
+INFO    | 	hw.display1.density = 0
+INFO    | 	hw.display1.xOffset = -1
+INFO    | 	hw.display1.yOffset = -1
+INFO    | 	hw.display1.flag = 0
+INFO    | 	hw.display2.width = 0
+INFO    | 	hw.display2.height = 0
+INFO    | 	hw.display2.density = 0
+INFO    | 	hw.display2.xOffset = -1
+INFO    | 	hw.display2.yOffset = -1
+INFO    | 	hw.display2.flag = 0
+INFO    | 	hw.display3.width = 0
+INFO    | 	hw.display3.height = 0
+INFO    | 	hw.display3.density = 0
+INFO    | 	hw.display3.xOffset = -1
+INFO    | 	hw.display3.yOffset = -1
+INFO    | 	hw.display3.flag = 0
+INFO    | 	hw.multi_display_window = false
+INFO    | 	hw.gpu.enabled = true
+INFO    | 	hw.gpu.mode = swiftshader_indirect
+INFO    | 	hw.initialOrientation = portrait
+INFO    | 	hw.camera.back = webcam0
+INFO    | 	hw.camera.front = emulated
+INFO    | 	vm.heapSize = 512
+INFO    | 	hw.sensors.light = true
+INFO    | 	hw.sensors.pressure = true
+INFO    | 	hw.sensors.humidity = true
+INFO    | 	hw.sensors.proximity = true
+INFO    | 	hw.sensors.magnetic_field = true
+INFO    | 	hw.sensors.magnetic_field_uncalibrated = true
+INFO    | 	hw.sensors.gyroscope_uncalibrated = true
+INFO    | 	hw.sensors.orientation = true
+INFO    | 	hw.sensors.temperature = true
+INFO    | 	hw.sensors.rgbclight = false
+INFO    | 	hw.sensor.hinge = false
+INFO    | 	hw.sensor.hinge.count = 0
+INFO    | 	hw.sensor.hinge.type = 0
+INFO    | 	hw.sensor.hinge.sub_type = 0
+INFO    | 	hw.sensor.hinge.fold_to_displayRegion.0.1_at_posture = 1
+INFO    | 	hw.sensor.roll = false
+INFO    | 	hw.sensor.roll.count = 0
+INFO    | 	hw.sensor.roll.resize_to_displayRegion.0.1_at_posture = 6
+INFO    | 	hw.sensor.roll.resize_to_displayRegion.0.2_at_posture = 6
+INFO    | 	hw.sensor.roll.resize_to_displayRegion.0.3_at_posture = 6
+INFO    | 	hw.sensors.heart_rate = false
+INFO    | 	hw.sensors.wrist_tilt = false
+INFO    | 	hw.useext4 = true
+INFO    | 	hw.arc = false
+INFO    | 	hw.arc.autologin = false
+INFO    | 	hw.device.flavor = watch
+INFO    | 	kernel.path = /home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/nuttx
+INFO    | 	kernel.newDeviceNaming = no
+INFO    | 	kernel.supportsYaffs2 = no
+INFO    | 	disk.systemPartition = true
+INFO    | 	disk.systemPartition.initPath = /home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/vela_system.bin
+INFO    | 	disk.systemPartition.size = 0
+INFO    | 	disk.vendorPartition.size = 0
+INFO    | 	disk.dataPartition = true
+INFO    | 	disk.dataPartition.path = /home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/vela_data.bin
+INFO    | 	disk.dataPartition.size = 10g
+INFO    | 	PlayStore.enabled = false
+INFO    | 	avd.name = <build>
+INFO    | 	avd.id = <build>
+INFO    | 	fastboot.forceColdBoot = true
+INFO    | 	android.avd.home = /home/xpqh/.vela/vvd
+INFO    | .
+INFO    | QEMU options list:
+INFO    | 	 argv[00] = "/home/xpqh/openvela/prebuilts/emulator/linux-x86_64/qemu/linux-x86_64/qemu-system-aarch64-headless"
+INFO    | 	 argv[01] = "-dns-server"
+INFO    | 	 argv[02] = "8.8.8.8,114.114.114.114,223.5.5.5"
+INFO    | 	 argv[03] = "-no-audio"
+INFO    | 	 argv[04] = "-serial"
+INFO    | 	 argv[05] = "mon:stdio"
+INFO    | 	 argv[06] = "-device"
+INFO    | 	 argv[07] = "goldfish_pstore,addr=0xff018000,size=0x10000,file=/home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/build.avd/data/misc/pstore/pstore.bin"
+INFO    | 	 argv[08] = "-cpu"
+INFO    | 	 argv[09] = "cortex-a57"
+INFO    | 	 argv[10] = "-machine"
+INFO    | 	 argv[11] = "type=virt,virtualization=on"
+INFO    | 	 argv[12] = "-m"
+INFO    | 	 argv[13] = "2048"
+INFO    | 	 argv[14] = "-lcd-density"
+INFO    | 	 argv[15] = "420"
+INFO    | 	 argv[16] = "-nodefaults"
+INFO    | 	 argv[17] = "-kernel"
+INFO    | 	 argv[18] = "/home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/nuttx"
+INFO    | 	 argv[19] = "-drive"
+INFO    | 	 argv[20] = "index=0,id=userdata,if=none,format=raw,file=/home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/vela_data.bin"
+INFO    | 	 argv[21] = "-device"
+INFO    | 	 argv[22] = "virtio-blk-device,bus=virtio-mmio-bus.1,drive=userdata"
+INFO    | 	 argv[23] = "-drive"
+INFO    | 	 argv[24] = "index=1,id=system,if=none,format=raw,file=/home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/vela_system.bin,read-only"
+INFO    | 	 argv[25] = "-device"
+INFO    | 	 argv[26] = "virtio-blk-device,bus=virtio-mmio-bus.0,drive=system"
+INFO    | 	 argv[27] = "-netdev"
+INFO    | 	 argv[28] = "user,id=mynet"
+INFO    | 	 argv[29] = "-device"
+INFO    | 	 argv[30] = "virtio-net-device,netdev=mynet"
+INFO    | 	 argv[31] = "-device"
+INFO    | 	 argv[32] = "virtio-rng-device"
+INFO    | 	 argv[33] = "-show-cursor"
+INFO    | 	 argv[34] = "-L"
+INFO    | 	 argv[35] = "/home/xpqh/openvela/prebuilts/emulator/linux-x86_64/lib/pc-bios"
+INFO    | 	 argv[36] = "-soundhw"
+INFO    | 	 argv[37] = "virtio-snd-pci"
+INFO    | 	 argv[38] = "-device"
+INFO    | 	 argv[39] = "virtio-snd,bus=virtio-mmio-bus.2"
+INFO    | 	 argv[40] = "-allow-host-audio"
+INFO    | 	 argv[41] = "-append"
+INFO    | 	 argv[42] = "no_timer_check console=ttyAMA0,38400 keep_bootcon earlyprintk=ttyAMA0 cma=16M@0-4G ndns=3 loop.max_part=7 ramoops.mem_address=0xff018000 ramoops.mem_size=0x10000 memmap=0x10000$0xff018000 printk.devkmsg=on qemu=1 androidboot.hardware=ranchu androidboot.serialno=EMULATOR32X1X15X0 qemu.gles=1 qemu.settings.system.screen_off_timeout=2147483647 qemu.vsync=60 qemu.gltransport=pipe qemu.gltransport.drawFlushInterval=800 qemu.opengles.version=196608 qemu.uirenderer=skiagl qemu.dalvik.vm.heapsize=512m qemu.camera_protocol_ver=1 qemu.camera_hq_edge_processing=0 android.qemud=1 qemu.avd_name=<build>"
+INFO    | 	 argv[43] = "-android-hw"
+INFO    | 	 argv[44] = "/home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/hardware-qemu.ini"
+INFO    | Concatenated QEMU options: /home/xpqh/openvela/prebuilts/emulator/linux-x86_64/qemu/linux-x86_64/qemu-system-aarch64-headless -dns-server 8.8.8.8,114.114.114.114,223.5.5.5 -no-audio -serial mon:stdio -device goldfish_pstore,addr=0xff018000,size=0x10000,file=/home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/build.avd/data/misc/pstore/pstore.bin -cpu cortex-a57 -machine type=virt,virtualization=on -m 2048 -lcd-density 420 -nodefaults -kernel /home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/nuttx -drive index=0,id=userdata,if=none,format=raw,file=/home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/vela_data.bin -device virtio-blk-device,bus=virtio-mmio-bus.1,drive=userdata -drive index=1,id=system,if=none,format=raw,file=/home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/vela_system.bin,read-only -device virtio-blk-device,bus=virtio-mmio-bus.0,drive=system -netdev user,id=mynet -device virtio-net-device,netdev=mynet -device virtio-rng-device -show-cursor -L /home/xpqh/openvela/prebuilts/emulator/linux-x86_64/lib/pc-bios -soundhw virtio-snd-pci -device virtio-snd,bus=virtio-mmio-bus.2 -allow-host-audio -append 'no_timer_check console=ttyAMA0,38400 keep_bootcon earlyprintk=ttyAMA0 cma=16M@0-4G ndns=3 loop.max_part=7 ramoops.mem_address=0xff018000 ramoops.mem_size=0x10000 memmap=0x10000$0xff018000 printk.devkmsg=on qemu=1 androidboot.hardware=ranchu androidboot.serialno=EMULATOR32X1X15X0 qemu.gles=1 qemu.settings.system.screen_off_timeout=2147483647 qemu.vsync=60 qemu.gltransport=pipe qemu.gltransport.drawFlushInterval=800 qemu.opengles.version=196608 qemu.uirenderer=skiagl qemu.dalvik.vm.heapsize=512m qemu.camera_protocol_ver=1 qemu.camera_hq_edge_processing=0 android.qemud=1 qemu.avd_name=<build>' -android-hw /home/xpqh/openvela/cmake_out/vela_goldfish-arm64-v8a-ap-phywear/hardware-qemu.ini
+VERBOSE | Android qemu version 32.1.15.0 (build_id 20251216) (CL:N/A)
+VERBOSE | Starting QEMU main loop
+Warning: Allowing host microphone input.
+VERBOSE | registered 'boot-properties' qemud service
+VERBOSE | Adding boot property: 'ro.product.device.screenshape' = 'rect'
+VERBOSE | Adding boot property: 'ro.product.device.devicetype' = 'watch'
+VERBOSE | Adding boot property: 'ro.opengles.version' = '196608'
+VERBOSE | Adding boot property: 'qemu.sf.fake_camera' = 'front'
+VERBOSE | Adding boot property: 'dalvik.vm.heapsize' = '512m'
+VERBOSE | Adding boot property: 'qemu.hw.mainkeys' = '0'
+VERBOSE | Adding boot property: 'qemu.sf.lcd_density' = '420'
+VERBOSE | control console listening on port 5554, ADB on port 5555
+VERBOSE | goldfish_events.have-dpad: false
+VERBOSE | goldfish_events.have-trackball: true
+VERBOSE | goldfish_events.have-camera: true
+VERBOSE | goldfish_events.have-keyboard: true
+VERBOSE | goldfish_events.have-lidswitch: false
+VERBOSE | goldfish_events.have-tabletmode: false
+VERBOSE | goldfish_events.have-touch: true
+VERBOSE | goldfish_events.have-multitouch: false
+VERBOSE | INFO: ignore sdcard for arm at api level >= 30
+VERBOSE | Not using any http proxy
+VERBOSE | Adding boot property: 'qemu.timezone' = 'Asia/Shanghai'
+VERBOSE | android_hw_fingerprint_init: fingerprint qemud listen service initialized
+WARNING | *** No gRPC protection active, consider launching with the -grpc-use-jwt flag.***
+INFO    | Started GRPC server at 127.0.0.1:8554, security: Local, auth: none
+INFO    | Advertising in: /run/user/1000/avd/running/pid_32991.ini
+VERBOSE | emulator_window_fb_rotate
+INFO    | Setting display: 0 configuration to: 1280x800, dpi: 420x420 
+[    0.070954] [ 3] [ ALERT] [ap] coredump_initialize: /dev/virtblk2 Coredump device init failed:-2
+NuttX  0.0.0 c977ace81d Sep 15 2026 20:28:58 arm64 ap
+nsh: mount: mount failed: 19
+kvdbd [9:100]
+servicemanager [10:100]
+adbd [11:100]
+[    0.100414] [12] [  INFO] [ap] [media][audio_graph_load:232] audio_graph_load, loadgraph from file: /etc/media/graph.conf
+[    0.103034] [12] [  INFO] [ap] [media][audio_graph_load:249] audio_graph_load, graph_desc:
+abufsrc@Music0=outputs=2:map=1 0[Music0_0][Music0_1],
+abufsrc@Music1=outputs=2:map=1 0[Music1_0][Music1_1],
+abufsrc@Ring=outputs=2:map=1 0[Ring0][Ring1],
+abufsrc@Media=outputs=2:map=1 0[Media0][Media1],
+abufsrc@Alarm=outputs=2:map=1 0[Alarm0][Alarm1],
+abufsrc@Sport=outputs=2:map=1 0[Sport0][Sport1],
+abufsrc@Video=outputs=2:map=1 0[Video0][Video1],
+abufsrc@Enforced=outputs=1:map=1[Enforced0],
+abufsrc@netcomm=outputs=2:map=1 0[netcomm0][netcomm1],
+abufsrc@TTS=outputs=2:map=1 0[TTS0][TTS1],
+abufsrc@CallRing=outputs=2:map=1 0[CallRing0][CallRing1],
+alsasrc@pcm0c=devname=pcm0c:outputs=4:map=1 0 0 0[cap0][cap1][cap2][cap3],
+alsasrc@SCOrx=devname=pcm1c:outputs=4:map=0 0 0 0[SCOrx0][SCOrx1][SCOrx2][SCOrx3],
+alsasrc@MDMrx=devname=pcm2c:outputs=2:map=0 0[MDMrx0][MDMrx1],
+[Music0_0][Music1_0][Ring0][Alarm0][Sport0][Video0][Enforced0][SCOrx0][MDMrx0][netcomm0][Media0][TTS0][CallRing0]alsasink@pcm0p=inputs=13:devname=pcm0p,
+[Music0_1][Music1_1][Ring1][Alarm1][Sport1][Video1][cap3][SCOrx3]tinycomprsink@a2dpsrc=inputs=8:devname=a2dpsrcp,
+[cap1][MDMrx1][netcomm1][Media1][TTS1][CallRing1]alsasink@SCOtx=inputs=6:devname=pcm1p,
+[cap2][SCOrx1]alsasink@MDMtx=inputs=2:devname=pcm2p,
+[cap0][SCOrx2]abufsink@Capture=inputs=2
+
+[    0.121372] [12] [  INFO] [ap] [media][audio_graph_load:350] audio_graph_load, loadgraph succeed
+mediad [12:100]
+telnetd [13:100]
+
+NuttShell (NSH)
+goldfish-armv8a-ap> [K[    0.140257] [ 9] [ ERROR] [ap] IO error while opening the target database file: /dev/config
+[    0.144219] [ 9] [ ERROR] [ap] IO error while opening the target database file: /dev/config
+[    0.147986] [ 9] [ ERROR] [ap] IO error while opening the target database file: /dev/config
+[    0.151474] [ 9] [ ERROR] [ap] IO error while opening the target database file: /dev/config
+[    0.154516] [ 9] [ ERROR] [ap] IO error while opening the target database file: /dev/config
+[    0.157805] [ 9] [ ERROR] [ap] IO error while opening the target database file: /dev/config
+[    0.160980] [ 9] [ ERROR] [ap] IO error while opening the target database file: /dev/config
+[    0.164291] [ 9] [ ERROR] [ap] IO error while opening the target database file: /dev/config
+[    0.206369] [12] [  INFO] [ap] pfw domain:MediaSwitchDomain switch to conf:speaker
+[    0.208634] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target Music cmd map arg 1 0 flags 0 res 0 res_len 0
+[    0.212471] [12] [  INFO] [ap] Pending command: map 1 0
+[    0.214767] [12] [  INFO] [ap] Pending command: map 1 0
+[    0.217123] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target Ring cmd map arg 1 0 flags 0 res 0 res_len 0
+[    0.220383] [12] [  INFO] [ap] Pending command: map 1 0
+[    0.222046] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target Alarm cmd map arg 1 0 flags 0 res 0 res_len 0
+[    0.225039] [12] [  INFO] [ap] Pending command: map 1 0
+[    0.226573] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target Notify cmd map arg 1 0 flags 0 res 0 res_len 0
+[    0.229769] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target Sport cmd map arg 1 0 flags 0 res 0 res_len 0
+[    0.233707] [12] [  INFO] [ap] Pending command: map 1 0
+[    0.235362] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target Video cmd map arg 1 0 flags 0 res 0 res_len 0
+[    0.238450] [12] [  INFO] [ap] Pending command: map 1 0
+[    0.239954] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target a2dpsrc cmd unlink arg (null) flags 0 res 0 res_len 0
+[    0.243044] [12] [  INFO] [ap] Pending command: unlink _
+[    0.244657] [12] [  INFO] [ap] pfw domain:netcommDomain switch to conf:netcomm
+[    0.246420] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target netcomm cmd map arg 1 0 flags 0 res 0 res_len 0
+[    0.250304] [12] [  INFO] [ap] Pending command: map 1 0
+[    0.251961] [12] [  INFO] [ap] pfw domain:pcm0cDomain switch to conf:cap
+[    0.253844] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target pcm0c cmd unmute arg (null) flags 0 res 0 res_len 0
+[    0.257106] [12] [  INFO] [ap] set alsasrc@pcm0c unmute.
+[    0.258646] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target pcm0c cmd map arg 1 0 0 0 flags 0 res 0 res_len 0
+[    0.261818] [12] [  INFO] [ap] Pending command: map 1 0 0 0
+[    0.263848] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target pcm0c cmd link arg (null) flags 0 res 0 res_len 0
+[    0.267645] [12] [  INFO] [ap] Pending command: link _
+[    0.269133] [12] [  INFO] [ap] pfw domain:SCOrxDomain switch to conf:off
+[    0.271158] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target SCOrx cmd unmute arg (null) flags 0 res 0 res_len 0
+[    0.274347] [12] [  INFO] [ap] set alsasrc@SCOrx unmute.
+[    0.275662] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target SCOrx cmd map arg 0 0 0 0 flags 0 res 0 res_len 0
+[    0.279237] [12] [  INFO] [ap] Pending command: map 0 0 0 0
+[    0.281192] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target SCOrx cmd unlink arg (null) flags 0 res 0 res_len 0
+[    0.284541] [12] [  INFO] [ap] Pending command: unlink _
+[    0.286107] [12] [  INFO] [ap] pfw domain:MDMrxDomain switch to conf:off
+[    0.288034] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target MDMrx cmd map arg 0 0 flags 0 res 0 res_len 0
+[    0.291091] [12] [  INFO] [ap] Pending command: map 0 0
+[    0.292697] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target MDMrx cmd unlink arg (null) flags 0 res 0 res_len 0
+[    0.296123] [12] [  INFO] [ap] Pending command: unlink _
+[    0.297704] [12] [  INFO] [ap] pfw domain:pcm0pParamDomain switch to conf:play
+[    0.299447] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target pcm0p cmd set_parameter arg set_scenario=music flags 0 res 0 res_len 0
+[    0.303351] [12] [  INFO] [ap] pfw domain:MediaVolumeDomain switch to conf:4
+[    0.305309] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target Music cmd volume arg -25dB flags 0 res 0 res_len 0
+[    0.308529] [12] [  INFO] [ap] cmd:set_parameter args:volume=-25dB
+[    0.309979] [12] [  INFO] [ap] Parsing args: volume=-25dB
+[    0.311490] [12] [  INFO] [ap] Parsed Key: volume, Value: -25dB
+[    0.313672] [12] [  INFO] [ap] cmd:set_parameter args:volume=-25dB
+[    0.315276] [12] [  INFO] [ap] Parsing args: volume=-25dB
+[    0.316844] [12] [  INFO] [ap] Parsed Key: volume, Value: -25dB
+[    0.318613] [12] [  INFO] [ap] pfw domain:RingVolumeDomain switch to conf:mute
+[    0.320503] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target Ring cmd volume arg 0 flags 0 res 0 res_len 0
+[    0.323588] [12] [  INFO] [ap] cmd:set_parameter args:volume=0
+[    0.325103] [12] [  INFO] [ap] Parsing args: volume=0
+[    0.326584] [12] [  INFO] [ap] Parsed Key: volume, Value: 0
+[    0.328435] [12] [  INFO] [ap] pfw domain:AlarmVolumeDomain switch to conf:index-4
+[    0.330706] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target Alarm cmd volume arg 10^(-4*(10-4)/20) flags 0 res 0 res_len 0
+[    0.334134] [12] [  INFO] [ap] cmd:set_parameter args:volume=10^(-4*(10-4)/20)
+[    0.335474] [12] [  INFO] [ap] Parsing args: volume=10^(-4*(10-4)/20)
+[    0.337091] [12] [  INFO] [ap] Parsed Key: volume, Value: 10^(-4*(10-4)/20)
+[    0.339427] [12] [  INFO] [ap] pfw domain:NotifyVolumeDomain switch to conf:index-4
+[    0.341299] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target Notify cmd volume arg 10^(-4*(10-4)/20) flags 0 res 0 res_len 0
+[    0.344529] [12] [  INFO] [ap] pfw domain:TTSVolumeDomain switch to conf:index-4
+[    0.346533] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target TTS cmd volume arg 10^(-4*(10-4)/20) flags 0 res 0 res_len 0
+[    0.350730] [12] [  INFO] [ap] cmd:set_parameter args:volume=10^(-4*(10-4)/20)
+[    0.352513] [12] [  INFO] [ap] Parsing args: volume=10^(-4*(10-4)/20)
+[    0.353983] [12] [  INFO] [ap] Parsed Key: volume, Value: 10^(-4*(10-4)/20)
+[    0.355924] [12] [  INFO] [ap] pfw domain:HealthVolumeDomain switch to conf:index-4
+[    0.358061] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target Health cmd volume arg 10^(-4*(10-4)/20) flags 0 res 0 res_len 0
+[    0.361482] [12] [  INFO] [ap] pfw domain:SportVolumeDomain switch to conf:index-4
+[    0.363808] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target Sport cmd volume arg 10^(-4*(10-4)/20) flags 0 res 0 res_len 0
+[    0.367783] [12] [  INFO] [ap] cmd:set_parameter args:volume=10^(-4*(10-4)/20)
+[    0.369235] [12] [  INFO] [ap] Parsing args: volume=10^(-4*(10-4)/20)
+[    0.370789] [12] [  INFO] [ap] Parsed Key: volume, Value: 10^(-4*(10-4)/20)
+[    0.372810] [12] [  INFO] [ap] pfw domain:InfoVolumeDomain switch to conf:index-4
+[    0.374784] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target Info cmd volume arg 10^(-4*(10-4)/20) flags 0 res 0 res_len 0
+[    0.378121] [12] [  INFO] [ap] pfw domain:EmergencyVolumeDomain switch to conf:index-5
+[    0.380180] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target Emergency cmd volume arg 10^(-4*(10-5)/20) flags 0 res 0 res_len 0
+[    0.384197] [12] [  INFO] [ap] pfw domain:A2dpsnkVolumeDomain switch to conf:5
+[    0.386138] [12] [  INFO] [ap] [media][audio_graph_handler:820] cookie 0 target a2dpsnk cmd volume arg -22dB flags 0 res 0 res_len 0
+[    0.390418] [12] [  INFO] [ap] process abufsrc@Music0 map 1 0
+[    0.392000] [12] [  INFO] [ap] cmd:map args:1 0
+[    0.396207] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:750] Negotiated source: fmt=u8, rate=0, ch=0
+[    0.399633] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:753] Negotiated sink:   fmt=any, rate=-1, ch=-1
+[    0.402546] [12] [  WARN] [ap] [media][audio_set_format_config:177] Invalid format: fmt=0, rate=0, ch=0
+[    0.405403] [12] [  WARN] [ap] [media][audio_negotiation_enabled_outputs:787] Failed to set format for enabled_output
+[    0.408375] [12] [  INFO] [ap] process abufsrc@Music1 map 1 0
+[    0.409744] [12] [  INFO] [ap] cmd:map args:1 0
+[    0.412108] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:750] Negotiated source: fmt=u8, rate=0, ch=0
+[    0.415465] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:753] Negotiated sink:   fmt=any, rate=-1, ch=-1
+[    0.418564] [12] [  WARN] [ap] [media][audio_set_format_config:177] Invalid format: fmt=0, rate=0, ch=0
+[    0.421100] [12] [  WARN] [ap] [media][audio_negotiation_enabled_outputs:787] Failed to set format for enabled_output
+[    0.423837] [12] [  INFO] [ap] process abufsrc@Ring map 1 0
+[    0.425345] [12] [  INFO] [ap] cmd:map args:1 0
+[    0.427435] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:750] Negotiated source: fmt=u8, rate=0, ch=0
+[    0.430422] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:753] Negotiated sink:   fmt=any, rate=-1, ch=-1
+[    0.433759] [12] [  WARN] [ap] [media][audio_set_format_config:177] Invalid format: fmt=0, rate=0, ch=0
+[    0.436303] [12] [  WARN] [ap] [media][audio_negotiation_enabled_outputs:787] Failed to set format for enabled_output
+[    0.438866] [12] [  INFO] [ap] process abufsrc@Alarm map 1 0
+[    0.440419] [12] [  INFO] [ap] cmd:map args:1 0
+[    0.442577] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:750] Negotiated source: fmt=u8, rate=0, ch=0
+[    0.445191] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:753] Negotiated sink:   fmt=any, rate=-1, ch=-1
+[    0.448241] [12] [  WARN] [ap] [media][audio_set_format_config:177] Invalid format: fmt=0, rate=0, ch=0
+[    0.450959] [12] [  WARN] [ap] [media][audio_negotiation_enabled_outputs:787] Failed to set format for enabled_output
+[    0.453582] [12] [  INFO] [ap] process abufsrc@Sport map 1 0
+[    0.454913] [12] [  INFO] [ap] cmd:map args:1 0
+[    0.456908] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:750] Negotiated source: fmt=u8, rate=0, ch=0
+[    0.459570] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:753] Negotiated sink:   fmt=any, rate=-1, ch=-1
+[    0.462327] [12] [  WARN] [ap] [media][audio_set_format_config:177] Invalid format: fmt=0, rate=0, ch=0
+[    0.464890] [12] [  WARN] [ap] [media][audio_negotiation_enabled_outputs:787] Failed to set format for enabled_output
+[    0.467848] [12] [  INFO] [ap] process abufsrc@Video map 1 0
+[    0.469356] [12] [  INFO] [ap] cmd:map args:1 0
+[    0.471530] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:750] Negotiated source: fmt=u8, rate=0, ch=0
+[    0.474200] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:753] Negotiated sink:   fmt=any, rate=-1, ch=-1
+[    0.476849] [12] [  WARN] [ap] [media][audio_set_format_config:177] Invalid format: fmt=0, rate=0, ch=0
+[    0.479328] [12] [  WARN] [ap] [media][audio_negotiation_enabled_outputs:787] Failed to set format for enabled_output
+[    0.483833] [12] [  INFO] [ap] process tinycomprsink@a2dpsrc unlink _
+[    0.485404] [12] [  INFO] [ap] process abufsrc@netcomm map 1 0
+[    0.486894] [12] [  INFO] [ap] cmd:map args:1 0
+[    0.489189] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:750] Negotiated source: fmt=u8, rate=0, ch=0
+[    0.491913] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:753] Negotiated sink:   fmt=any, rate=-1, ch=-1
+[    0.494661] [12] [  WARN] [ap] [media][audio_set_format_config:177] Invalid format: fmt=0, rate=0, ch=0
+[    0.497268] [12] [  WARN] [ap] [media][audio_negotiation_enabled_outputs:787] Failed to set format for enabled_output
+[    0.500140] [12] [  INFO] [ap] process alsasrc@pcm0c map 1 0 0 0
+[    0.502621] [12] [  INFO] [ap] [media][audio_negotiate_formats_init:435] Skipping format negotiation for sink 'abufsink@Capture' (started=false)
+[    0.505966] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:724] Skipping format setting for sink 'abufsink@Capture' (started=false)
+[    0.510911] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:750] Negotiated source: fmt=any, rate=-1, ch=-1
+[    0.513539] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:753] Negotiated sink:   fmt=any, rate=-1, ch=-1
+[    0.516220] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:780] Skipping format config for sink 'abufsink@Capture' (started=false)
+[    0.519497] [12] [  INFO] [ap] process alsasrc@pcm0c link _
+[    0.522072] [12] [  INFO] [ap] [media][audio_negotiate_formats_init:435] Skipping format negotiation for sink 'abufsink@Capture' (started=false)
+[    0.525268] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:724] Skipping format setting for sink 'abufsink@Capture' (started=false)
+[    0.528253] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:750] Negotiated source: fmt=any, rate=-1, ch=-1
+[    0.531185] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:753] Negotiated sink:   fmt=any, rate=-1, ch=-1
+[    0.533982] [12] [  INFO] [ap] [media][audio_negotiation_enabled_outputs:780] Skipping format config for sink 'abufsink@Capture' (started=false)
+[    0.536986] [12] [  INFO] [ap] process alsasrc@SCOrx map 0 0 0 0
+[    0.538835] [12] [  INFO] [ap] [media][audio_query_formats:88] Query format failed for 'alsasrc@SCOrx': Unknown error 2
+[    0.541410] [12] [ ERROR] [ap] [media][audio_negotiation_trigger:870] alsasrc@SCOrx negotiate formats init failed -2.
+[    0.543984] [12] [ ERROR] [ap] [media][audio_graph_dequeue_command:525] Media graph link error after command 'map': -2:Unknown error 2
+[    0.547118] [12] [ ERROR] [ap] [media][mediad_main:164] audio_graph run_once failed -2
+[    0.549476] [12] [  INFO] [ap] alsasrc@pcm0c output0 format not negotiated yet (fmt=-1 rate=0 ch=0), defer open.
+[    0.552753] [12] [  INFO] [ap] process alsasrc@SCOrx unlink _
+[    0.554196] [12] [  INFO] [ap] process alsasrc@MDMrx map 0 0
+[    0.555827] [12] [  INFO] [ap] [media][audio_query_formats:88] Query format failed for 'alsasrc@MDMrx': Unknown error 2
+[    0.558262] [12] [ ERROR] [ap] [media][audio_negotiation_trigger:870] alsasrc@MDMrx negotiate formats init failed -2.
+[    0.560785] [12] [ ERROR] [ap] [media][audio_graph_dequeue_command:525] Media graph link error after command 'map': -2:Unknown error 2
+[    0.563669] [12] [ ERROR] [ap] [media][mediad_main:164] audio_graph run_once failed -2
+[    0.565802] [12] [  INFO] [ap] process alsasrc@MDMrx unlink _
+VERBOSE | onGuestSendCommand: [0x25633110] Adb connected, start proxing data
+VERBOSE | onGuestSendCommand: [0x25633040] Adb connected, start proxing data
+
+goldfish-armv8a-ap> [Kai_agent &
+ai_agent [14:100]
+goldfish-armv8a-ap> [K[   31.203348] [14] [  INFO] [ap] [agent] AI Agent - Vela AI Agent starting (build: Sep 15 2026 20:28:58)
+[   31.226083] [14] [  INFO] [ap] [agent] [boot +22ms] P0: timezone set
+[   32.972075] [14] [  INFO] [ap] [agent] [boot +1768ms] P0: storage ready
+[   32.973809] [14] [  INFO] [ap] [agent] [boot +1770ms] heap: arena=103900608 free=94565776 used=9334832
+[   33.027385] [14] [  INFO] [ap] [cfgstore] Config store ready at /data/agent/config/config.json
+[   33.029127] [14] [  INFO] [ap] [agent] [boot +1826ms] P1: config_store_init (rc=0)
+[   33.030321] [14] [  INFO] [ap] [bus] Message bus initialized (depth 16)
+[   33.031393] [14] [  INFO] [ap] [agent] [boot +1829ms] P1: message_bus_init (rc=0)
+[   33.032611] [14] [  INFO] [ap] [memory] Initializing memory store at /data/agent
+[   33.160624] [14] [  INFO] [ap] [memory] Created file: /data/agent/config/SOUL.md
+[   33.270772] [14] [  INFO] [ap] [memory] Created file: /data/agent/config/USER.md
+[   33.353186] [14] [  INFO] [ap] [memory] Created file: /data/agent/memory/MEMORY.md
+[   33.461678] [14] [  INFO] [ap] [memory] Created file: /data/agent/config/HEARTBEAT.md
+[   33.518658] [14] [  INFO] [ap] [memory] Created file: /data/agent/config/cron.json
+[   33.635840] [14] [  INFO] [ap] [memory] Created directory: /data/agent/memory/daily
+[   33.637899] [14] [  INFO] [ap] [memory] Memory store initialized successfully
+[   33.640551] [14] [  INFO] [ap] [agent] [boot +2437ms] P1: memory_store_init (rc=0)
+[   33.642187] [14] [  INFO] [ap] [session] Session manager initialized at /data/agent/sessions
+[   33.643371] [14] [  INFO] [ap] [agent] [boot +2440ms] P1: session_mgr_init (rc=0)
+[   33.646025] [14] [  INFO] [ap] [proxy] Loading proxy config...
+[   33.650948] [14] [  INFO] [ap] [proxy] No proxy (direct connection)
+[   33.652672] [14] [  INFO] [ap] [agent] [boot +2449ms] P2: http_proxy_init (rc=0)
+[   33.723494] [14] [  WARN] [ap] [llm] No API key. Use CLI: set_llm <preset> <key>
+[   33.731056] [14] [  INFO] [ap] [agent] [boot +2527ms] P3: llm_proxy_init (rc=0)
+[   33.756495] [14] [  INFO] [ap] [llm_router] Router initialized: 0 backends, profile=0
+[   33.758703] [14] [  INFO] [ap] [agent] [boot +2555ms] P3: llm_router_init (rc=0)
+[   33.782091] [14] [  WARN] [ap] [web_search] No search key. Use: set_tavily_key / set_search_key
+[   33.785337] [14] [  INFO] [ap] [tools] Registered tool: web_search
+[   33.786973] [14] [  INFO] [ap] [tools] Registered tool: news_search
+[   33.789020] [14] [  INFO] [ap] [tools] Registered tool: get_weather
+[   33.790423] [14] [  INFO] [ap] [tools] Registered tool: get_current_time
+[   33.791811] [14] [  INFO] [ap] [tools] Registered tool: read_file
+[   33.793136] [14] [  INFO] [ap] [tools] Registered tool: write_file
+[   33.794445] [14] [  INFO] [ap] [tools] Registered tool: edit_file
+[   33.795724] [14] [  INFO] [ap] [tools] Registered tool: list_dir
+[   33.796911] [14] [  INFO] [ap] [tools] Registered tool: cron_add
+[   33.798204] [14] [  INFO] [ap] [tools] Registered tool: cron_list
+[   33.799447] [14] [  INFO] [ap] [tools] Registered tool: cron_remove
+[   33.801281] [14] [  INFO] [ap] [tools] Registered tool: fetch_url
+[   33.803227] [14] [  INFO] [ap] [tools] Registered tool: analyze_image
+[   33.806740] [14] [  INFO] [ap] [tools] Registered tool: run_shell
+[   33.808006] [14] [  INFO] [ap] [tools] Registered tool: get_battery
+[   33.809565] [14] [  INFO] [ap] [tools] Registered tool: get_wear_state
+[   33.811952] [14] [  INFO] [ap] [tools] Registered tool: get_screen_state
+[   33.814209] [14] [  INFO] [ap] [tools] Registered tool: get_heartrate
+[   33.816843] [14] [  INFO] [ap] [tools] Registered tool: get_steps
+[   33.819734] [14] [  INFO] [ap] [tools] Registered tool: vibrate
+[   33.822382] [14] [  INFO] [ap] [tools] Registered tool: feishu_doc_create
+[   33.823943] [14] [  INFO] [ap] [tools] Registered tool: feishu_doc_write
+[   33.829310] [14] [  INFO] [ap] [tools] Registered tool: feishu_doc_read
+[   33.833662] [14] [  INFO] [ap] [tools] Registered tool: feishu_doc_list
+[   33.836142] [14] [  INFO] [ap] [tools] Registered tool: feishu_chat_members
+[   33.837587] [14] [  INFO] [ap] [tools] Registered tool: feishu_send_mention
+[   33.839013] [14] [  INFO] [ap] [tools] Registered tool: music_search
+[   33.840257] [14] [  INFO] [ap] [tools] Registered tool: music_play
+[   33.842497] [14] [  INFO] [ap] [tools] Registered tool: music_pause
+[   33.844438] [14] [  INFO] [ap] [tools] Registered tool: music_resume
+[   33.846140] [14] [  INFO] [ap] [tools] Registered tool: music_stop
+[   33.847520] [14] [  INFO] [ap] [tools] Registered tool: music_seek
+[   33.848857] [14] [  INFO] [ap] [tools] Registered tool: music_set_volume
+[   33.850373] [14] [  INFO] [ap] [tools] Registered tool: music_status
+[   33.851737] [14] [  INFO] [ap] [tools] Registered tool: launch_quickapp
+[   33.852970] [14] [  INFO] [ap] [tools] Registered tool: exit_quickapp
+[   33.854100] [14] [  INFO] [ap] [tools] Registered tool: phywear_list_experiments
+[   33.855345] [14] [  INFO] [ap] [tools] Registered tool: phywear_open_screen
+[   33.856715] [14] [  INFO] [ap] [tools] Registered tool: phywear_read_sensor
+[   33.858199] [14] [  INFO] [ap] [tools] Registered tool: phywear_run_experiment
+[   33.871398] [14] [  INFO] [ap] [tools] Tools JSON built (40 builtin + 0 providers)
+[   33.873215] [14] [  INFO] [ap] [tools] Tool registry initialized
+[   33.875201] [14] [  INFO] [ap] [agent] [boot +2671ms] P3: tool_registry_init (rc=0)
+[   33.877395] [14] [  INFO] [ap] [guard] Tool guard initialized (max_input=32768, rate_window=60s, rate_max=10)
+[   33.880219] [14] [  INFO] [ap] [agent] [boot +2676ms] P3: tool_guard_init (rc=0)
+[   33.883034] [14] [  INFO] [ap] [skills] Initializing skills system
+[   33.896538] [14] [  INFO] [ap] [skills] Installed built-in skill: /data/agent/skills/weather.md
+[   33.905980] [14] [  INFO] [ap] [skills] Installed built-in skill: /data/agent/skills/daily-briefing.md
+[   33.918093] [14] [  INFO] [ap] [skills] Installed built-in skill: /data/agent/skills/skill-creator.md
+[   33.925501] [14] [  INFO] [ap] [skills] Installed built-in skill: /data/agent/skills/system-health.md
+[   33.950085] [14] [  INFO] [ap] [skills] Installed built-in skill: /data/agent/skills/reminder.md
+[   33.989570] [14] [  INFO] [ap] [skills] Installed built-in skill: /data/agent/skills/note-taker.md
+[   33.998621] [14] [  INFO] [ap] [skills] Installed built-in skill: /data/agent/skills/translate.md
+[   34.005049] [14] [  INFO] [ap] [skills] Installed built-in skill: /data/agent/skills/news-digest.md
+[   34.011662] [14] [  INFO] [ap] [skills] Installed built-in skill: /data/agent/skills/feishu-test.md
+[   34.018375] [14] [  INFO] [ap] [skills] Installed built-in skill: /data/agent/skills/task-manager.md
+[   34.020455] [14] [  INFO] [ap] [skills] Skills system ready (10 built-in)
+[   34.022659] [14] [  INFO] [ap] [agent] [boot +2820ms] P3: skill_loader_init (rc=0)
+[   34.025135] [14] [  INFO] [ap] [agent] Agent loop initialized
+[   34.026995] [14] [  INFO] [ap] [agent] [boot +2824ms] P3: agent_loop_init (rc=0)
+[   34.030273] [14] [  INFO] [ap] [cron] No cron file, starting fresh
+[   34.031810] [14] [  INFO] [ap] [agent] [boot +2829ms] P3: cron_service_init (rc=0)
+[   34.034255] [14] [  INFO] [ap] [heartbeat] Heartbeat service initialized (file: /data/agent/HEARTBEAT.md, interval: 1800s)
+[   34.037218] [14] [  INFO] [ap] [agent] [boot +2834ms] P3: heartbeat_init (rc=0)
+[   34.039454] [14] [  INFO] [ap] [voice] Voice channel initializing
+[   34.041319] [14] [  INFO] [ap] [voice_tts] Registered backend: volcengine
+[   34.045527] [14] [  INFO] [ap] [voice_asr] Registered backend: volcengine
+[   34.049926] [14] [  INFO] [ap] [agent] [boot +2847ms] P3: voice_channel_init (rc=0)
+[   34.051879] [14] [  INFO] [ap] NSH commands registered
+[   34.052751] [14] [  INFO] [ap] [agent] [boot +2850ms] P4: nsh_commands_init (rc=0)
+[   34.054265] [14] [  INFO] [ap] [agent] [boot +2851ms] P5: outbound dispatch thread started
+[   34.055984] [14] [  INFO] [ap] [agent] [boot +2853ms] P5: quickapp mqueue listener started
+[   34.057473] [14] [  INFO] [ap] [cron] Cron started (0 jobs, interval 10s)
+[   34.058988] [14] [  INFO] [ap] [heartbeat] Heartbeat started (every 30 min)
+[   34.060126] [14] [  INFO] [ap] [agent] [boot +2857ms] P5: cron + heartbeat started
+[   34.061718] [14] [  INFO] [ap] [agent] [boot +2859ms] P5: agent loop started
+[   34.062923] [14] [  INFO] [ap] [agent] [boot +2860ms] P5: network_watch thread started (async)
+[   34.064749] [14] [  INFO] [ap] [agent] [boot +2862ms] P6: nsh_commands_start (rc=0)
+[   34.066042] [14] [  INFO] [ap] [agent] [boot +2863ms] AI Agent ready. Type 'help' in NSH for commands.
+[   34.067931] [25] [  INFO] [ap] [agent] Agent loop started, free heap: 94432144
+[   34.069511] [25] [  INFO] [ap] [agent] Buffers: ctx=8192 hist=8192 tool=8192
+[   34.070624] [25] [  INFO] [ap] [agent] Tool output pool: 2 x 16384 bytes
+[   34.071768] [25] [  INFO] [ap] [agent] Tools JSON loaded: 11162 bytes
+[   34.073011] [15] [  INFO] [ap] [agent] Outbound dispatch started
+[   34.074182] [19] [  INFO] [ap] [agent] Quickapp mqueue listener started
+[   34.075550] [26] [  INFO] [ap] [agent] Network watcher started
+[   34.076518] [26] [  INFO] [ap] [netmgr] QEMU: Initializing eth0...
+ifup eth0...OK
+[   34.080385] [26] [  WARN] [ap] [netmgr] ifup eth0 failed: -1
+[   34.082507] [26] [  WARN] [ap] [netmgr] renew eth0 failed: -1
+[   34.083527] [27] [  INFO] [ap] [cli] NSH CLI started. Type 'help' for commands.
+vela> [   34.590132] [26] [  INFO] [ap] [netmgr] Found iface eth0 addr 10.0.2.15
+[   34.592684] [26] [  INFO] [ap] [netmgr] Network connected: 10.0.2.15
+[   34.595350] [26] [  INFO] [ap] [netmgr] Found iface eth0 addr 10.0.2.15
+[   34.599761] [26] [  INFO] [ap] [netmgr] Network connected: 10.0.2.15
+[   34.616119] [26] [  INFO] [ap] [netmgr] Found iface eth0 addr 10.0.2.15
+[   34.625588] [26] [  INFO] [ap] [agent] Network connected: 10.0.2.15
+[   34.628956] [26] [  INFO] [ap] [ws] WebSocket server started on port 28789
+[   34.632712] [26] [  INFO] [ap] [agent] All network services started!
+phywear cap root &
+phywear [35:100]
+goldfish-armv8a-ap> [KWARN(sim): open /dev/lsm6dsl0 failed: 2 - continue w/o IMU
+WARN(sim): open /dev/mag0 failed: 2 - continue w/o mag
+WARN(sim): open /dev/light0 failed: 2 - continue w/o light
+[   39.198795] [35] [  CRIT] [ap] [LVGL] [User]	(39.198, +39198)	 check_stack_size: tid: 35, Stack size : 16112 lv_nuttx_entry.c:283
+[   39.200326] [35] [ ERROR] [ap] [LVGL] [Error]	(39.200, +2)	 check_stack_size: Stack size is too small. Please increase it to 32768 bytes or more. lv_nuttx_entry.c:286
+[   39.208596] [35] [  CRIT] [ap] [LVGL] [User]	(39.208, +8)	 lv_nuttx_fbdev_set_file: The framebuffer device was opened successfully lv_nuttx_fbdev.c:104
+[   39.210178] [35] [  CRIT] [ap] [LVGL] [User]	(39.210, +2)	 lv_nuttx_fbdev_set_file: VideoInfo: lv_nuttx_fbdev.c:112
+[   39.211389] [35] [  CRIT] [ap] [LVGL] [User]	(39.211, +1)	 lv_nuttx_fbdev_set_file:       fmt: 13 lv_nuttx_fbdev.c:113
+[   39.212719] [35] [  CRIT] [ap] [LVGL] [User]	(39.212, +1)	 lv_nuttx_fbdev_set_file:      xres: 1280 lv_nuttx_fbdev.c:114
+[   39.213807] [35] [  CRIT] [ap] [LVGL] [User]	(39.213, +1)	 lv_nuttx_fbdev_set_file:      yres: 800 lv_nuttx_fbdev.c:115
+[   39.214759] [35] [  CRIT] [ap] [LVGL] [User]	(39.214, +1)	 lv_nuttx_fbdev_set_file:   nplanes: 1 lv_nuttx_fbdev.c:116
+[   39.216204] [35] [  CRIT] [ap] [LVGL] [User]	(39.216, +2)	 fbdev_get_pinfo: PlaneInfo (plane 0): lv_nuttx_fbdev.c:278
+[   39.217389] [35] [  CRIT] [ap] [LVGL] [User]	(39.217, +1)	 fbdev_get_pinfo:     mem: 0x41bd2030 lv_nuttx_fbdev.c:279
+[   39.218761] [35] [  CRIT] [ap] [LVGL] [User]	(39.218, +1)	 fbdev_get_pinfo:     fblen: 8192000 lv_nuttx_fbdev.c:280
+[   39.219962] [35] [  CRIT] [ap] [LVGL] [User]	(39.219, +1)	 fbdev_get_pinfo:    stride: 5120 lv_nuttx_fbdev.c:281
+[   39.221796] [35] [  CRIT] [ap] [LVGL] [User]	(39.221, +2)	 fbdev_get_pinfo:   display: 0 lv_nuttx_fbdev.c:282
+[   39.223050] [35] [  CRIT] [ap] [LVGL] [User]	(39.223, +2)	 fbdev_get_pinfo:       bpp: 32 lv_nuttx_fbdev.c:283
+[   39.224502] [35] [  CRIT] [ap] [LVGL] [User]	(39.224, +1)	 fbdev_get_pinfo: PlaneInfo (plane 0): lv_nuttx_fbdev.c:278
+[   39.225977] [35] [  CRIT] [ap] [LVGL] [User]	(39.225, +1)	 fbdev_get_pinfo:     mem: 0x41bd2030 lv_nuttx_fbdev.c:279
+[   39.227303] [35] [  CRIT] [ap] [LVGL] [User]	(39.227, +2)	 fbdev_get_pinfo:     fblen: 8192000 lv_nuttx_fbdev.c:280
+[   39.228933] [35] [  CRIT] [ap] [LVGL] [User]	(39.228, +1)	 fbdev_get_pinfo:    stride: 5120 lv_nuttx_fbdev.c:281
+[   39.230512] [35] [  CRIT] [ap] [LVGL] [User]	(39.230, +2)	 fbdev_get_pinfo:   display: 0 lv_nuttx_fbdev.c:282
+[   39.231897] [35] [  CRIT] [ap] [LVGL] [User]	(39.231, +1)	 fbdev_get_pinfo:       bpp: 32 lv_nuttx_fbdev.c:283
+[   39.233265] [35] [  CRIT] [ap] [LVGL] [User]	(39.233, +2)	 fbdev_get_pinfo: PlaneInfo (plane 0): lv_nuttx_fbdev.c:278
+[   39.234355] [35] [  CRIT] [ap] [LVGL] [User]	(39.234, +1)	 fbdev_get_pinfo:     mem: 0x41bd2030 lv_nuttx_fbdev.c:279
+[   39.235672] [35] [  CRIT] [ap] [LVGL] [User]	(39.235, +1)	 fbdev_get_pinfo:     fblen: 8192000 lv_nuttx_fbdev.c:280
+[   39.236861] [35] [  CRIT] [ap] [LVGL] [User]	(39.236, +1)	 fbdev_get_pinfo:    stride: 5120 lv_nuttx_fbdev.c:281
+[   39.238156] [35] [  CRIT] [ap] [LVGL] [User]	(39.238, +2)	 fbdev_get_pinfo:   display: 0 lv_nuttx_fbdev.c:282
+[   39.239496] [35] [  CRIT] [ap] [LVGL] [User]	(39.239, +1)	 fbdev_get_pinfo:       bpp: 32 lv_nuttx_fbdev.c:283
+[   39.241902] [35] [  CRIT] [ap] [LVGL] [User]	(39.241, +2)	 fbdev_init_mem2: Use of consecutive mem2 = 0x41fba030, yoffset = 800 lv_nuttx_fbdev.c:347
+[   39.244268] [35] [  CRIT] [ap] [LVGL] [User]	(39.244, +3)	 lv_nuttx_fbdev_set_file: Resolution is set to 1280x800 at 130dpi lv_nuttx_fbdev.c:162
+[   39.245894] [35] [  CRIT] [ap] [LVGL] [User]	(39.245, +1)	 lv_nuttx_touchscreen_create: touchscreen /dev/input0 opening lv_nuttx_touchscreen.c:79
+[   39.247387] [35] [  CRIT] [ap] [LVGL] [User]	(39.247, +2)	 lv_nuttx_touchscreen_create: touchscreen /dev/input0 open success, maxpoint 1 lv_nuttx_touchscreen.c:98
+[   39.249356] [35] [  CRIT] [ap] [LVGL] [User]	(39.249, +2)	 lv_nuttx_touchscreen_create: touchscreen /dev/utouch opening lv_nuttx_touchscreen.c:79
+[   39.251458] [35] [  CRIT] [ap] [LVGL] [User]	(39.251, +2)	 lv_nuttx_touchscreen_create: touchscreen /dev/utouch open success, maxpoint 1 lv_nuttx_touchscreen.c:98
+FPS probe: fb 1280x800 frame=4096000
+[   39.289446] [35] [  INFO] [ap] [phywear] installed skill /data/agent/skills/phywear-physics-coach.md (5165 bytes)
+[   39.291278] [35] [  INFO] [ap] [phywear] skills ready in /data/agent/skills (1 installed this boot)
+[   39.398083] [35] [  INFO] [ap] [phywear] alive t=39s loops/s=0 fps=0
+[   46.241283] [35] [  WARN] [ap] [phywear] t=46s PhyWear 巡检：检测到持续摆动（窗口振幅 0.54 g，持续 2.5 s）。请跑单摆实验测重力加速度 g 并解释结果。
+[   46.248358] [35] [  INFO] [ap] [phywear] ai-coach: PhyWear 巡检：检测到持续摆动（窗口振幅 0.54 g，持续 2.5 s）。请跑单摆实验测重力加速度 g 并解释结果。
+[   46.250756] [35] [  INFO] [ap] [tap] registered tap for channel 'local_client'
+[   46.253034] [35] [  INFO] [ap] [velaclaw_client] client opened: phywear-coach
+[   46.255247] [25] [  INFO] [ap] [agent] Processing message from local_client:phywear-coach
+[   46.258786] [25] [  INFO] [ap] [tools] Executing tool: phywear_run_experiment
+[   46.281973] [35] [  INFO] [ap] [phywear] pw_scope: slot 0, 1/6 in use
+[   48.962258] [35] [  INFO] [ap] [phywear] result pendulum: 18.3075 m/s^2 (T=1.038s f=0.963Hz L=0.500m)
+[   49.052997] [25] [  INFO] [ap] [agent] NL fast path: phywear_run_experiment (fast=1 llm=0)
+[   49.055226] [15] [  INFO] [ap] [agent] Dispatching response → local_client:phywear-coach
+[   49.057734] [15] [  INFO] [ap] [phywear] ai-coach: AI: 已自动测重力加速度: g = 18.31 m/s^2 (T = 1.038 s)
+[   50.040288] [35] [  INFO] [ap] [phywear] result pendulum: 17.9754 m/s^2 (T=1.048s f=0.954Hz L=0.500m)
+[   51.123383] [35] [  INFO] [ap] [phywear] result pendulum: 18.0387 m/s^2 (T=1.046s f=0.956Hz L=0.500m)
+[   52.225177] [35] [  INFO] [ap] [phywear] result pendulum: 18.4678 m/s^2 (T=1.034s f=0.967Hz L=0.500m)
+[   53.340826] [35] [  INFO] [ap] [phywear] result pendulum: 18.5433 m/s^2 (T=1.032s f=0.969Hz L=0.500m)
+[   54.431190] [35] [  INFO] [ap] [phywear] result pendulum: 18.4977 m/s^2 (T=1.033s f=0.968Hz L=0.500m)
+[   55.538373] [35] [  INFO] [ap] [phywear] result pendulum: 18.5751 m/s^2 (T=1.031s f=0.970Hz L=0.500m)
+[   56.643832] [35] [  INFO] [ap] [phywear] result pendulum: 18.6860 m/s^2 (T=1.028s f=0.973Hz L=0.500m)
+[   57.750271] [35] [  INFO] [ap] [phywear] result pendulum: 18.7403 m/s^2 (T=1.026s f=0.974Hz L=0.500m)
+[   58.882459] [35] [  INFO] [ap] [phywear] result pendulum: 18.7528 m/s^2 (T=1.026s f=0.975Hz L=0.500m)
+[   59.998118] [35] [  INFO] [ap] [phywear] result pendulum: 18.8066 m/s^2 (T=1.024s f=0.976Hz L=0.500m)
+[   61.136113] [35] [  INFO] [ap] [phywear] result pendulum: 18.8955 m/s^2 (T=1.022s f=0.978Hz L=0.500m)
+[   62.266210] [35] [  INFO] [ap] [phywear] result pendulum: 19.0452 m/s^2 (T=1.018s f=0.982Hz L=0.500m)
+[   63.405524] [35] [  INFO] [ap] [phywear] result pendulum: 19.2041 m/s^2 (T=1.014s f=0.986Hz L=0.500m)
+[   64.552954] [35] [  INFO] [ap] [phywear] result pendulum: 19.3595 m/s^2 (T=1.010s f=0.990Hz L=0.500m)
+[   65.686520] [35] [  INFO] [ap] [phywear] result pendulum: 19.4722 m/s^2 (T=1.007s f=0.993Hz L=0.500m)
+[   66.854925] [35] [  INFO] [ap] [phywear] result pendulum: 19.6179 m/s^2 (T=1.003s f=0.997Hz L=0.500m)
+[   67.981427] [35] [  INFO] [ap] [phywear] result pendulum: 19.8176 m/s^2 (T=0.998s f=1.002Hz L=0.500m)
+[   69.003864] [35] [  INFO] [ap] [phywear] alive t=69s loops/s=65 fps=16
+[   69.117626] [35] [  INFO] [ap] [phywear] result pendulum: 19.9972 m/s^2 (T=0.994s f=1.007Hz L=0.500m)
+[   70.271890] [35] [  INFO] [ap] [phywear] result pendulum: 20.0997 m/s^2 (T=0.991s f=1.009Hz L=0.500m)
+[   71.430955] [35] [  INFO] [ap] [phywear] result pendulum: 20.1900 m/s^2 (T=0.989s f=1.011Hz L=0.500m)
+[   72.558490] [35] [  INFO] [ap] [phywear] result pendulum: 20.2861 m/s^2 (T=0.986s f=1.014Hz L=0.500m)
+[   73.700702] [35] [  INFO] [ap] [phywear] result pendulum: 20.3474 m/s^2 (T=0.985s f=1.015Hz L=0.500m)
+[   74.833662] [35] [  INFO] [ap] [phywear] result pendulum: 20.3922 m/s^2 (T=0.984s f=1.016Hz L=0.500m)
+[   75.961434] [35] [  INFO] [ap] [phywear] result pendulum: 20.4033 m/s^2 (T=0.984s f=1.017Hz L=0.500m)
+[   77.093343] [35] [  INFO] [ap] [phywear] result pendulum: 20.3621 m/s^2 (T=0.985s f=1.016Hz L=0.500m)
+[   78.234738] [35] [  INFO] [ap] [phywear] result pendulum: 20.3130 m/s^2 (T=0.986s f=1.014Hz L=0.500m)
+[   79.399082] [35] [  INFO] [ap] [phywear] result pendulum: 20.2776 m/s^2 (T=0.987s f=1.014Hz L=0.500m)
+[   80.567963] [35] [  INFO] [ap] [phywear] result pendulum: 20.2773 m/s^2 (T=0.987s f=1.014Hz L=0.500m)
+[   81.737956] [35] [  INFO] [ap] [phywear] result pendulum: 20.2901 m/s^2 (T=0.986s f=1.014Hz L=0.500m)
+[   82.903515] [35] [  INFO] [ap] [phywear] result pendulum: 20.3583 m/s^2 (T=0.985s f=1.016Hz L=0.500m)
+[   84.057531] [35] [  INFO] [ap] [phywear] result pendulum: 20.4371 m/s^2 (T=0.983s f=1.018Hz L=0.500m)
+[   85.206242] [35] [  INFO] [ap] [phywear] result pendulum: 20.5427 m/s^2 (T=0.980s f=1.020Hz L=0.500m)
+[   86.353634] [35] [  INFO] [ap] [phywear] result pendulum: 20.6599 m/s^2 (T=0.977s f=1.023Hz L=0.500m)
+[   87.584235] [35] [  INFO] [ap] [phywear] result pendulum: 20.8098 m/s^2 (T=0.974s f=1.027Hz L=0.500m)
+[   88.757956] [35] [  INFO] [ap] [phywear] result pendulum: 20.9498 m/s^2 (T=0.971s f=1.030Hz L=0.500m)
+[   89.906660] [35] [  INFO] [ap] [phywear] result pendulum: 21.0594 m/s^2 (T=0.968s f=1.033Hz L=0.500m)
+[   91.104997] [35] [  INFO] [ap] [phywear] result pendulum: 21.1734 m/s^2 (T=0.966s f=1.036Hz L=0.500m)
+[   92.298269] [35] [  INFO] [ap] [phywear] result pendulum: 21.3105 m/s^2 (T=0.962s f=1.039Hz L=0.500m)
+[   93.437948] [35] [  INFO] [ap] [phywear] result pendulum: 21.3996 m/s^2 (T=0.960s f=1.041Hz L=0.500m)
+[   94.594796] [35] [  INFO] [ap] [phywear] result pendulum: 21.4160 m/s^2 (T=0.960s f=1.042Hz L=0.500m)
+[   95.754553] [35] [  INFO] [ap] [phywear] result pendulum: 21.4251 m/s^2 (T=0.960s f=1.042Hz L=0.500m)
+[   96.947268] [35] [  INFO] [ap] [phywear] result pendulum: 21.4337 m/s^2 (T=0.960s f=1.042Hz L=0.500m)
+[   98.102987] [35] [  INFO] [ap] [phywear] result pendulum: 21.4080 m/s^2 (T=0.960s f=1.041Hz L=0.500m)
+[   99.000948] [35] [  INFO] [ap] [phywear] alive t=99s loops/s=56 fps=21
+[   99.263350] [35] [  INFO] [ap] [phywear] result pendulum: 21.3830 m/s^2 (T=0.961s f=1.041Hz L=0.500m)
+[  100.854854] [35] [  INFO] [ap] [phywear] result pendulum: 21.4064 m/s^2 (T=0.960s f=1.041Hz L=0.500m)
+[  102.359060] [35] [  INFO] [ap] [phywear] result pendulum: 21.4366 m/s^2 (T=0.960s f=1.042Hz L=0.500m)
+[  103.691491] [35] [  INFO] [ap] [phywear] result pendulum: 21.5380 m/s^2 (T=0.957s f=1.045Hz L=0.500m)
+[  104.856097] [35] [  INFO] [ap] [phywear] result pendulum: 21.8000 m/s^2 (T=0.952s f=1.051Hz L=0.500m)
+[  106.009287] [35] [  INFO] [ap] [phywear] result pendulum: 22.2644 m/s^2 (T=0.942s f=1.062Hz L=0.500m)
+[  107.160528] [35] [  INFO] [ap] [phywear] result pendulum: 22.8761 m/s^2 (T=0.929s f=1.077Hz L=0.500m)
+[  107.931411] [35] [  WARN] [ap] [phywear] t=107s PhyWear 巡检：检测到持续摆动（窗口振幅 0.54 g，持续 2.5 s）。请跑单摆实验测重力加速度 g 并解释结果。
+[  107.934179] [35] [  INFO] [ap] [phywear] ai-coach: PhyWear 巡检：检测到持续摆动（窗口振幅 0.54 g，持续 2.5 s）。请跑单摆实验测重力加速度 g 并解释结果。
+[  107.937195] [25] [  INFO] [ap] [agent] Processing message from local_client:phywear-coach
+[  107.941173] [25] [  INFO] [ap] [tools] Executing tool: phywear_run_experiment
+[  107.982568] [35] [  INFO] [ap] [phywear] pw_scope: slot 1, 2/6 in use
+[  109.939729] [35] [  INFO] [ap] [phywear] result pendulum: 4.9373 m/s^2 (T=1.999s f=0.500Hz L=0.500m)
+[  109.970475] [25] [  INFO] [ap] [agent] NL fast path: phywear_run_experiment (fast=2 llm=0)
+[  109.972833] [15] [  INFO] [ap] [agent] Dispatching response → local_client:phywear-coach
+[  109.989309] [15] [  INFO] [ap] [phywear] ai-coach: AI: 已自动测重力加速度: g = 4.94 m/s^2 (T = 1.999 s)
+[  110.983658] [35] [  INFO] [ap] [phywear] result pendulum: 5.5809 m/s^2 (T=1.881s f=0.532Hz L=0.500m)
+[  112.004394] [35] [  INFO] [ap] [phywear] result pendulum: 5.7248 m/s^2 (T=1.857s f=0.539Hz L=0.500m)
+[  113.070346] [35] [  INFO] [ap] [phywear] result pendulum: 5.8371 m/s^2 (T=1.839s f=0.544Hz L=0.500m)
+[  114.120622] [35] [  INFO] [ap] [phywear] result pendulum: 5.9725 m/s^2 (T=1.818s f=0.550Hz L=0.500m)
+[  115.280095] [35] [  INFO] [ap] [phywear] result pendulum: 6.0769 m/s^2 (T=1.802s f=0.555Hz L=0.500m)
+[  116.420957] [35] [  INFO] [ap] [phywear] result pendulum: 6.2080 m/s^2 (T=1.783s f=0.561Hz L=0.500m)
+[  117.561362] [35] [  INFO] [ap] [phywear] result pendulum: 6.4859 m/s^2 (T=1.745s f=0.573Hz L=0.500m)
+[  118.699615] [35] [  INFO] [ap] [phywear] result pendulum: 6.7285 m/s^2 (T=1.713s f=0.584Hz L=0.500m)
+[  119.847199] [35] [  INFO] [ap] [phywear] result pendulum: 7.0043 m/s^2 (T=1.679s f=0.596Hz L=0.500m)
+[  120.956532] [35] [  INFO] [ap] [phywear] result pendulum: 7.1971 m/s^2 (T=1.656s f=0.604Hz L=0.500m)
+[  122.097894] [35] [  INFO] [ap] [phywear] result pendulum: 7.2497 m/s^2 (T=1.650s f=0.606Hz L=0.500m)
+[  123.212023] [35] [  INFO] [ap] [phywear] result pendulum: 7.2566 m/s^2 (T=1.649s f=0.606Hz L=0.500m)
+[  124.404200] [35] [  INFO] [ap] [phywear] result pendulum: 7.2359 m/s^2 (T=1.652s f=0.605Hz L=0.500m)
+[  125.508195] [35] [  INFO] [ap] [phywear] result pendulum: 7.2363 m/s^2 (T=1.652s f=0.605Hz L=0.500m)
+[  126.638163] [35] [  INFO] [ap] [phywear] result pendulum: 7.2476 m/s^2 (T=1.650s f=0.606Hz L=0.500m)
+[  127.763975] [35] [  INFO] [ap] [phywear] result pendulum: 7.2437 m/s^2 (T=1.651s f=0.606Hz L=0.500m)
+[  128.892743] [35] [  INFO] [ap] [phywear] result pendulum: 7.2340 m/s^2 (T=1.652s f=0.605Hz L=0.500m)
+[  129.017814] [35] [  INFO] [ap] [phywear] alive t=129s loops/s=37 fps=28
+[  130.017887] [35] [  INFO] [ap] [phywear] result pendulum: 7.1999 m/s^2 (T=1.656s f=0.604Hz L=0.500m)
+[  131.197108] [35] [  INFO] [ap] [phywear] result pendulum: 7.1976 m/s^2 (T=1.656s f=0.604Hz L=0.500m)
+[  132.362492] [35] [  INFO] [ap] [phywear] result pendulum: 7.2116 m/s^2 (T=1.654s f=0.604Hz L=0.500m)
+[  133.524297] [35] [  INFO] [ap] [phywear] result pendulum: 7.3162 m/s^2 (T=1.643s f=0.609Hz L=0.500m)
+[  134.641329] [35] [  INFO] [ap] [phywear] result pendulum: 7.4179 m/s^2 (T=1.631s f=0.613Hz L=0.500m)
+[  135.771486] [35] [  INFO] [ap] [phywear] result pendulum: 7.4506 m/s^2 (T=1.628s f=0.614Hz L=0.500m)
+[  136.898541] [35] [  INFO] [ap] [phywear] result pendulum: 7.4063 m/s^2 (T=1.633s f=0.613Hz L=0.500m)
+[  138.039157] [35] [  INFO] [ap] [phywear] result pendulum: 7.3222 m/s^2 (T=1.642s f=0.609Hz L=0.500m)
+[  139.164099] [35] [  INFO] [ap] [phywear] result pendulum: 7.2341 m/s^2 (T=1.652s f=0.605Hz L=0.500m)
+[  140.309210] [35] [  INFO] [ap] [phywear] result pendulum: 7.2070 m/s^2 (T=1.655s f=0.604Hz L=0.500m)
+[  141.443304] [35] [  INFO] [ap] [phywear] result pendulum: 7.2181 m/s^2 (T=1.654s f=0.605Hz L=0.500m)
+[  142.614131] [35] [  INFO] [ap] [phywear] result pendulum: 7.2315 m/s^2 (T=1.652s f=0.605Hz L=0.500m)
+[  143.716695] [35] [  INFO] [ap] [phywear] result pendulum: 7.2568 m/s^2 (T=1.649s f=0.606Hz L=0.500m)
+[  144.846930] [35] [  INFO] [ap] [phywear] result pendulum: 7.2484 m/s^2 (T=1.650s f=0.606Hz L=0.500m)
+[  145.960273] [35] [  INFO] [ap] [phywear] result pendulum: 7.2389 m/s^2 (T=1.651s f=0.606Hz L=0.500m)
+[  147.093091] [35] [  INFO] [ap] [phywear] result pendulum: 7.2076 m/s^2 (T=1.655s f=0.604Hz L=0.500m)
+[  148.285439] [35] [  INFO] [ap] [phywear] result pendulum: 7.1957 m/s^2 (T=1.656s f=0.604Hz L=0.500m)
+[  149.440992] [35] [  INFO] [ap] [phywear] result pendulum: 7.2118 m/s^2 (T=1.654s f=0.604Hz L=0.500m)
+[  150.544207] [35] [  INFO] [ap] [phywear] result pendulum: 7.2575 m/s^2 (T=1.649s f=0.606Hz L=0.500m)
+[  151.691710] [35] [  INFO] [ap] [phywear] result pendulum: 7.3231 m/s^2 (T=1.642s f=0.609Hz L=0.500m)
+[  152.808891] [35] [  INFO] [ap] [phywear] result pendulum: 7.3482 m/s^2 (T=1.639s f=0.610Hz L=0.500m)
+[  153.945128] [35] [  INFO] [ap] [phywear] result pendulum: 7.3264 m/s^2 (T=1.641s f=0.609Hz L=0.500m)
+[  155.055531] [35] [  INFO] [ap] [phywear] result pendulum: 7.2412 m/s^2 (T=1.651s f=0.606Hz L=0.500m)
+[  156.270987] [35] [  INFO] [ap] [phywear] result pendulum: 7.2082 m/s^2 (T=1.655s f=0.604Hz L=0.500m)
+[  157.392138] [35] [  INFO] [ap] [phywear] result pendulum: 7.2202 m/s^2 (T=1.653s f=0.605Hz L=0.500m)
+[  158.523127] [35] [  INFO] [ap] [phywear] result pendulum: 7.2786 m/s^2 (T=1.647s f=0.607Hz L=0.500m)
+[  159.019113] [35] [  INFO] [ap] [phywear] alive t=159s loops/s=32 fps=32
+[  159.634771] [35] [  INFO] [ap] [phywear] result pendulum: 7.3293 m/s^2 (T=1.641s f=0.609Hz L=0.500m)
+[  160.781697] [35] [  INFO] [ap] [phywear] result pendulum: 7.3318 m/s^2 (T=1.641s f=0.609Hz L=0.500m)
+[  161.888573] [35] [  INFO] [ap] [phywear] result pendulum: 7.2571 m/s^2 (T=1.649s f=0.606Hz L=0.500m)
+[  163.063662] [35] [  INFO] [ap] [phywear] result pendulum: 7.2083 m/s^2 (T=1.655s f=0.604Hz L=0.500m)
+[  164.251189] [35] [  INFO] [ap] [phywear] result pendulum: 7.2023 m/s^2 (T=1.655s f=0.604Hz L=0.500m)
+[  165.420898] [35] [  INFO] [ap] [phywear] result pendulum: 7.2835 m/s^2 (T=1.646s f=0.607Hz L=0.500m)
+[  166.540056] [35] [  INFO] [ap] [phywear] result pendulum: 7.4313 m/s^2 (T=1.630s f=0.614Hz L=0.500m)
+[  167.508990] [35] [  WARN] [ap] [phywear] t=167s PhyWear 巡检：检测到持续摆动（窗口振幅 0.54 g，持续 2.5 s）。请跑单摆实验测重力加速度 g 并解释结果。
+[  167.511249] [35] [  INFO] [ap] [phywear] ai-coach: PhyWear 巡检：检测到持续摆动（窗口振幅 0.54 g，持续 2.5 s）。请跑单摆实验测重力加速度 g 并解释结果。
+[  167.513968] [25] [  INFO] [ap] [agent] Processing message from local_client:phywear-coach
+[  167.517952] [25] [  INFO] [ap] [tools] Executing tool: phywear_run_experiment
+[  167.556385] [35] [  INFO] [ap] [phywear] pw_scope: slot 2, 3/6 in use
+[  169.393007] [35] [  INFO] [ap] [phywear] result pendulum: 3.1183 m/s^2 (T=2.516s f=0.397Hz L=0.500m)
+[  169.426071] [25] [  INFO] [ap] [agent] NL fast path: phywear_run_experiment (fast=3 llm=0)
+[  169.428654] [15] [  INFO] [ap] [agent] Dispatching response → local_client:phywear-coach
+[  169.430788] [15] [  INFO] [ap] [phywear] ai-coach: AI: 已自动测重力加速度: g = 3.12 m/s^2 (T = 2.516 s)
+[  170.496974] [35] [  INFO] [ap] [phywear] result pendulum: 3.2922 m/s^2 (T=2.449s f=0.408Hz L=0.500m)
+[  171.614093] [35] [  INFO] [ap] [phywear] result pendulum: 3.4349 m/s^2 (T=2.397s f=0.417Hz L=0.500m)
+[  172.615377] [35] [  INFO] [ap] [phywear] result pendulum: 3.4647 m/s^2 (T=2.387s f=0.419Hz L=0.500m)
+[  173.635587] [35] [  INFO] [ap] [phywear] result pendulum: 3.5670 m/s^2 (T=2.352s f=0.425Hz L=0.500m)
+[  174.727084] [35] [  INFO] [ap] [phywear] result pendulum: 3.7028 m/s^2 (T=2.309s f=0.433Hz L=0.500m)
+[  175.785545] [35] [  INFO] [ap] [phywear] result pendulum: 3.9120 m/s^2 (T=2.246s f=0.445Hz L=0.500m)
+[  176.876709] [35] [  INFO] [ap] [phywear] result pendulum: 4.1191 m/s^2 (T=2.189s f=0.457Hz L=0.500m)
+[  177.933143] [35] [  INFO] [ap] [phywear] result pendulum: 4.3561 m/s^2 (T=2.129s f=0.470Hz L=0.500m)
+[  178.998586] [35] [  INFO] [ap] [phywear] result pendulum: 4.4614 m/s^2 (T=2.103s f=0.475Hz L=0.500m)
+[  180.061375] [35] [  INFO] [ap] [phywear] result pendulum: 4.4722 m/s^2 (T=2.101s f=0.476Hz L=0.500m)
+[  181.116456] [35] [  INFO] [ap] [phywear] result pendulum: 4.4710 m/s^2 (T=2.101s f=0.476Hz L=0.500m)
+[  182.172918] [35] [  INFO] [ap] [phywear] result pendulum: 4.4455 m/s^2 (T=2.107s f=0.475Hz L=0.500m)
+[  183.238307] [35] [  INFO] [ap] [phywear] result pendulum: 4.3687 m/s^2 (T=2.126s f=0.470Hz L=0.500m)
+[  184.299639] [35] [  INFO] [ap] [phywear] result pendulum: 4.3839 m/s^2 (T=2.122s f=0.471Hz L=0.500m)
+[  185.363961] [35] [  INFO] [ap] [phywear] result pendulum: 4.3943 m/s^2 (T=2.119s f=0.472Hz L=0.500m)
+[  186.435234] [35] [  INFO] [ap] [phywear] result pendulum: 4.3709 m/s^2 (T=2.125s f=0.471Hz L=0.500m)
+[  187.493581] [35] [  INFO] [ap] [phywear] result pendulum: 4.4056 m/s^2 (T=2.117s f=0.472Hz L=0.500m)
+[  188.548727] [35] [  INFO] [ap] [phywear] result pendulum: 4.4432 m/s^2 (T=2.108s f=0.474Hz L=0.500m)
+[  189.023268] [35] [  INFO] [ap] [phywear] alive t=189s loops/s=29 fps=29
+[  189.613547] [35] [  INFO] [ap] [phywear] result pendulum: 4.4023 m/s^2 (T=2.118s f=0.472Hz L=0.500m)
+[  190.675647] [35] [  INFO] [ap] [phywear] result pendulum: 4.3792 m/s^2 (T=2.123s f=0.471Hz L=0.500m)
+[  191.751851] [35] [  INFO] [ap] [phywear] result pendulum: 4.4215 m/s^2 (T=2.113s f=0.473Hz L=0.500m)
+[  192.809092] [35] [  INFO] [ap] [phywear] result pendulum: 4.4225 m/s^2 (T=2.113s f=0.473Hz L=0.500m)
+[  193.872034] [35] [  INFO] [ap] [phywear] result pendulum: 4.4067 m/s^2 (T=2.116s f=0.472Hz L=0.500m)
+[  194.929183] [35] [  INFO] [ap] [phywear] result pendulum: 4.4350 m/s^2 (T=2.110s f=0.474Hz L=0.500m)
+[  195.987112] [35] [  INFO] [ap] [phywear] result pendulum: 4.4208 m/s^2 (T=2.113s f=0.473Hz L=0.500m)
+[  197.083296] [35] [  INFO] [ap] [phywear] result pendulum: 4.3707 m/s^2 (T=2.125s f=0.471Hz L=0.500m)
+[  198.139399] [35] [  INFO] [ap] [phywear] result pendulum: 4.4017 m/s^2 (T=2.118s f=0.472Hz L=0.500m)
+[  199.195226] [35] [  INFO] [ap] [phywear] result pendulum: 4.4602 m/s^2 (T=2.104s f=0.475Hz L=0.500m)
+[  200.271495] [35] [  INFO] [ap] [phywear] result pendulum: 4.4556 m/s^2 (T=2.105s f=0.475Hz L=0.500m)
+[  201.314986] [35] [  INFO] [ap] [phywear] result pendulum: 4.4529 m/s^2 (T=2.105s f=0.475Hz L=0.500m)
+[  202.394756] [35] [  INFO] [ap] [phywear] result pendulum: 4.4457 m/s^2 (T=2.107s f=0.475Hz L=0.500m)
+[  203.489226] [35] [  INFO] [ap] [phywear] result pendulum: 4.4140 m/s^2 (T=2.115s f=0.473Hz L=0.500m)
+[  204.607653] [35] [  INFO] [ap] [phywear] result pendulum: 4.4750 m/s^2 (T=2.100s f=0.476Hz L=0.500m)
+[  205.678881] [35] [  INFO] [ap] [phywear] result pendulum: 4.5717 m/s^2 (T=2.078s f=0.481Hz L=0.500m)
+[  206.769291] [35] [  INFO] [ap] [phywear] result pendulum: 4.6068 m/s^2 (T=2.070s f=0.483Hz L=0.500m)
+[  207.846652] [35] [  INFO] [ap] [phywear] result pendulum: 4.6401 m/s^2 (T=2.063s f=0.485Hz L=0.500m)
+[  208.900160] [35] [  INFO] [ap] [phywear] result pendulum: 4.6253 m/s^2 (T=2.066s f=0.484Hz L=0.500m)
+[  209.943989] [35] [  INFO] [ap] [phywear] result pendulum: 4.5350 m/s^2 (T=2.086s f=0.479Hz L=0.500m)
+[  210.984538] [35] [  INFO] [ap] [phywear] result pendulum: 4.4617 m/s^2 (T=2.103s f=0.475Hz L=0.500m)
+[  212.020168] [35] [  INFO] [ap] [phywear] result pendulum: 4.3508 m/s^2 (T=2.130s f=0.469Hz L=0.500m)
+[  213.066508] [35] [  INFO] [ap] [phywear] result pendulum: 4.2678 m/s^2 (T=2.151s f=0.465Hz L=0.500m)
+[  214.094414] [35] [  INFO] [ap] [phywear] result pendulum: 4.2549 m/s^2 (T=2.154s f=0.464Hz L=0.500m)
+[  215.139175] [35] [  INFO] [ap] [phywear] result pendulum: 4.2162 m/s^2 (T=2.164s f=0.462Hz L=0.500m)
+[  216.199812] [35] [  INFO] [ap] [phywear] result pendulum: 4.2131 m/s^2 (T=2.165s f=0.462Hz L=0.500m)
+[  217.294659] [35] [  INFO] [ap] [phywear] result pendulum: 4.3065 m/s^2 (T=2.141s f=0.467Hz L=0.500m)
+[  218.359440] [35] [  INFO] [ap] [phywear] result pendulum: 4.3468 m/s^2 (T=2.131s f=0.469Hz L=0.500m)
+[  219.028744] [35] [  INFO] [ap] [phywear] alive t=219s loops/s=28 fps=28
+[  219.410952] [35] [  INFO] [ap] [phywear] result pendulum: 4.3763 m/s^2 (T=2.124s f=0.471Hz L=0.500m)
+[  220.450704] [35] [  INFO] [ap] [phywear] result pendulum: 4.4548 m/s^2 (T=2.105s f=0.475Hz L=0.500m)
+[  221.497366] [35] [  INFO] [ap] [phywear] result pendulum: 4.3877 m/s^2 (T=2.121s f=0.471Hz L=0.500m)
+[  222.565783] [35] [  INFO] [ap] [phywear] result pendulum: 4.3318 m/s^2 (T=2.135s f=0.468Hz L=0.500m)
+[  223.641681] [35] [  INFO] [ap] [phywear] result pendulum: 4.3413 m/s^2 (T=2.132s f=0.469Hz L=0.500m)
+[  224.687715] [35] [  INFO] [ap] [phywear] result pendulum: 4.3604 m/s^2 (T=2.128s f=0.470Hz L=0.500m)
+[  225.730503] [35] [  INFO] [ap] [phywear] result pendulum: 4.3501 m/s^2 (T=2.130s f=0.469Hz L=0.500m)
+[  226.789342] [35] [  INFO] [ap] [phywear] result pendulum: 4.3649 m/s^2 (T=2.127s f=0.470Hz L=0.500m)
+[  227.931172] [35] [  INFO] [ap] [phywear] result pendulum: 4.3844 m/s^2 (T=2.122s f=0.471Hz L=0.500m)
+[  228.981569] [35] [  INFO] [ap] [phywear] result pendulum: 4.4168 m/s^2 (T=2.114s f=0.473Hz L=0.500m)
+[  229.412300] [35] [  WARN] [ap] [phywear] t=229s PhyWear 巡检：检测到持续摆动（窗口振幅 0.54 g，持续 2.5 s）。请跑单摆实验测重力加速度 g 并解释结果。
+[  229.414616] [35] [  INFO] [ap] [phywear] ai-coach: PhyWear 巡检：检测到持续摆动（窗口振幅 0.54 g，持续 2.5 s）。请跑单摆实验测重力加速度 g 并解释结果。
+[  229.416864] [25] [  INFO] [ap] [agent] Processing message from local_client:phywear-coach
+[  229.420259] [25] [  INFO] [ap] [tools] Executing tool: phywear_run_experiment
+[  229.463019] [35] [  INFO] [ap] [phywear] pw_scope: slot 3, 4/6 in use
+[  231.138955] [35] [  INFO] [ap] [phywear] result pendulum: 2.0714 m/s^2 (T=3.087s f=0.324Hz L=0.500m)
+[  231.169355] [25] [  INFO] [ap] [agent] NL fast path: phywear_run_experiment (fast=4 llm=0)
+[  231.172101] [15] [  INFO] [ap] [agent] Dispatching response → local_client:phywear-coach
+[  231.174384] [15] [  INFO] [ap] [phywear] ai-coach: AI: 已自动测重力加速度: g = 2.07 m/s^2 (T = 3.087 s)
+[  232.199159] [35] [  INFO] [ap] [phywear] result pendulum: 2.3988 m/s^2 (T=2.869s f=0.349Hz L=0.500m)
+[  233.301514] [35] [  INFO] [ap] [phywear] result pendulum: 2.4217 m/s^2 (T=2.855s f=0.350Hz L=0.500m)
+[  234.329714] [35] [  INFO] [ap] [phywear] result pendulum: 2.5220 m/s^2 (T=2.798s f=0.357Hz L=0.500m)
+[  235.382698] [35] [  INFO] [ap] [phywear] result pendulum: 2.6870 m/s^2 (T=2.710s f=0.369Hz L=0.500m)
+[  236.449803] [35] [  INFO] [ap] [phywear] result pendulum: 2.8465 m/s^2 (T=2.633s f=0.380Hz L=0.500m)
+[  237.550214] [35] [  INFO] [ap] [phywear] result pendulum: 3.0529 m/s^2 (T=2.543s f=0.393Hz L=0.500m)
+[  238.590188] [35] [  INFO] [ap] [phywear] result pendulum: 3.2070 m/s^2 (T=2.481s f=0.403Hz L=0.500m)
+[  239.625064] [35] [  INFO] [ap] [phywear] result pendulum: 3.2893 m/s^2 (T=2.450s f=0.408Hz L=0.500m)
+[  240.678713] [35] [  INFO] [ap] [phywear] result pendulum: 3.2205 m/s^2 (T=2.476s f=0.404Hz L=0.500m)
+[  241.743955] [35] [  INFO] [ap] [phywear] result pendulum: 3.2016 m/s^2 (T=2.483s f=0.403Hz L=0.500m)
+[  242.787226] [35] [  INFO] [ap] [phywear] result pendulum: 3.1957 m/s^2 (T=2.485s f=0.402Hz L=0.500m)
+[  243.897374] [35] [  INFO] [ap] [phywear] result pendulum: 3.1980 m/s^2 (T=2.484s f=0.403Hz L=0.500m)
+[  244.928775] [35] [  INFO] [ap] [phywear] result pendulum: 3.2071 m/s^2 (T=2.481s f=0.403Hz L=0.500m)
+[  245.998201] [35] [  INFO] [ap] [phywear] result pendulum: 3.2793 m/s^2 (T=2.453s f=0.408Hz L=0.500m)
+[  247.042658] [35] [  INFO] [ap] [phywear] result pendulum: 3.2950 m/s^2 (T=2.448s f=0.409Hz L=0.500m)
+[  248.096569] [35] [  INFO] [ap] [phywear] result pendulum: 3.2044 m/s^2 (T=2.482s f=0.403Hz L=0.500m)
+[  249.033420] [35] [  INFO] [ap] [phywear] alive t=249s loops/s=26 fps=26
+[  249.140071] [35] [  INFO] [ap] [phywear] result pendulum: 3.1984 m/s^2 (T=2.484s f=0.403Hz L=0.500m)
+[  250.202739] [35] [  INFO] [ap] [phywear] result pendulum: 3.2005 m/s^2 (T=2.483s f=0.403Hz L=0.500m)
+[  251.230962] [35] [  INFO] [ap] [phywear] result pendulum: 3.1761 m/s^2 (T=2.493s f=0.401Hz L=0.500m)
+[  252.339243] [35] [  INFO] [ap] [phywear] result pendulum: 3.1967 m/s^2 (T=2.485s f=0.402Hz L=0.500m)
+[  253.381248] [35] [  INFO] [ap] [phywear] result pendulum: 3.2177 m/s^2 (T=2.477s f=0.404Hz L=0.500m)
+[  254.476694] [35] [  INFO] [ap] [phywear] result pendulum: 3.2495 m/s^2 (T=2.465s f=0.406Hz L=0.500m)
+[  255.525961] [35] [  INFO] [ap] [phywear] result pendulum: 3.2470 m/s^2 (T=2.466s f=0.406Hz L=0.500m)
+[  256.642444] [35] [  INFO] [ap] [phywear] result pendulum: 3.3052 m/s^2 (T=2.444s f=0.409Hz L=0.500m)
+[  257.703277] [35] [  INFO] [ap] [phywear] result pendulum: 3.3243 m/s^2 (T=2.437s f=0.410Hz L=0.500m)
+[  258.795963] [35] [  INFO] [ap] [phywear] result pendulum: 3.3337 m/s^2 (T=2.433s f=0.411Hz L=0.500m)
+[  259.940400] [35] [  INFO] [ap] [phywear] result pendulum: 3.3583 m/s^2 (T=2.424s f=0.412Hz L=0.500m)
+[  261.014155] [35] [  INFO] [ap] [phywear] result pendulum: 3.4347 m/s^2 (T=2.397s f=0.417Hz L=0.500m)
+[  262.071338] [35] [  INFO] [ap] [phywear] result pendulum: 3.4409 m/s^2 (T=2.395s f=0.418Hz L=0.500m)
+[  263.188464] [35] [  INFO] [ap] [phywear] result pendulum: 3.4214 m/s^2 (T=2.402s f=0.416Hz L=0.500m)
+[  264.238773] [35] [  INFO] [ap] [phywear] result pendulum: 3.3970 m/s^2 (T=2.411s f=0.415Hz L=0.500m)
+[  265.302084] [35] [  INFO] [ap] [phywear] result pendulum: 3.3630 m/s^2 (T=2.423s f=0.413Hz L=0.500m)
+[  266.380752] [35] [  INFO] [ap] [phywear] result pendulum: 3.3184 m/s^2 (T=2.439s f=0.410Hz L=0.500m)
+[  267.495869] [35] [  INFO] [ap] [phywear] result pendulum: 3.2884 m/s^2 (T=2.450s f=0.408Hz L=0.500m)
+[  268.501640] [35] [  INFO] [ap] [phywear] result pendulum: 3.3967 m/s^2 (T=2.411s f=0.415Hz L=0.500m)
+[  269.597422] [35] [  INFO] [ap] [phywear] result pendulum: 3.4601 m/s^2 (T=2.388s f=0.419Hz L=0.500m)
+[  270.711873] [35] [  INFO] [ap] [phywear] result pendulum: 3.5439 m/s^2 (T=2.360s f=0.424Hz L=0.500m)
+[  271.817202] [35] [  INFO] [ap] [phywear] result pendulum: 3.5801 m/s^2 (T=2.348s f=0.426Hz L=0.500m)
+[  272.909812] [35] [  INFO] [ap] [phywear] result pendulum: 3.5668 m/s^2 (T=2.352s f=0.425Hz L=0.500m)
+[  273.989918] [35] [  INFO] [ap] [phywear] result pendulum: 3.5126 m/s^2 (T=2.371s f=0.422Hz L=0.500m)
+[  275.057122] [35] [  INFO] [ap] [phywear] result pendulum: 3.4255 m/s^2 (T=2.401s f=0.417Hz L=0.500m)
+[  276.194047] [35] [  INFO] [ap] [phywear] result pendulum: 3.3978 m/s^2 (T=2.410s f=0.415Hz L=0.500m)
+[  277.291633] [35] [  INFO] [ap] [phywear] result pendulum: 3.4234 m/s^2 (T=2.401s f=0.416Hz L=0.500m)
+[  278.392438] [35] [  INFO] [ap] [phywear] result pendulum: 3.4485 m/s^2 (T=2.392s f=0.418Hz L=0.500m)
+[  279.050251] [35] [  INFO] [ap] [phywear] alive t=279s loops/s=24 fps=24
+[  279.518962] [35] [  INFO] [ap] [phywear] result pendulum: 3.4665 m/s^2 (T=2.386s f=0.419Hz L=0.500m)
+[  280.604624] [35] [  INFO] [ap] [phywear] result pendulum: 3.5010 m/s^2 (T=2.374s f=0.421Hz L=0.500m)
+[  281.738408] [35] [  INFO] [ap] [phywear] result pendulum: 3.5167 m/s^2 (T=2.369s f=0.422Hz L=0.500m)
+[  282.834310] [35] [  INFO] [ap] [phywear] result pendulum: 3.5377 m/s^2 (T=2.362s f=0.423Hz L=0.500m)
+[  283.916820] [35] [  INFO] [ap] [phywear] result pendulum: 3.5300 m/s^2 (T=2.365s f=0.423Hz L=0.500m)
+[  284.969314] [35] [  INFO] [ap] [phywear] result pendulum: 3.4435 m/s^2 (T=2.394s f=0.418Hz L=0.500m)
+[  286.102250] [35] [  INFO] [ap] [phywear] result pendulum: 3.4186 m/s^2 (T=2.403s f=0.416Hz L=0.500m)
+[  287.166289] [35] [  INFO] [ap] [phywear] result pendulum: 3.4123 m/s^2 (T=2.405s f=0.416Hz L=0.500m)
+[  288.244656] [35] [  INFO] [ap] [phywear] result pendulum: 3.3570 m/s^2 (T=2.425s f=0.412Hz L=0.500m)
+[  289.308603] [35] [  INFO] [ap] [phywear] result pendulum: 3.3370 m/s^2 (T=2.432s f=0.411Hz L=0.500m)
+[  290.366548] [35] [  INFO] [ap] [phywear] result pendulum: 3.3388 m/s^2 (T=2.431s f=0.411Hz L=0.500m)
+[  291.428511] [35] [  INFO] [ap] [phywear] result pendulum: 3.3144 m/s^2 (T=2.440s f=0.410Hz L=0.500m)
+[  291.922132] [35] [  WARN] [ap] [phywear] t=291s PhyWear 巡检：检测到持续摆动（窗口振幅 0.54 g，持续 2.5 s）。请跑单摆实验测重力加速度 g 并解释结果。
+[  291.924479] [35] [  INFO] [ap] [phywear] ai-coach: PhyWear 巡检：检测到持续摆动（窗口振幅 0.54 g，持续 2.5 s）。请跑单摆实验测重力加速度 g 并解释结果。
+[  291.927098] [25] [  INFO] [ap] [agent] Processing message from local_client:phywear-coach
+[  291.930537] [25] [  INFO] [ap] [tools] Executing tool: phywear_run_experiment
+[  291.975638] [35] [  INFO] [ap] [phywear] pw_scope: slot 4, 5/6 in use
+[  293.583655] [35] [  INFO] [ap] [phywear] result pendulum: 1.6307 m/s^2 (T=3.479s f=0.287Hz L=0.500m)
+[  293.619145] [25] [  INFO] [ap] [agent] NL fast path: phywear_run_experiment (fast=5 llm=0)
+[  293.621697] [15] [  INFO] [ap] [agent] Dispatching response → local_client:phywear-coach
+[  293.625013] [15] [  INFO] [ap] [phywear] ai-coach: AI: 已自动测重力加速度: g = 1.63 m/s^2 (T = 3.479 s)
+[  294.648301] [35] [  INFO] [ap] [phywear] result pendulum: 1.9243 m/s^2 (T=3.203s f=0.312Hz L=0.500m)
+[  295.764521] [35] [  INFO] [ap] [phywear] result pendulum: 1.9287 m/s^2 (T=3.199s f=0.313Hz L=0.500m)
+[  296.802935] [35] [  INFO] [ap] [phywear] result pendulum: 2.0279 m/s^2 (T=3.120s f=0.321Hz L=0.500m)
+[  297.876820] [35] [  INFO] [ap] [phywear] result pendulum: 2.1982 m/s^2 (T=2.997s f=0.334Hz L=0.500m)
+[  298.945170] [35] [  INFO] [ap] [phywear] result pendulum: 2.3276 m/s^2 (T=2.912s f=0.343Hz L=0.500m)
+[  300.014470] [35] [  INFO] [ap] [phywear] result pendulum: 2.4418 m/s^2 (T=2.843s f=0.352Hz L=0.500m)
+[  301.099849] [35] [  INFO] [ap] [phywear] result pendulum: 2.5090 m/s^2 (T=2.805s f=0.357Hz L=0.500m)
+[  302.226970] [35] [  INFO] [ap] [phywear] result pendulum: 2.5333 m/s^2 (T=2.791s f=0.358Hz L=0.500m)
+[  303.302533] [35] [  INFO] [ap] [phywear] result pendulum: 2.6098 m/s^2 (T=2.750s f=0.364Hz L=0.500m)
+[  304.394014] [35] [  INFO] [ap] [phywear] result pendulum: 2.5822 m/s^2 (T=2.765s f=0.362Hz L=0.500m)
+[  305.483668] [35] [  INFO] [ap] [phywear] result pendulum: 2.6422 m/s^2 (T=2.733s f=0.366Hz L=0.500m)
+[  306.552811] [35] [  INFO] [ap] [phywear] result pendulum: 2.6660 m/s^2 (T=2.721s f=0.368Hz L=0.500m)
+[  307.641257] [35] [  INFO] [ap] [phywear] result pendulum: 2.5736 m/s^2 (T=2.769s f=0.361Hz L=0.500m)
+[  308.708129] [35] [  INFO] [ap] [phywear] result pendulum: 2.5391 m/s^2 (T=2.788s f=0.359Hz L=0.500m)
+[  309.008848] [35] [  INFO] [ap] [phywear] alive t=309s loops/s=23 fps=23
+[  309.785842] [35] [  INFO] [ap] [phywear] result pendulum: 2.5224 m/s^2 (T=2.797s f=0.357Hz L=0.500m)
+[  310.897789] [35] [  INFO] [ap] [phywear] result pendulum: 2.5438 m/s^2 (T=2.786s f=0.359Hz L=0.500m)
+[  311.977085] [35] [  INFO] [ap] [phywear] result pendulum: 2.5653 m/s^2 (T=2.774s f=0.360Hz L=0.500m)
+[  313.053422] [35] [  INFO] [ap] [phywear] result pendulum: 2.5444 m/s^2 (T=2.785s f=0.359Hz L=0.500m)
+[  314.138907] [35] [  INFO] [ap] [phywear] result pendulum: 2.5921 m/s^2 (T=2.760s f=0.362Hz L=0.500m)
+[  315.217444] [35] [  INFO] [ap] [phywear] result pendulum: 2.6174 m/s^2 (T=2.746s f=0.364Hz L=0.500m)
+[  316.336659] [35] [  INFO] [ap] [phywear] result pendulum: 2.5635 m/s^2 (T=2.775s f=0.360Hz L=0.500m)
+[  317.417996] [35] [  INFO] [ap] [phywear] result pendulum: 2.5697 m/s^2 (T=2.772s f=0.361Hz L=0.500m)
+[  318.494956] [35] [  INFO] [ap] [phywear] result pendulum: 2.6186 m/s^2 (T=2.746s f=0.364Hz L=0.500m)
+[  319.592760] [35] [  INFO] [ap] [phywear] result pendulum: 2.6707 m/s^2 (T=2.719s f=0.368Hz L=0.500m)
+[  320.673236] [35] [  INFO] [ap] [phywear] result pendulum: 2.5758 m/s^2 (T=2.768s f=0.361Hz L=0.500m)
+[  321.762716] [35] [  INFO] [ap] [phywear] result pendulum: 2.5458 m/s^2 (T=2.785s f=0.359Hz L=0.500m)
+[  322.835950] [35] [  INFO] [ap] [phywear] result pendulum: 2.5944 m/s^2 (T=2.758s f=0.363Hz L=0.500m)
+[  323.910851] [35] [  INFO] [ap] [phywear] result pendulum: 2.5682 m/s^2 (T=2.772s f=0.361Hz L=0.500m)
+[  324.916676] [35] [  INFO] [ap] [phywear] result pendulum: 2.5531 m/s^2 (T=2.781s f=0.360Hz L=0.500m)
+[  325.998149] [35] [  INFO] [ap] [phywear] result pendulum: 2.6565 m/s^2 (T=2.726s f=0.367Hz L=0.500m)
+[  327.074474] [35] [  INFO] [ap] [phywear] result pendulum: 2.6726 m/s^2 (T=2.718s f=0.368Hz L=0.500m)
+[  328.143599] [35] [  INFO] [ap] [phywear] result pendulum: 2.5969 m/s^2 (T=2.757s f=0.363Hz L=0.500m)
+[  329.213921] [35] [  INFO] [ap] [phywear] result pendulum: 2.5280 m/s^2 (T=2.794s f=0.358Hz L=0.500m)
+[  330.282365] [35] [  INFO] [ap] [phywear] result pendulum: 2.5257 m/s^2 (T=2.796s f=0.358Hz L=0.500m)
+[  331.370218] [35] [  INFO] [ap] [phywear] result pendulum: 2.5234 m/s^2 (T=2.797s f=0.358Hz L=0.500m)
+[  332.441700] [35] [  INFO] [ap] [phywear] result pendulum: 2.5186 m/s^2 (T=2.800s f=0.357Hz L=0.500m)
+[  333.513689] [35] [  INFO] [ap] [phywear] result pendulum: 2.5235 m/s^2 (T=2.797s f=0.358Hz L=0.500m)
+[  334.583323] [35] [  INFO] [ap] [phywear] result pendulum: 2.5313 m/s^2 (T=2.793s f=0.358Hz L=0.500m)
+[  335.680112] [35] [  INFO] [ap] [phywear] result pendulum: 2.5274 m/s^2 (T=2.795s f=0.358Hz L=0.500m)
+[  336.803792] [35] [  INFO] [ap] [phywear] result pendulum: 2.5489 m/s^2 (T=2.783s f=0.359Hz L=0.500m)
+[  337.887885] [35] [  INFO] [ap] [phywear] result pendulum: 2.6527 m/s^2 (T=2.728s f=0.367Hz L=0.500m)
+[  338.965448] [35] [  INFO] [ap] [phywear] result pendulum: 2.6912 m/s^2 (T=2.708s f=0.369Hz L=0.500m)
+[  339.000305] [35] [  INFO] [ap] [phywear] alive t=339s loops/s=22 fps=22
+[  340.053715] [35] [  INFO] [ap] [phywear] result pendulum: 2.6331 m/s^2 (T=2.738s f=0.365Hz L=0.500m)
+[  341.175263] [35] [  INFO] [ap] [phywear] result pendulum: 2.5903 m/s^2 (T=2.761s f=0.362Hz L=0.500m)
+[  342.268453] [35] [  INFO] [ap] [phywear] result pendulum: 2.6457 m/s^2 (T=2.731s f=0.366Hz L=0.500m)
+[  343.369178] [35] [  INFO] [ap] [phywear] result pendulum: 2.6943 m/s^2 (T=2.707s f=0.369Hz L=0.500m)
+[  344.472753] [35] [  INFO] [ap] [phywear] result pendulum: 2.6815 m/s^2 (T=2.713s f=0.369Hz L=0.500m)
+[  345.548874] [35] [  INFO] [ap] [phywear] result pendulum: 2.5866 m/s^2 (T=2.763s f=0.362Hz L=0.500m)
+[  346.652954] [35] [  INFO] [ap] [phywear] result pendulum: 2.6557 m/s^2 (T=2.726s f=0.367Hz L=0.500m)
+[  347.747868] [35] [  INFO] [ap] [phywear] result pendulum: 2.6892 m/s^2 (T=2.709s f=0.369Hz L=0.500m)
+[  348.828941] [35] [  INFO] [ap] [phywear] result pendulum: 2.6409 m/s^2 (T=2.734s f=0.366Hz L=0.500m)
+[  349.912429] [35] [  INFO] [ap] [phywear] result pendulum: 2.5631 m/s^2 (T=2.775s f=0.360Hz L=0.500m)
+[  350.985472] [35] [  INFO] [ap] [phywear] result pendulum: 2.5897 m/s^2 (T=2.761s f=0.362Hz L=0.500m)
+[  352.068479] [35] [  INFO] [ap] [phywear] result pendulum: 2.5671 m/s^2 (T=2.773s f=0.361Hz L=0.500m)
+[  352.104932] [35] [  WARN] [ap] [phywear] t=352s PhyWear 巡检：检测到持续摆动（窗口振幅 0.54 g，持续 2.5 s）。请跑单摆实验测重力加速度 g 并解释结果。
+[  352.107402] [35] [  INFO] [ap] [phywear] ai-coach: PhyWear 巡检：检测到持续摆动（窗口振幅 0.54 g，持续 2.5 s）。请跑单摆实验测重力加速度 g 并解释结果。
+[  352.110117] [25] [  INFO] [ap] [agent] Processing message from local_client:phywear-coach
+[  352.113986] [25] [  INFO] [ap] [tools] Executing tool: phywear_run_experiment
+[  352.158967] [35] [  INFO] [ap] [phywear] pw_scope: slot 5, 6/6 in use
+[  353.816888] [35] [  INFO] [ap] [phywear] result pendulum: 1.6130 m/s^2 (T=3.498s f=0.286Hz L=0.500m)
+[  353.919771] [25] [  INFO] [ap] [agent] NL fast path: phywear_run_experiment (fast=6 llm=0)
+[  353.922325] [15] [  INFO] [ap] [agent] Dispatching response → local_client:phywear-coach
+[  353.924808] [15] [  INFO] [ap] [phywear] ai-coach: AI: 已自动测重力加速度: g = 1.61 m/s^2 (T = 3.498 s)
+[  354.903990] [35] [  INFO] [ap] [phywear] result pendulum: 1.5279 m/s^2 (T=3.594s f=0.278Hz L=0.500m)
+[  355.958596] [35] [  INFO] [ap] [phywear] result pendulum: 1.6422 m/s^2 (T=3.467s f=0.288Hz L=0.500m)
+[  357.044875] [35] [  INFO] [ap] [phywear] result pendulum: 1.7274 m/s^2 (T=3.380s f=0.296Hz L=0.500m)
+[  358.168104] [35] [  INFO] [ap] [phywear] result pendulum: 1.9053 m/s^2 (T=3.219s f=0.311Hz L=0.500m)
+[  359.169421] [35] [  INFO] [ap] [phywear] result pendulum: 2.0374 m/s^2 (T=3.113s f=0.321Hz L=0.500m)
+[  360.196957] [35] [  INFO] [ap] [phywear] result pendulum: 2.1802 m/s^2 (T=3.009s f=0.332Hz L=0.500m)
+[  361.235665] [35] [  INFO] [ap] [phywear] result pendulum: 2.1876 m/s^2 (T=3.004s f=0.333Hz L=0.500m)
+[  362.260017] [35] [  INFO] [ap] [phywear] result pendulum: 2.3012 m/s^2 (T=2.929s f=0.341Hz L=0.500m)
+[  363.368756] [35] [  INFO] [ap] [phywear] result pendulum: 2.3171 m/s^2 (T=2.919s f=0.343Hz L=0.500m)
+[  364.383722] [35] [  INFO] [ap] [phywear] result pendulum: 2.2348 m/s^2 (T=2.972s f=0.336Hz L=0.500m)
+[  365.384989] [35] [  INFO] [ap] [phywear] result pendulum: 2.2874 m/s^2 (T=2.938s f=0.340Hz L=0.500m)
+[  366.384447] [35] [  INFO] [ap] [phywear] result pendulum: 2.1987 m/s^2 (T=2.996s f=0.334Hz L=0.500m)
+[  367.540047] [35] [  INFO] [ap] [phywear] result pendulum: 2.1843 m/s^2 (T=3.006s f=0.333Hz L=0.500m)
+[  368.638163] [35] [  INFO] [ap] [phywear] result pendulum: 2.1961 m/s^2 (T=2.998s f=0.334Hz L=0.500m)
+[  369.054762] [35] [  INFO] [ap] [phywear] alive t=369s loops/s=21 fps=21
+[  369.763679] [35] [  INFO] [ap] [phywear] result pendulum: 2.2020 m/s^2 (T=2.994s f=0.334Hz L=0.500m)
+[  370.862329] [35] [  INFO] [ap] [phywear] result pendulum: 2.1993 m/s^2 (T=2.996s f=0.334Hz L=0.500m)
+[  371.979899] [35] [  INFO] [ap] [phywear] result pendulum: 2.1489 m/s^2 (T=3.031s f=0.330Hz L=0.500m)
+[  373.077560] [35] [  INFO] [ap] [phywear] result pendulum: 2.1017 m/s^2 (T=3.065s f=0.326Hz L=0.500m)
+[  374.104916] [35] [  INFO] [ap] [phywear] result pendulum: 2.1907 m/s^2 (T=3.002s f=0.333Hz L=0.500m)
+[  375.232389] [35] [  INFO] [ap] [phywear] result pendulum: 2.1973 m/s^2 (T=2.997s f=0.334Hz L=0.500m)
+[  376.327399] [35] [  INFO] [ap] [phywear] result pendulum: 2.1810 m/s^2 (T=3.008s f=0.332Hz L=0.500m)
+[  377.443423] [35] [  INFO] [ap] [phywear] result pendulum: 2.1624 m/s^2 (T=3.021s f=0.331Hz L=0.500m)
+[  378.535248] [35] [  INFO] [ap] [phywear] result pendulum: 2.1582 m/s^2 (T=3.024s f=0.331Hz L=0.500m)
+[  379.651796] [35] [  INFO] [ap] [phywear] result pendulum: 2.1730 m/s^2 (T=3.014s f=0.332Hz L=0.500m)
+[  380.753975] [35] [  INFO] [ap] [phywear] result pendulum: 2.1292 m/s^2 (T=3.045s f=0.328Hz L=0.500m)
+[  381.883780] [35] [  INFO] [ap] [phywear] result pendulum: 2.1012 m/s^2 (T=3.065s f=0.326Hz L=0.500m)
+[  382.982136] [35] [  INFO] [ap] [phywear] result pendulum: 2.1566 m/s^2 (T=3.025s f=0.331Hz L=0.500m)
+[  384.108612] [35] [  INFO] [ap] [phywear] result pendulum: 2.1920 m/s^2 (T=3.001s f=0.333Hz L=0.500m)
+[  385.212427] [35] [  INFO] [ap] [phywear] result pendulum: 2.1877 m/s^2 (T=3.004s f=0.333Hz L=0.500m)
+[  386.335441] [35] [  INFO] [ap] [phywear] result pendulum: 2.1463 m/s^2 (T=3.033s f=0.330Hz L=0.500m)
+[  387.445503] [35] [  INFO] [ap] [phywear] result pendulum: 2.1230 m/s^2 (T=3.049s f=0.328Hz L=0.500m)
+[  388.560905] [35] [  INFO] [ap] [phywear] result pendulum: 2.1817 m/s^2 (T=3.008s f=0.332Hz L=0.500m)
+[  389.659621] [35] [  INFO] [ap] [phywear] result pendulum: 2.1895 m/s^2 (T=3.003s f=0.333Hz L=0.500m)
+[  390.784640] [35] [  INFO] [ap] [phywear] result pendulum: 2.1717 m/s^2 (T=3.015s f=0.332Hz L=0.500m)
+[  391.791328] [35] [  INFO] [ap] [phywear] result pendulum: 2.1267 m/s^2 (T=3.047s f=0.328Hz L=0.500m)
+[  392.805601] [35] [  INFO] [ap] [phywear] result pendulum: 2.2006 m/s^2 (T=2.995s f=0.334Hz L=0.500m)
+[  393.806708] [35] [  INFO] [ap] [phywear] result pendulum: 2.1830 m/s^2 (T=3.007s f=0.333Hz L=0.500m)
+[  394.810133] [35] [  INFO] [ap] [phywear] result pendulum: 2.2110 m/s^2 (T=2.988s f=0.335Hz L=0.500m)
+[  395.820165] [35] [  INFO] [ap] [phywear] result pendulum: 2.2068 m/s^2 (T=2.991s f=0.334Hz L=0.500m)
+[  396.823500] [35] [  INFO] [ap] [phywear] result pendulum: 2.1902 m/s^2 (T=3.002s f=0.333Hz L=0.500m)
+[  397.833214] [35] [  INFO] [ap] [phywear] result pendulum: 2.2311 m/s^2 (T=2.974s f=0.336Hz L=0.500m)
+[  398.837404] [35] [  INFO] [ap] [phywear] result pendulum: 2.1942 m/s^2 (T=2.999s f=0.333Hz L=0.500m)
+[  399.018168] [35] [  INFO] [ap] [phywear] alive t=399s loops/s=20 fps=20
+[  399.852509] [35] [  INFO] [ap] [phywear] result pendulum: 2.2113 m/s^2 (T=2.988s f=0.335Hz L=0.500m)
+[  400.860438] [35] [  INFO] [ap] [phywear] result pendulum: 2.2228 m/s^2 (T=2.980s f=0.336Hz L=0.500m)
+[  401.872454] [35] [  INFO] [ap] [phywear] result pendulum: 2.1940 m/s^2 (T=2.999s f=0.333Hz L=0.500m)
+[  402.877083] [35] [  INFO] [ap] [phywear] result pendulum: 2.2488 m/s^2 (T=2.963s f=0.338Hz L=0.500m)
+[  404.012864] [35] [  INFO] [ap] [phywear] result pendulum: 2.2245 m/s^2 (T=2.979s f=0.336Hz L=0.500m)
+[  405.015026] [35] [  INFO] [ap] [phywear] result pendulum: 2.1968 m/s^2 (T=2.998s f=0.334Hz L=0.500m)
+[  406.019966] [35] [  INFO] [ap] [phywear] result pendulum: 2.2464 m/s^2 (T=2.964s f=0.337Hz L=0.500m)
+[  407.155907] [35] [  INFO] [ap] [phywear] result pendulum: 2.2347 m/s^2 (T=2.972s f=0.336Hz L=0.500m)
+[  408.194264] [35] [  INFO] [ap] [phywear] result pendulum: 2.1943 m/s^2 (T=2.999s f=0.333Hz L=0.500m)
+[  409.223326] [35] [  INFO] [ap] [phywear] result pendulum: 2.2513 m/s^2 (T=2.961s f=0.338Hz L=0.500m)
+[  410.249267] [35] [  INFO] [ap] [phywear] result pendulum: 2.2787 m/s^2 (T=2.943s f=0.340Hz L=0.500m)
+[  411.275056] [35] [  INFO] [ap] [phywear] result pendulum: 2.2791 m/s^2 (T=2.943s f=0.340Hz L=0.500m)
+[  412.301845] [35] [  INFO] [ap] [phywear] result pendulum: 2.3519 m/s^2 (T=2.897s f=0.345Hz L=0.500m)
+[  413.330500] [35] [  INFO] [ap] [phywear] result pendulum: 2.2910 m/s^2 (T=2.935s f=0.341Hz L=0.500m)
+[  414.337158] [35] [  INFO] [ap] [phywear] result pendulum: 2.2853 m/s^2 (T=2.939s f=0.340Hz L=0.500m)
+[  414.730582] [35] [  WARN] [ap] [phywear] t=414s PhyWear 巡检：检测到持续摆动（窗口振幅 0.54 g，持续 2.5 s）。请跑单摆实验测重力加速度 g 并解释结果。
+[  414.733250] [35] [  INFO] [ap] [phywear] ai-coach: PhyWear 巡检：检测到持续摆动（窗口振幅 0.54 g，持续 2.5 s）。请跑单摆实验测重力加速度 g 并解释结果。
+[  414.735897] [25] [  INFO] [ap] [agent] Processing message from local_client:phywear-coach
+[  414.739632] [25] [  INFO] [ap] [tools] Executing tool: phywear_run_experiment
+[  414.789763] [35] [  WARN] [ap] [phywear] pw_scope: out of slots (6 in use)
+[  414.792947] [35] [ ALERT] [ap] dump_assert_info: Current Version: NuttX  0.0.0 c977ace81d Sep 15 2026 20:28:58 arm64
+[  414.794320] [35] [ ALERT] [ap] dump_assert_info: Assertion failed panic: at file: /arch/arm64/src/common/arm64_fatal.c:571 task: phywear process: phywear 0x40baa980
+[  414.795706] [35] [ ALERT] [ap] up_dump_register: stack = 0x4194ef00
+[  414.796429] [35] [ ALERT] [ap] up_dump_register: x0:   0x4194ef00          x1:   0x23b
+[  414.797360] [35] [ ALERT] [ap] up_dump_register: x2:   0x41528dd0          x3:   0x1
+[  414.798136] [35] [ ALERT] [ap] up_dump_register: x4:   0x1                 x5:   0x41b6c8c0
+[  414.799017] [35] [ ALERT] [ap] up_dump_register: x6:   0x1                 x7:   0x48000000
+[  414.799944] [35] [ ALERT] [ap] up_dump_register: x8:   0xa                 x9:   0x96000006
+[  414.800670] [35] [ ALERT] [ap] up_dump_register: x10:  0x25                x11:  0x0
+[  414.801313] [35] [ ALERT] [ap] up_dump_register: x12:  0x101010101010101   x13:  0x10
+[  414.802090] [35] [ ALERT] [ap] up_dump_register: x14:  0xffffffffffffffe   x15:  0x18
+[  414.802737] [35] [ ALERT] [ap] up_dump_register: x16:  0x23                x17:  0x0
+[  414.803603] [35] [ ALERT] [ap] up_dump_register: x18:  0xa                 x19:  0x41b6c8c0
+[  414.804284] [35] [ ALERT] [ap] up_dump_register: x20:  0x41528dd0          x21:  0x41528da8
+[  414.805074] [35] [ ALERT] [ap] up_dump_register: x22:  0x4194ef00          x23:  0x4190c000
+[  414.805779] [35] [ ALERT] [ap] up_dump_register: x24:  0x4194d000          x25:  0x23b
+[  414.806465] [35] [ ALERT] [ap] up_dump_register: x26:  0x1                 x27:  0x6
+[  414.807350] [35] [ ALERT] [ap] up_dump_register: x28:  0xffffc784          x29:  0x424839b0
+[  414.808221] [35] [ ALERT] [ap] up_dump_register: x30:  0x4031560c        
+[  414.809056] [35] [ ALERT] [ap] up_dump_register: 
+[  414.809439] [35] [ ALERT] [ap] up_dump_register: STATUS Registers:
+[  414.810013] [35] [ ALERT] [ap] up_dump_register: PC:        0x4031560c        
+[  414.810895] [35] [ ALERT] [ap] up_dump_register: SPSR:      0x60000045        
+[  414.811486] [35] [ ALERT] [ap] up_dump_register: ELR:       0x4031560c        
+[  414.812245] [35] [ ALERT] [ap] up_dump_register: SP_EL0:    0x0               
+[  414.812812] [35] [ ALERT] [ap] up_dump_register: SP:        0x424838a0        
+[  414.813452] [35] [ ALERT] [ap] up_dump_register: EXE_DEPTH: 0x0               
+[  414.814190] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  414.814760] [35] [ ALERT] [ap] sched_dumpstack: [35] [<0x40c25664>] lv_obj_get_local_style_prop+0x44/0x120
+[  414.817462] [35] [ ALERT] [ap] sched_dumpstack: [35] [<0x40c1ab64>] lv_obj_set_pos+0x44/0x110
+[  414.819854] [35] [ ALERT] [ap] sched_dumpstack: [35] [<0x40bba090>] pw_pendulum_screen+0x5f0/0xfa0
+[  414.822290] [35] [ ALERT] [ap] sched_dumpstack: [35] [<0x40baa6dc>] pw_cap_open+0xcc/0x370
+[  414.824561] [35] [ ALERT] [ap] sched_dumpstack: [35] [<0x40bae720>] pw_ai_poll+0x190/0x260
+[  414.826674] [35] [ ALERT] [ap] sched_dumpstack: [35] [<0x40bab204>] phywear_main+0x884/0x2d80
+[  414.828865] [35] [ ALERT] [ap] sched_dumpstack: [35] [<0x403e4068>] nxtask_startup+0x38/0x60
+[  414.830812] [35] [ ALERT] [ap] sched_dumpstack: [35] [<0x4031e2a8>] nxtask_start+0xf8/0x120
+[  414.832740] [35] [ ALERT] [ap] dump_tasks:    PID GROUP PRI POLICY   TYPE    NPX STATE   EVENT      SIGMASK          STACKBASE  STACKSIZE      USED   FILLED    COMMAND
+[  414.834324] [35] [ ALERT] [ap] dump_tasks:   ----   --- --- -------- ------- --- ------- ---------- ---------------- 0x41b54000      4096       968    23.6%    irq
+[  414.836138] [35] [ ALERT] [ap] dump_task:       0     0   0 FIFO     Kthread -   Ready              0000000000000000 0x41b550d0      7984      2120    26.5%    CPU0 IDLE
+[  414.837885] [35] [ ALERT] [ap] dump_task:       1     0 192 RR       Kthread -   Waiting Semaphore  0000000000000000 0x4196a420      7920      1488    18.7%    hpwork 0x4190c400 0x4190c480
+[  414.839468] [35] [ ALERT] [ap] dump_task:       2     0 100 RR       Kthread -   Waiting Semaphore  0000000000000000 0x41968420      7920      1152    14.5%    lpwork 0x4190c340 0x4190c3c0
+[  414.841013] [35] [ ALERT] [ap] dump_task:      35    35 100 RR       Task    -   Running            0000000000000000 0x42480d10     16112     11656    72.3%    phywear cap root
+[  414.842854] [35] [ ALERT] [ap] dump_task:       5     0 100 RR       Kthread -   Waiting Semaphore  0000000000000000 0x423a40a0      7920      1680    21.2%    goldfish_gnss_thread 0x423a3ee0
+[  414.845032] [35] [ ALERT] [ap] dump_task:       6     0 100 RR       Kthread -   Waiting Semaphore  0000000000000000 0x423a60c0      7920      1760    22.2%    goldfish_sensor_thread 0x41bbe0c0
+[  414.846760] [35] [ ALERT] [ap] dump_task:       7     7 100 RR       Task    -   Waiting Semaphore  0000000000000000 0x423aa080      7952      3552    44.6%    nsh_main
+[  414.848356] [35] [ ALERT] [ap] dump_task:       9     9 100 RR       Task    -   Waiting Semaphore  0000000000000000 0x423ad0b0      7952      4000    50.3%    kvdbd
+[  414.849713] [35] [ ALERT] [ap] dump_task:      10    10 100 RR       Task    -   Waiting Semaphore  0000000000000000 0x423af0d0      7952      3208    40.3%    servicemanager
+[  414.851124] [35] [ ALERT] [ap] dump_task:      11    11 100 RR       Task    -   Waiting Semaphore  0000000000000000 0x423b10f0      7952      2360    29.6%    adbd
+[  414.853728] [35] [ ALERT] [ap] dump_task:      12    12 245 RR       Task    -   Waiting Semaphore  0000000000000000 0x423b3110     81680      8536    10.4%    mediad
+[  414.855006] [35] [ ALERT] [ap] dump_task:      13    13 100 RR       Task    -   Waiting Semaphore  0000000000020000 0x423e60b0      7952      2256    28.3%    telnetd
+[  414.856858] [35] [ ALERT] [ap] dump_task:      14    14 100 RR       Task    -   Waiting Signal     0000000000000000 0x424420b0     32528      4336    13.3%    ai_agent
+[  414.858650] [35] [ ALERT] [ap] dump_task:      15    14  50 FIFO     pthread -   Waiting Semaphore  0000000000000000 0x4246ec50     16176      3440    21.2%    ai_agent 0x40b7c1f0 0x42441d90
+[  414.860512] [35] [ ALERT] [ap] dump_task:      19    14  50 FIFO     pthread -   Waiting MQ empty   0000000000000000 0x42472c70     16176      2912    18.0%    ai_agent 0x40b7c1f0 0x4244b850
+[  414.862168] [35] [ ALERT] [ap] dump_task:      20    14  40 FIFO     pthread -   Waiting Semaphore  0000000000000000 0x41b5e040      7984      1504    18.8%    ai_agent 0x40b8d6b0 0x4244b7e0
+[  414.863611] [35] [ ALERT] [ap] dump_task:      24    14   3 FIFO     pthread -   Waiting Signal     0000000000000000 0x42476c90      7984      1280    16.0%    ai_agent 0x40b8f280 0x4244b8c0
+[  414.865441] [35] [ ALERT] [ap] dump_task:      25    14  60 FIFO     pthread -   Waiting Signal     0000000000000000 0x42478cb0     32560     10560    32.4%    ai_agent 0x40b7e510 0x4244b700
+[  414.867023] [35] [ ALERT] [ap] dump_task:      27    14  30 FIFO     pthread -   Waiting Semaphore  0000000000000000 0x42484cf0     16176      4576    28.2%    ai_agent 0x40b8f880 0x4244b770
+[  414.868770] [35] [ ALERT] [ap] dump_task:      31    14  50 RR       pthread -   Waiting Semaphore  0000000000000000 0x42499970     16176      1600     9.8%    ai_agent 0x40b93a50 0
+[  414.870172] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  414.870688] [35] [ ALERT] [ap] sched_dumpstack: [ 0] [<0x40347bc8>] up_idle+0x28/0x50
+[  414.872357] [35] [ ALERT] [ap] sched_dumpstack: [ 0] [<0x40314d24>] nx_start+0x294/0x300
+[  414.874070] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  414.874681] [35] [ ALERT] [ap] sched_dumpstack: [ 1] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  414.876338] [35] [ ALERT] [ap] sched_dumpstack: [ 1] [<0x40319a8c>] nxsem_wait_slow+0x19c/0x320
+[  414.878129] [35] [ ALERT] [ap] sched_dumpstack: [ 1] [<0x40320d0c>] work_thread+0x1ac/0x220
+[  414.879796] [35] [ ALERT] [ap] sched_dumpstack: [ 1] [<0x4031e260>] nxtask_start+0xb0/0x120
+[  414.881551] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  414.882009] [35] [ ALERT] [ap] sched_dumpstack: [ 2] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  414.883854] [35] [ ALERT] [ap] sched_dumpstack: [ 2] [<0x40319a8c>] nxsem_wait_slow+0x19c/0x320
+[  414.885725] [35] [ ALERT] [ap] sched_dumpstack: [ 2] [<0x40320d0c>] work_thread+0x1ac/0x220
+[  414.887550] [35] [ ALERT] [ap] sched_dumpstack: [ 2] [<0x4031e260>] nxtask_start+0xb0/0x120
+[  414.889596] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  414.890038] [35] [ ALERT] [ap] sched_dumpstack: [35] [<0x40c25664>] lv_obj_get_local_style_prop+0x44/0x120
+[  414.892508] [35] [ ALERT] [ap] sched_dumpstack: [35] [<0x40c1ab64>] lv_obj_set_pos+0x44/0x110
+[  414.894845] [35] [ ALERT] [ap] sched_dumpstack: [35] [<0x40bba090>] pw_pendulum_screen+0x5f0/0xfa0
+[  414.897417] [35] [ ALERT] [ap] sched_dumpstack: [35] [<0x40baa6dc>] pw_cap_open+0xcc/0x370
+[  414.899764] [35] [ ALERT] [ap] sched_dumpstack: [35] [<0x40bae720>] pw_ai_poll+0x190/0x260
+[  414.901985] [35] [ ALERT] [ap] sched_dumpstack: [35] [<0x40bab204>] phywear_main+0x884/0x2d80
+[  414.904178] [35] [ ALERT] [ap] sched_dumpstack: [35] [<0x403e4068>] nxtask_startup+0x38/0x60
+[  414.906450] [35] [ ALERT] [ap] sched_dumpstack: [35] [<0x4031e2a8>] nxtask_start+0xf8/0x120
+[  414.908352] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  414.909003] [35] [ ALERT] [ap] sched_dumpstack: [ 5] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  414.911002] [35] [ ALERT] [ap] sched_dumpstack: [ 5] [<0x40319a8c>] nxsem_wait_slow+0x19c/0x320
+[  414.913127] [35] [ ALERT] [ap] sched_dumpstack: [ 5] [<0x40349bf8>] goldfish_pipe_transfer+0x2e8/0x460
+[  414.915277] [35] [ ALERT] [ap] sched_dumpstack: [ 5] [<0x403a4e3c>] file_read+0x12c/0x160
+[  414.917368] [35] [ ALERT] [ap] sched_dumpstack: [ 5] [<0x4034cf20>] goldfish_gnss_thread+0x70/0xc0
+[  414.919600] [35] [ ALERT] [ap] sched_dumpstack: [ 5] [<0x4031e260>] nxtask_start+0xb0/0x120
+[  414.921483] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  414.921957] [35] [ ALERT] [ap] sched_dumpstack: [ 6] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  414.923787] [35] [ ALERT] [ap] sched_dumpstack: [ 6] [<0x40319a8c>] nxsem_wait_slow+0x19c/0x320
+[  414.925855] [35] [ ALERT] [ap] sched_dumpstack: [ 6] [<0x40349bf8>] goldfish_pipe_transfer+0x2e8/0x460
+[  414.927812] [35] [ ALERT] [ap] sched_dumpstack: [ 6] [<0x403a4e3c>] file_read+0x12c/0x160
+[  414.929589] [35] [ ALERT] [ap] sched_dumpstack: [ 6] [<0x4034d528>] goldfish_sensor_parse_event+0x58/0xa40
+[  414.931612] [35] [ ALERT] [ap] sched_dumpstack: [ 6] [<0x4034df60>] goldfish_sensor_thread+0x50/0x60
+[  414.933356] [35] [ ALERT] [ap] sched_dumpstack: [ 6] [<0x4031e260>] nxtask_start+0xb0/0x120
+[  414.935258] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  414.935801] [35] [ ALERT] [ap] sched_dumpstack: [ 7] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  414.937549] [35] [ ALERT] [ap] sched_dumpstack: [ 7] [<0x40319a8c>] nxsem_wait_slow+0x19c/0x320
+[  414.939450] [35] [ ALERT] [ap] sched_dumpstack: [ 7] [<0x402aecb4>] uart_read+0xf34/0x1220
+[  414.941649] [35] [ ALERT] [ap] sched_dumpstack: [ 7] [<0x403a4c7c>] file_readv+0x15c/0x1f0
+[  414.943682] [35] [ ALERT] [ap] sched_dumpstack: [ 7] [<0x403a4fcc>] read+0x9c/0xc0
+[  414.945428] [35] [ ALERT] [ap] sched_dumpstack: [ 7] [<0x40337eec>] readline_getc+0x4c/0xc0
+[  414.947296] [35] [ ALERT] [ap] sched_dumpstack: [ 7] [<0x4033875c>] readline_common+0xac/0x590
+[  414.949582] [35] [ ALERT] [ap] sched_dumpstack: [ 7] [<0x40337fd8>] readline_fd+0x78/0x130
+[  414.951781] [35] [ ALERT] [ap] sched_dumpstack: [ 7] [<0x40342a0c>] nsh_session+0xbc/0x300
+[  414.953569] [35] [ ALERT] [ap] sched_dumpstack: [ 7] [<0x403362b0>] nsh_consolemain+0x50/0x90
+[  414.955480] [35] [ ALERT] [ap] sched_dumpstack: [ 7] [<0x40329624>] nsh_main+0x64/0xb0
+[  414.957263] [35] [ ALERT] [ap] sched_dumpstack: [ 7] [<0x403e4068>] nxtask_startup+0x38/0x60
+[  414.959346] [35] [ ALERT] [ap] sched_dumpstack: [ 7] [<0x4031e2a8>] nxtask_start+0xf8/0x120
+[  414.961396] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  414.961953] [35] [ ALERT] [ap] sched_dumpstack: [ 9] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  414.963810] [35] [ ALERT] [ap] sched_dumpstack: [ 9] [<0x40319a8c>] nxsem_wait_slow+0x19c/0x320
+[  414.965736] [35] [ ALERT] [ap] sched_dumpstack: [ 9] [<0x41122170>] epoll_wait+0x280/0x380
+[  414.968286] [35] [ ALERT] [ap] sched_dumpstack: [ 9] [<0x40be0a88>] kvdbd_main+0x148/0x980
+[  414.970754] [35] [ ALERT] [ap] sched_dumpstack: [ 9] [<0x403e4068>] nxtask_startup+0x38/0x60
+[  414.972815] [35] [ ALERT] [ap] sched_dumpstack: [ 9] [<0x4031e2a8>] nxtask_start+0xf8/0x120
+[  414.975012] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  414.975469] [35] [ ALERT] [ap] sched_dumpstack: [10] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  414.977632] [35] [ ALERT] [ap] sched_dumpstack: [10] [<0x40319a8c>] nxsem_wait_slow+0x19c/0x320
+[  414.979969] [35] [ ALERT] [ap] sched_dumpstack: [10] [<0x41122170>] epoll_wait+0x280/0x380
+[  414.982629] [35] [ ALERT] [ap] sched_dumpstack: [10] [<0x40db235c>] android::Looper::pollInner+0xac/0x690
+[  414.985279] [35] [ ALERT] [ap] sched_dumpstack: [10] [<0x40db2b88>] android::Looper::pollAll+0x248/0x2f0
+[  414.987588] [35] [ ALERT] [ap] sched_dumpstack: [10] [<0x40bcc270>] servicemanager_main+0x2d0/0x350
+[  414.989956] [35] [ ALERT] [ap] sched_dumpstack: [10] [<0x403e4068>] nxtask_startup+0x38/0x60
+[  414.992002] [35] [ ALERT] [ap] sched_dumpstack: [10] [<0x4031e2a8>] nxtask_start+0xf8/0x120
+[  414.993911] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  414.994599] [35] [ ALERT] [ap] sched_dumpstack: [11] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  414.996263] [35] [ ALERT] [ap] sched_dumpstack: [11] [<0x40319a8c>] nxsem_wait_slow+0x19c/0x320
+[  414.998220] [35] [ ALERT] [ap] sched_dumpstack: [11] [<0x41121d80>] epoll_pwait+0x220/0x390
+[  415.000872] [35] [ ALERT] [ap] sched_dumpstack: [11] [<0x40d93b78>] uv__io_poll+0x438/0xec0
+[  415.003414] [35] [ ALERT] [ap] sched_dumpstack: [11] [<0x40d8e76c>] uv_run+0x1fc/0x760
+[  415.005944] [35] [ ALERT] [ap] sched_dumpstack: [11] [<0x40b58708>] adb_hal_run+0x38/0x90
+[  415.008241] [35] [ ALERT] [ap] sched_dumpstack: [11] [<0x40b584b8>] adbd_main+0x38/0x80
+[  415.010440] [35] [ ALERT] [ap] sched_dumpstack: [11] [<0x403e4068>] nxtask_startup+0x38/0x60
+[  415.012281] [35] [ ALERT] [ap] sched_dumpstack: [11] [<0x4031e2a8>] nxtask_start+0xf8/0x120
+[  415.014379] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  415.015167] [35] [ ALERT] [ap] sched_dumpstack: [12] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  415.017014] [35] [ ALERT] [ap] sched_dumpstack: [12] [<0x40319a8c>] nxsem_wait_slow+0x19c/0x320
+[  415.018768] [35] [ ALERT] [ap] sched_dumpstack: [12] [<0x402b787c>] poll+0x57c/0x6a0
+[  415.020473] [35] [ ALERT] [ap] sched_dumpstack: [12] [<0x40bcc6f8>] mediad_main+0x158/0x3e0
+[  415.022809] [35] [ ALERT] [ap] sched_dumpstack: [12] [<0x403e4068>] nxtask_startup+0x38/0x60
+[  415.024671] [35] [ ALERT] [ap] sched_dumpstack: [12] [<0x4031e2a8>] nxtask_start+0xf8/0x120
+[  415.026509] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  415.027100] [35] [ ALERT] [ap] sched_dumpstack: [13] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  415.029186] [35] [ ALERT] [ap] sched_dumpstack: [13] [<0x40319a8c>] nxsem_wait_slow+0x19c/0x320
+[  415.030992] [35] [ ALERT] [ap] sched_dumpstack: [13] [<0x402e3590>] net_sem_timedwait2+0x4c0/0x880
+[  415.032833] [35] [ ALERT] [ap] sched_dumpstack: [13] [<0x402f5770>] psock_tcp_accept+0x2f0/0x4d0
+[  415.035037] [35] [ ALERT] [ap] sched_dumpstack: [13] [<0x402e9cd0>] inet_accept+0x120/0x190
+[  415.036858] [35] [ ALERT] [ap] sched_dumpstack: [13] [<0x402f3d34>] psock_accept+0xa4/0x150
+[  415.038732] [35] [ ALERT] [ap] sched_dumpstack: [13] [<0x4111e700>] accept4+0xb0/0x1c0
+[  415.041483] [35] [ ALERT] [ap] sched_dumpstack: [13] [<0x40bf6ba4>] telnetd_daemon+0x1a4/0x3a0
+[  415.044118] [35] [ ALERT] [ap] sched_dumpstack: [13] [<0x40b61558>] telnetd_main+0x168/0x1b0
+[  415.046625] [35] [ ALERT] [ap] sched_dumpstack: [13] [<0x403e4068>] nxtask_startup+0x38/0x60
+[  415.048723] [35] [ ALERT] [ap] sched_dumpstack: [13] [<0x4031e2a8>] nxtask_start+0xf8/0x120
+[  415.050565] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  415.051071] [35] [ ALERT] [ap] sched_dumpstack: [14] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  415.053018] [35] [ ALERT] [ap] sched_dumpstack: [14] [<0x40326f3c>] nxsig_clockwait+0x11c/0x2e0
+[  415.054840] [35] [ ALERT] [ap] sched_dumpstack: [14] [<0x40326a08>] clock_nanosleep+0x58/0x80
+[  415.056740] [35] [ ALERT] [ap] sched_dumpstack: [14] [<0x403f09e4>] sleep+0x74/0xc0
+[  415.058723] [35] [ ALERT] [ap] sched_dumpstack: [14] [<0x40b7d628>] ai_agent_main+0xb68/0xce0
+[  415.061013] [35] [ ALERT] [ap] sched_dumpstack: [14] [<0x403e4068>] nxtask_startup+0x38/0x60
+[  415.062932] [35] [ ALERT] [ap] sched_dumpstack: [14] [<0x4031e2a8>] nxtask_start+0xf8/0x120
+[  415.064704] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  415.065487] [35] [ ALERT] [ap] sched_dumpstack: [15] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  415.067587] [35] [ ALERT] [ap] sched_dumpstack: [15] [<0x40319a8c>] nxsem_wait_slow+0x19c/0x320
+[  415.069558] [35] [ ALERT] [ap] sched_dumpstack: [15] [<0x409da368>] nxsem_clockwait_slow+0xe8/0x190
+[  415.071601] [35] [ ALERT] [ap] sched_dumpstack: [15] [<0x409d7ed0>] pthread_cond_clockwait+0x1f0/0x2e0
+[  415.074018] [35] [ ALERT] [ap] sched_dumpstack: [15] [<0x40b7d860>] msg_queue_pop+0xc0/0x220
+[  415.076699] [35] [ ALERT] [ap] sched_dumpstack: [15] [<0x40b7c538>] outbound_dispatch_task+0x98/0x420
+[  415.079218] [35] [ ALERT] [ap] sched_dumpstack: [15] [<0x403e3b64>] pthread_startup+0x34/0x60
+[  415.081148] [35] [ ALERT] [ap] sched_dumpstack: [15] [<0x403fafc0>] pthread_start+0x90/0xf0
+[  415.083291] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  415.083813] [35] [ ALERT] [ap] sched_dumpstack: [19] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  415.085681] [35] [ ALERT] [ap] sched_dumpstack: [19] [<0x4112c718>] nxmq_wait_receive+0x228/0x2e0
+[  415.088265] [35] [ ALERT] [ap] sched_dumpstack: [19] [<0x4112c23c>] file_mq_timedreceive_internal+0x20c/0x280
+[  415.091038] [35] [ ALERT] [ap] sched_dumpstack: [19] [<0x4112c3f0>] mq_receive+0x60/0xd0
+[  415.093791] [35] [ ALERT] [ap] sched_dumpstack: [19] [<0x40b7c30c>] quickapp_mq_listener_task+0x9c/0x230
+[  415.096217] [35] [ ALERT] [ap] sched_dumpstack: [19] [<0x403e3b64>] pthread_startup+0x34/0x60
+[  415.098163] [35] [ ALERT] [ap] sched_dumpstack: [19] [<0x403fafc0>] pthread_start+0x90/0xf0
+[  415.100222] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  415.100772] [35] [ ALERT] [ap] sched_dumpstack: [20] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  415.102728] [35] [ ALERT] [ap] sched_dumpstack: [20] [<0x40319a8c>] nxsem_wait_slow+0x19c/0x320
+[  415.104598] [35] [ ALERT] [ap] sched_dumpstack: [20] [<0x409da368>] nxsem_clockwait_slow+0xe8/0x190
+[  415.106886] [35] [ ALERT] [ap] sched_dumpstack: [20] [<0x409d7ed0>] pthread_cond_clockwait+0x1f0/0x2e0
+[  415.109553] [35] [ ALERT] [ap] sched_dumpstack: [20] [<0x40b8e024>] cron_task_main+0xb4/0x380
+[  415.112097] [35] [ ALERT] [ap] sched_dumpstack: [20] [<0x403e3b64>] pthread_startup+0x34/0x60
+[  415.114140] [35] [ ALERT] [ap] sched_dumpstack: [20] [<0x403fafc0>] pthread_start+0x90/0xf0
+[  415.115975] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  415.116548] [35] [ ALERT] [ap] sched_dumpstack: [24] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  415.118651] [35] [ ALERT] [ap] sched_dumpstack: [24] [<0x40326f3c>] nxsig_clockwait+0x11c/0x2e0
+[  415.120513] [35] [ ALERT] [ap] sched_dumpstack: [24] [<0x40326a08>] clock_nanosleep+0x58/0x80
+[  415.122278] [35] [ ALERT] [ap] sched_dumpstack: [24] [<0x403f09e4>] sleep+0x74/0xc0
+[  415.124265] [35] [ ALERT] [ap] sched_dumpstack: [24] [<0x40b8f560>] heartbeat_thread+0x40/0x80
+[  415.126920] [35] [ ALERT] [ap] sched_dumpstack: [24] [<0x403e3b64>] pthread_startup+0x34/0x60
+[  415.128951] [35] [ ALERT] [ap] sched_dumpstack: [24] [<0x403fafc0>] pthread_start+0x90/0xf0
+[  415.130640] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  415.131098] [35] [ ALERT] [ap] sched_dumpstack: [25] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  415.133026] [35] [ ALERT] [ap] sched_dumpstack: [25] [<0x40326f3c>] nxsig_clockwait+0x11c/0x2e0
+[  415.135162] [35] [ ALERT] [ap] sched_dumpstack: [25] [<0x40326a08>] clock_nanosleep+0x58/0x80
+[  415.137025] [35] [ ALERT] [ap] sched_dumpstack: [25] [<0x403f0ac4>] usleep+0x94/0xa0
+[  415.138679] [35] [ ALERT] [ap] sched_dumpstack: [25] [<0x40b9e0f0>] tool_phywear_run_execute+0x190/0x590
+[  415.141508] [35] [ ALERT] [ap] sched_dumpstack: [25] [<0x40b9695c>] tool_registry_execute+0xfc/0x2c0
+[  415.148051] [35] [ ALERT] [ap] sched_dumpstack: [25] [<0x40b7fae8>] handle_nl_fast_path+0x218/0x730
+[  415.150401] [35] [ ALERT] [ap] sched_dumpstack: [25] [<0x40b80410>] agent_loop_task+0x410/0x18f0
+[  415.152768] [35] [ ALERT] [ap] sched_dumpstack: [25] [<0x403e3b64>] pthread_startup+0x34/0x60
+[  415.154776] [35] [ ALERT] [ap] sched_dumpstack: [25] [<0x403fafc0>] pthread_start+0x90/0xf0
+[  415.156725] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  415.157225] [35] [ ALERT] [ap] sched_dumpstack: [27] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  415.159499] [35] [ ALERT] [ap] sched_dumpstack: [27] [<0x40319a8c>] nxsem_wait_slow+0x19c/0x320
+[  415.161653] [35] [ ALERT] [ap] sched_dumpstack: [27] [<0x402aecb4>] uart_read+0xf34/0x1220
+[  415.163569] [35] [ ALERT] [ap] sched_dumpstack: [27] [<0x403a4c7c>] file_readv+0x15c/0x1f0
+[  415.165651] [35] [ ALERT] [ap] sched_dumpstack: [27] [<0x403a4fcc>] read+0x9c/0xc0
+[  415.167422] [35] [ ALERT] [ap] sched_dumpstack: [27] [<0x409d8360>] lib_fread_unlocked+0x3a0/0x470
+[  415.169551] [35] [ ALERT] [ap] sched_dumpstack: [27] [<0x409d65e0>] fgetc_unlocked+0x30/0x70
+[  415.171595] [35] [ ALERT] [ap] sched_dumpstack: [27] [<0x409d67ec>] lib_fgets_unlocked+0x9c/0x210
+[  415.173716] [35] [ ALERT] [ap] sched_dumpstack: [27] [<0x409d670c>] fgets+0x5c/0xa0
+[  415.175924] [35] [ ALERT] [ap] sched_dumpstack: [27] [<0x40b8f9ac>] cli_thread+0xac/0x1bc0
+[  415.178446] [35] [ ALERT] [ap] sched_dumpstack: [27] [<0x403e3b64>] pthread_startup+0x34/0x60
+[  415.180696] [35] [ ALERT] [ap] sched_dumpstack: [27] [<0x403fafc0>] pthread_start+0x90/0xf0
+[  415.182762] [35] [ ALERT] [ap] sched_dumpstack: backtrace:
+[  415.183327] [35] [ ALERT] [ap] sched_dumpstack: [31] [<0x40318f40>] nxsched_switch+0x60/0xa0
+[  415.185255] [35] [ ALERT] [ap] sched_dumpstack: [31] [<0x40319a8c>] nxsem_wait_slow+0x19c/0x320
+[  415.187252] [35] [ ALERT] [ap] sched_dumpstack: [31] [<0x40319c7c>] nxsem_tickwait_slow+0x6c/0xe0
+[  415.189469] [35] [ ALERT] [ap] sched_dumpstack: [31] [<0x402b77bc>] poll+0x4bc/0x6a0
+[  415.191396] [35] [ ALERT] [ap] sched_dumpstack: [31] [<0x40b93adc>] accept_thread+0x8c/0x170
+[  415.193614] [35] [ ALERT] [ap] sched_dumpstack: [31] [<0x403e3b64>] pthread_startup+0x34/0x60
+[  415.195870] [35] [ ALERT] [ap] sched_dumpstack: [31] [<0x403fafc0>] pthread_start+0x90/0xf0
+[  415.197925] [35] [ ALERT] [ap] coredump_print_memory_regions: Memory regions will be printed:
+Reset board on recursive assert:
+0x4194ef00: 000000004194ef00 000000000000022d 0000000000000000 0000000000000001 0000000000000001 0000000041b6c8c0 000000000000000a 000000000000000a
+0x4194ef40: 000000000000000a 0000000096000006 0000000000000025 0000000000000000 79726f6d656d5f74 736e6f696765725f 0ffffffffffffffd 0000000000000000
+0x4194ef80: 00000000ffffffff 0000000000000001 000000000000000a 0000000041b6c8c0 0000000000000000 0000000041528da8 000000004194ef00 000000004190c000
+0x4194efc0: 000000004194d000 000000000000022d 0000000000000001 0000000000000008 00000000000003c0 0000000042483420 000000004031560c 0000000042483310
+0x4194f000: 000000004031560c 00000000600003c5 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+0x4194f040: 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+0x4194f080: 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+0x4194f0c0: 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+0x4194f100: 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+0x4194f140: 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+0x4194f180: 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+0x4194f1c0: 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+0x4194f200: 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000 0000000000000000

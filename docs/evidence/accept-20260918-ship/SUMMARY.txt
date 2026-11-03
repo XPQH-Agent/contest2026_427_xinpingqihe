@@ -1,0 +1,22 @@
+判定    检查项                               说明
+------------------------------------------------------------------------------
+PASS  A 阶段A裸探针 HCI 通                    rx=04 0e 04 06 03 0c 00  (A_bthci.raw)
+PASS  B1 bt_enable rc=0                 elapsed=1227ms
+PASS  B2 gatt register rc=0             
+PASS  B2 conn cb register rc=0          
+PASS  B2 adv start rc=0                 
+PASS  B2 READY name=PhyWear             identity=CD:AB:78:56:34:12
+PASS  B2b 服务端自检 PASS                    
+PASS  B2b 合矢量合理(300~3000mg)             |a|=1018 mg
+PASS  B2b 采样耗时已实测且在预算内                  sample took 2 ms (budget 200 ms)
+PASS  B2b notify 演练 rc=-ENOTCONN(-107)  SELFTEST notify(无订阅者) rc=-107
+PASS  B2b 句柄结构 value!=0 且 ccc==value+1  value=0x0010 ccc=0x0011
+PASS  B2b 有属性 handle=0                  
+PASS  B2b 全程无 RX 读错误                    
+PASS  R1 帧率 >= 12（同口径 30s 心跳，最多测 3 次）   命中 loops/s=198 fps=12；观测 loops/fps = 198/12
+PASS  R2 主页截图 >5KB                      26608 B
+PASS  R2 主页 sha256 == 金标(UI 未变)         d552c57bba5f8c07…
+PASS  R3 浸泡期间有存活心跳                      2 次心跳 / 60s
+PASS  R3 浸泡无 panic/断言/重启                
+------------------------------------------------------------------------------
+结论：✅ 设备侧验收全过

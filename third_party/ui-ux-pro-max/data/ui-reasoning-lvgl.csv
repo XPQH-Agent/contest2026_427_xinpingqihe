@@ -1,0 +1,11 @@
+Our Page,Upstream UI_Category,Upstream Pattern,Style (LVGL),Palette Source,Typography,Density,Motion Tier,Notes,Status
+手表主屏,Alarm & World Clock,Minimal & Direct,Flat Design,colors.csv: dark 档,时间 XL(28) / 日期 BODY(14),中,C2 入场 + C4 按压（见 motion-lvgl.csv）,刻度+指针,adapted
+主页宫格入口,Smart Home/IoT Dashboard,Real-Time Monitoring,Bento Box Grid（只取网格，砍圆角阴影缩放）,colors.csv: dark 档,标题 LARGE(24) / tile MED(20) / 说明 BODY(14),2×4,C2 入场 + C4 按压（见 motion-lvgl.csv）,宫格,adapted
+工具板,Calculator & Unit Converter,Minimal & Direct,Flat Design + Minimal & Direct,同主页,行项 SMALL(16),松,C2 入场 + C4 按压（见 motion-lvgl.csv）,列表,adapted
+读数页（原始传感器/水平仪）,Financial Dashboard,Data-Dense Dashboard,Data-Dense Dashboard,colors.csv: Analytics 档,数值 MED(20) / 单位 BODY(14),紧凑,C2 入场 + C4 按压（见 motion-lvgl.csv）,高密度网格,adapted
+图表页（曲线/频谱）,Analytics Dashboard,Data-Dense + Drill-Down,Real-Time Monitoring,同读数页,数值 MED / 标注 BODY,中,C2 入场 + C4 按压（见 motion-lvgl.csv）,10–15 Hz 重绘,adapted
+轨迹页,Running & Cycling GPS,Feature-Rich Showcase + Social Proof,Real-Time Monitoring + Data-Dense,同读数页,数值 MED / 诚实标注 BODY,中,C2 入场 + C4 按压（见 motion-lvgl.csv）,10 Hz 图线,adapted
+秒表/计时,Timer & Pomodoro,Minimal & Direct,Flat Design,colors.csv: Productivity 档,计时 XL(28),松,C2 入场 + C4 按压（见 motion-lvgl.csv）,大数字,adapted
+声学页,White Noise & Ambient Sound,Minimal & Direct + Social Proof,Flat Design,colors.csv: dark 档,数值 MED,中,C2 入场 + C4 按压（见 motion-lvgl.csv）,波形,adapted
+AI 教练/日志页,Educational App,Feature-Rich Showcase,Minimal & Direct,同主页,正文 BODY / 标题 LARGE,松,C2 入场 + C4 按压（见 motion-lvgl.csv）,文本为主,adapted
+设置/关于,Productivity Tool,Interactive Demo + Feature-Rich,Flat Design,同主页,行项 SMALL(16),松,C2 入场 + C4 按压（见 motion-lvgl.csv）,列表,adapted

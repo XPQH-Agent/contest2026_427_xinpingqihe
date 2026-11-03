@@ -1,0 +1,5 @@
+[ t=30s loops/s=27 fps=27
+]
+[ t=60s loops/s=29 fps=29
+]
+[ t=30s loops/s=58 fps=8]

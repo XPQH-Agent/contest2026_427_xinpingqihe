@@ -1,0 +1,6 @@
+订阅窗口: 23.548 -> 24.354
+ATT 帧总数: 15   订阅窗口内通知帧: 2
+通知 value handle 分布: 0x0010×2
+  t=23.752   Notify value_handle=0x0010 value=ef ff 26 00 0c fc 3f 00 35 ff 62 00 00 00 01 00
+  t=24.154   Notify value_handle=0x0010 value=e7 ff 25 00 09 fc 8c 00 20 ff 77 00 00 00 01 00
+✅ 2 条通知全部使用 value handle 0x0010

@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<!--
+  PhyWear v4 原型 —— 严格按实名风格重做（网页仿真，上板前评审）
+  ==================================================================
+  Design Read（taste-skill §0.B 要求的一行）：
+    "Reading this as: 手持科学仪器 UI（导航 + 实时读数 + 图表）for 实验/课堂用户，
+     with a Swiss-Modernist 技术语言，leaning toward `Swiss Modernism 2.0` +
+     `Data-Dense Dashboard` on a `Dark Mode (OLED)` 基底。"
+
+  风格来源全部可查：third_party/ui-ux-pro-max/data/styles.csv
+    · Swiss Modernism 2.0   → 12 列严格网格 / 8px 基准单位 / 数学化间距 / 层级清晰 / **单一强调色** / 无装饰
+    · Data-Dense Dashboard  → grid-gap 8px / card-padding 12px / 小字 12px / header 56px / 信息密度最大
+    · Dark Mode (OLED)      → 纯黑 #000000 + 表面 #121212 / 文字对比 7:1+ / 无白底 / 极简发光
+    · Minimal & Direct      → 单列、克制、极简文字（用于列表页）
+
+  按 taste-skill 修正的三处（上一版被判"太AI"的根因）：
+    ① §4.2 Color Consistency Lock：**全局只用 1 个强调色**（Emerald #22C55E）。模块身份不再靠 8 种颜色，
+       改用「序号 + 名称 + 元信息」表达；曲线通道色是**唯一被文档化的例外**（数据标记专用）。
+    ② §0.D / lilA 规则：**删掉紫色渐晕 hero**，不再有任何装饰性渐变；表面只有 #000 与 #121212 两级。
+    ③ §4.4 Shape Consistency Lock：**圆角一律 0**（同时是 EPIC 直通路径）；状态点、分页指示也做成矩形，
+       不做"圆按钮 + 方卡片"的混搭。卡片容器只在表达层级时出现，其余用 1px 细线分组（§4.4）。
+  动效遵守 §6.A：**只动 transform / opacity**（不动 left/width/height）；§5.D 不写滚动监听/常驻 rAF；
+  §6.B 支持 prefers-reduced-motion。旋钮 VARIANCE 4 / MOTION 3 / DENSITY 7。
+-->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>PhyWear v4 原型 · Swiss/OLED 仪器风</title>
+<style>
+  :root{
+    /* Dark Mode (OLED) */
+    --bg:#000000;          /* --bg-black */
+    --surface:#121212;     /* --bg-dark-grey（唯一一级抬升） */
+    --rule:#242424;        /* 细分隔线 */
+    --rule-strong:#3A3A3A;
+    --fg:#FFFFFF;          /* 对比 21:1 */
+    --fg-2:#B4B4B4;
+    --fg-3:#7A7A7A;
+    /* Swiss Modernism 2.0：single vibrant accent only */
+    --accent:#22C55E;
+    --accent-dim:rgba(34,197,94,.16);
+    /* 唯一被文档化的例外：曲线通道色（数据标记，不用于 UI chrome） */
+    --ch-x:#22C55E; --ch-y:#38BDF8; --ch-z:#E879F9;
+    --u:8px;               /* --base-unit: 8px */
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none}
+  html,body{background:#000}
+  body{color:var(--fg);
+       font-family:"DejaVu Sans","Noto Sans CJK SC","Source Han Sans SC",system-ui,sans-serif;
+       padding:24px 28px;display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap}
+  .mono{font-family:"DejaVu Sans Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+  h1{font-size:17px;font-weight:600;letter-spacing:.01em}
+  h1 span{color:var(--fg-3);font-size:12px;font-weight:400;margin-left:8px;letter-spacing:.06em}
+  .hint{margin-top:8px;font-size:12.5px;color:var(--fg-3);line-height:1.7;max-width:620px}
+  .hint b{color:var(--fg-2);font-weight:500}
+
+  .stage{display:flex;flex-direction:column;gap:12px;align-items:center}
+  .watch{width:390px;height:450px;background:var(--bg);position:relative;overflow:hidden;
+         border:1px solid var(--rule-strong);transform:scale(1.3);transform-origin:top center;
+         touch-action:none;border-radius:0}
+  .pad{height:140px}
+  .screen{position:absolute;inset:0;display:none;overflow:hidden}
+  .screen.on{display:block}
+
+  /* 仪器顶栏：56px（Data-Dense Dashboard --header-height） */
+  .bar{height:56px;display:flex;align-items:center;padding:0 12px;position:relative;z-index:6;
+       border-bottom:1px solid var(--rule)}
+  .bar .id{font-size:15px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+  .bar .sub{position:absolute;right:12px;font-size:12px;color:var(--fg-3);letter-spacing:.08em}
+  .bar .t{position:absolute;right:12px;font-size:12px;color:var(--fg-2)}
+  .back{width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--fg-2);
+        font-size:20px;margin-right:4px}
+  .back:active{background:var(--surface)}
+  .bar .ttl{font-size:14px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+  .bar .no{font-size:12px;color:var(--accent);margin-left:8px;letter-spacing:.1em}
+
+  /* 状态行（仪器式一行元信息） */
+  .statusline{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--rule);
+              font-size:12px;color:var(--fg-2);letter-spacing:.02em}
+  .statusline .k{color:var(--fg-3);letter-spacing:.1em;text-transform:uppercase;font-size:11px}
+  .sq{width:8px;height:8px;background:var(--accent);flex:none}      /* 方点，不是圆点 */
+  .sq.off{background:#3A3A3A}
+  .statusline .grow{flex:1}
+
+  /* 主页：8 格（细线分组，不用卡片） */
+  .grid{position:absolute;left:0;right:0;top:112px;height:326px;padding:0;touch-action:none}
+  .cell{position:absolute;border-top:1px solid var(--rule);padding:0 12px;display:flex;align-items:center;gap:10px;
+        background:transparent;transform-origin:left center}
+  .cell .no{font-size:11px;color:var(--fg-3);width:18px;flex:none;letter-spacing:.06em}
+  .cell .rail{width:2px;height:26px;background:transparent;flex:none}   /* 聚焦时点亮（单一强调色） */
+  .cell .tx{min-width:0;flex:1}
+  .cell .nm{display:block;font-size:16px;font-weight:600;letter-spacing:.005em}
+  .cell .mt{display:block;font-size:11.5px;color:var(--fg-3);margin-top:2px;letter-spacing:.02em}
+  .cell .rt{font-size:11px;color:var(--fg-3);letter-spacing:.06em}
+  .cell.focus{background:var(--surface)}
+  .cell.focus .rail{background:var(--accent)}
+  .cell.focus .rt{color:var(--accent)}
+  .cell.dim{opacity:.55}
+
+  /* 分页：矩形段 + 拉伸（transform: scaleX，不动 width） */
+  .segs{position:absolute;left:12px;right:12px;bottom:14px;height:16px;display:flex;align-items:center;gap:4px}
+  .segs i{flex:1;height:3px;background:#2E2E2E;transform-origin:left center;transition:background .18s}
+  .segs i.on{background:var(--accent)}
+
+  /* 板块页：表格式列表 */
+  .head{padding:12px 12px 10px;border-bottom:1px solid var(--rule-strong)}
+  .head .no{font-size:11px;color:var(--accent);letter-spacing:.16em}
+  .head .nm{font-size:26px;font-weight:700;letter-spacing:-.01em;margin-top:6px;line-height:1.05}
+  .head .ds{font-size:12px;color:var(--fg-3);margin-top:6px;line-height:1.5}
+  .head .cnt{font-size:11px;color:var(--fg-2);letter-spacing:.1em;margin-top:8px}
+  .row{position:relative;display:flex;align-items:center;gap:10px;padding:0 12px;height:49px;
+       border-bottom:1px solid var(--rule);transition:transform .12s,background .12s}
+  .row:active{transform:translateY(1px);background:var(--surface)}   /* §4.5 触感反馈 */
+  .row .no{font-size:11px;color:var(--fg-3);width:18px;flex:none}
+  .row .rail{width:2px;height:24px;background:transparent;flex:none}
+  .row .tx{flex:1;min-width:0}
+  .row .nm{display:block;font-size:15.5px;font-weight:600}
+  .row .mt{display:block;font-size:11.5px;color:var(--fg-3);margin-top:2px}
+  .row .st{font-size:11px;letter-spacing:.1em;color:var(--accent)}
+  .row.off .nm,.row.off .mt,.row.off .no{color:#5A5A5A}
+  .row.off .st{color:#5A5A5A}
+  .row.act{background:var(--surface)}
+  .row.act .rail{background:var(--accent)}
+  .foot{position:absolute;left:12px;right:12px;bottom:12px;font-size:11px;color:#5A5A5A;letter-spacing:.06em;
+        display:flex;justify-content:space-between}
+
+  /* 读数页 */
+  .page{position:absolute;inset:0;padding:56px 0 0;will-change:transform}
+  .rd{padding:12px}
+  .rd .no{font-size:11px;color:var(--fg-3);letter-spacing:.16em}
+  .rd .nm{font-size:18px;font-weight:700;margin-top:4px;letter-spacing:.01em}
+  .tbl{margin-top:12px;border-top:1px solid var(--rule)}
+  .tr{display:flex;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--rule)}
+  .tr .c0{width:26px;font-size:11px;color:var(--fg-3)}
+  .tr .c1{flex:1}
+  .tr .v,.tr .u{font-size:30px;font-weight:700;letter-spacing:-.02em}
+  .tr .v{margin-left:auto}
+  .tr .u{font-size:12px;color:var(--fg-3);font-weight:400;width:42px;text-align:right;letter-spacing:.04em}
+  .tcap{display:flex;justify-content:space-between;font-size:11px;color:var(--fg-3);margin-top:10px;letter-spacing:.06em}
+  .chart{position:relative;height:120px;margin-top:10px;border:1px solid var(--rule);background:#070707}
+  .chart .gl{position:absolute;left:0;right:0;height:1px;background:var(--rule)}
+  .chart .tap{position:absolute;right:8px;bottom:6px;font-size:11px;color:var(--fg-3)}
+  .chart .cap{position:absolute;left:8px;top:6px;font-size:11px;color:var(--fg-3);letter-spacing:.06em}
+
+  .full{position:absolute;inset:0;background:#000;z-index:20;display:none;padding:14px 12px 0}
+  .full.on{display:block}
+  .full .hd{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--fg-2);letter-spacing:.08em}
+  .full .box{position:relative;height:300px;margin-top:12px;border:1px solid var(--rule-strong);background:#070707}
+  .full .ax{position:absolute;left:8px;right:8px;bottom:6px;display:flex;justify-content:space-between;
+            font-size:11px;color:var(--fg-3)}
+
+  .flip{position:absolute;z-index:30;pointer-events:none;background:var(--surface);border:1px solid var(--rule-strong);
+        transform-origin:top left;display:none}
+
+  .switch{display:flex;gap:6px}
+  .switch button{background:#0A0A0A;color:var(--fg-3);border:1px solid var(--rule);padding:7px 12px;
+                 font-size:12px;cursor:pointer;letter-spacing:.04em;border-radius:0}
+  .switch button.on{color:#000;background:var(--accent);border-color:var(--accent);font-weight:600}
+
+  .spec{width:540px;max-width:100%}
+  .spec h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-2);margin:0 0 10px}
+  .spec table{border-collapse:collapse;width:100%;font-size:12.5px;line-height:1.6}
+  .spec th,.spec td{border:1px solid var(--rule);padding:8px 10px;vertical-align:top;text-align:left}
+  .spec th{background:#0A0A0A;color:var(--fg-3);font-weight:500;letter-spacing:.06em}
+  .spec td.k{width:104px;color:var(--fg)}
+  .yes{color:var(--accent)}.no{color:#FF7A7A}.mid{color:#FFC46B}
+  .note{margin-top:14px;font-size:12.5px;color:var(--fg-3);line-height:1.85}
+  .note b{color:var(--fg-2);font-weight:600}
+  .swatch{display:inline-block;width:10px;height:10px;vertical-align:-1px;margin-right:5px}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div>
+    <h1>PhyWear v4 原型 <span>SWISS MODERNISM 2.0 · DATA-DENSE · OLED</span></h1>
+    <div class="hint">
+      <b>主页</b>：按住任意格滑动 → 聚焦（单一强调色点亮），抬起进入。<b>板块页</b>：右拖返回。
+      <b>读数页</b>：左右拖翻页、点图表放大、下拉收起。
+    </div>
+  </div>
+
+  <div class="watch" id="watch">
+    <!-- ============ 主页 ============ -->
+    <section class="screen on" id="scr-home">
+      <div class="bar">
+        <div class="id">PHYWEAR</div>
+        <div class="sub">LAB INSTRUMENT</div>
+      </div>
+      <div class="statusline">
+        <span class="k">模块</span><span class="mono" id="stNo">01</span>
+        <span id="stName">原始传感器</span>
+        <span class="grow"></span>
+        <span class="k">项数</span><span class="mono" id="stCnt">6</span>
+        <span class="sq"></span><span class="k">AUTO</span>
+      </div>
+      <div class="grid" id="grid"></div>
+      <div class="segs" id="segsHome"></div>
+    </section>
+
+    <!-- ============ 板块页 ============ -->
+    <section class="screen" id="scr-cat">
+      <div class="bar">
+        <div class="back" id="catBack">‹</div>
+        <div class="ttl" id="catTtl">TOOLS</div>
+        <div class="t" >1:11</div>
+      </div>
+      <div class="head">
+        <div class="no mono" id="hNo">MODULE 04</div>
+        <div class="nm" id="hName">工具</div>
+        <div class="ds" id="hDesc">频谱 / 倾角 / 标尺 / 磁场 / 惯性</div>
+        <div class="cnt mono" id="hCnt">5 AVAILABLE · 0 PLANNED</div>
+      </div>
+      <div id="rows"></div>
+      <div class="foot"><span>右拖返回</span><span class="mono" id="footNo">04 / 08</span></div>
+    </section>
+
+    <!-- ============ 读数页 ============ -->
+    <section class="screen" id="scr-read">
+      <div class="bar">
+        <div class="back" id="readBack">‹</div>
+        <div class="ttl">RAW SENSORS</div>
+        <div class="t mono" id="readIdx">01 / 06</div>
+      </div>
+      <div id="pages"></div>
+      <div class="segs" id="segsRead"></div>
+    </section>
+
+    <!-- 全屏图表 -->
+    <div class="full" id="full">
+      <div class="hd"><span class="sq"></span><span class="mono" id="fullName">ACC · RESULTANT</span>
+        <span style="flex:1"></span><span>下拉收起</span></div>
+      <div class="box" id="fullBox">
+        <div class="gl" style="top:25%"></div><div class="gl" style="top:50%"></div><div class="gl" style="top:75%"></div>
+        <svg viewBox="0 0 366 300" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+          <polyline id="fullLine" fill="none" stroke="#22C55E" stroke-width="2" points=""/>
+        </svg>
+        <div class="ax"><span class="mono">−2.4 s</span><span class="mono">0 s</span></div>
+      </div>
+    </div>
+
+    <div class="flip" id="flipLayer"></div>
+  </div>
+
+  <div class="pad"></div>
+  <div class="switch">
+    <button data-scr="home" class="on">主页</button>
+    <button data-scr="cat">板块页</button>
+    <button data-scr="read">读数页</button>
+    <button id="resetBtn">回到初始</button>
+  </div>
+</div>
+
+<aside class="spec">
+  <h2>风格来源（可查 third_party/ui-ux-pro-max/data/styles.csv）</h2>
+  <table>
+    <tr><th>实名风格</th><th>用在哪</th><th>照做的规则</th></tr>
+    <tr><td class="k">Swiss Modernism 2.0</td><td>全站骨架</td>
+        <td>12 列严格网格 · 8px 基准单位 · 数学化间距 · 层级清晰 · <b>只用 1 个强调色</b> · 无装饰 · 高对比</td></tr>
+    <tr><td class="k">Data-Dense Dashboard</td><td>读数页 / 列表</td>
+        <td>grid-gap 8px · padding 12px · 小字 12px · header 56px · 信息密度最大、chrome 最少</td></tr>
+    <tr><td class="k">Dark Mode (OLED)</td><td>基底</td>
+        <td>纯黑 #000000 + 表面 #121212 · 文字对比 7:1+（本稿 21:1）· 无白底 · 极简发光</td></tr>
+    <tr><td class="k">Minimal &amp; Direct</td><td>列表页</td>
+        <td>单列 · 克制 · 极简文字 · 不做装饰性图像</td></tr>
+  </table>
+
+  <h2 style="margin-top:16px">taste-skill 的硬规则：上一版为什么"太AI"，这版怎么改</h2>
+  <table>
+    <tr><th>规则</th><th>上一版（v3.1）</th><th>v4</th></tr>
+    <tr><td class="k">§0.D 反默认<br>+ §4.2 LILA 规则</td>
+        <td class="no">紫色渐晕 hero（AI-purple gradient 默认货）+ 8 个彩色强调色</td>
+        <td class="yes">删掉所有装饰渐变；<b>全局 1 个强调色</b> <span class="swatch" style="background:#22C55E"></span>Emerald #22C55E；模块身份改用「序号 + 名称 + 元信息」</td></tr>
+    <tr><td class="k">§4.2 调色板锁定</td><td class="no">每块一个色，色彩在页面间漂移</td>
+        <td class="yes">锁定单一强调色；<b>唯一文档化例外</b>：曲线通道色（X/Y/Z）只用于数据标记，不进 UI chrome</td></tr>
+    <tr><td class="k">§4.4 形状锁定</td><td class="no">圆角卡片 + 圆形点 + 胶囊按钮混搭</td>
+        <td class="yes"><b>圆角一律 0</b>：状态点、分页指示都做成矩形段；同时是 EPIC 直通路径（radius 0）</td></tr>
+    <tr><td class="k">§4.4 卡片克制</td><td class="no">什么都是圆角卡片 + 彩色底</td>
+        <td class="yes">用 <b>1px 细线 + 间距</b>分组；#121212 填充只用于"聚焦/按下"这一层真实层级</td></tr>
+    <tr><td class="k">§6.A 只动 transform/opacity</td><td class="no">分页器动 left/width</td>
+        <td class="yes">分页段用 <b>transform: scaleX</b>；共享元素用 translate+scale（初始尺寸定死，只动 transform）</td></tr>
+    <tr><td class="k">§5.D / §6.B</td><td class="no">无 reduced-motion 处理</td>
+        <td class="yes">无滚动监听/常驻 rAF；<code>prefers-reduced-motion: reduce</code> 时全部退化为瞬时切换</td></tr>
+    <tr><td class="k">§4.1 字体</td><td class="no">默认无衬线堆叠、数据不做等宽对齐</td>
+        <td class="yes">grotesque + <b>mono 数据</b>（本机取 DejaVu Sans / DejaVu Sans Mono；上板用位图字体，计划加一套「数字等宽」子集）</td></tr>
+  </table>
+
+  <div class="note">
+    <b>选型仍保留的 6 种质感动效</b>（用户已确认的降级不变）：中心聚焦（改为 scale+填充+强调轨）、磁吸吸附、
+    液态指示器（改为 scaleX 拉伸，形状仍是矩形）、共享元素展开、手势转场、速度形变（强调轨伸缩）。<br>
+    3D 视差 / 碰撞推挤仍不选（手表无指针；界面无自由浮动元素）。<br><br>
+    <b>请重点看</b>：① 这个"纯黑 + 单强调色 + 零圆角 + 细线分组"的仪器气质对不对路；
+    ② 主页一屏 8 格是否仍然一眼可点；③ 读数页的大数字对齐与密度。<br>
+    点头后我上板先做主屏 + 板块页，同口径帧率 A/B + SRAM 核对 + 真机截图。
+  </div>
+</aside>
+
+<script>
+const $=s=>document.querySelector(s);
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;   /* §6.B */
+/* ?still=1：静态取证（跳过动画与错峰），用于截图/评审 */
+const STILL=location.search.indexOf('still')>=0;
+const D=(REDUCED||STILL)?0:1;
+
+const BOARDS=[
+  {n:'原始传感器', d:'加速度 / 陀螺 / 磁场 / 光 / 麦克风 / 扬声器',
+   items:[['加速度计','X/Y/Z · 折线',1],['陀螺仪','角速度 · 折线',1],['磁力计','三轴磁场',1],['光线','环境光',1],['麦克风','声压波形',1],['扬声器','回放电平',1]]},
+  {n:'力学', d:'单摆 / 弹簧 / 向心力',
+   items:[['单摆','测重力加速度 g',1],['弹簧','测频率 f',1],['向心力','测旋转半径 r',1],['碰撞','规划中',0]]},
+  {n:'声学', d:'频谱 / 音调 / 音高 / 多普勒',
+   items:[['频谱','FFT 主频与谐波',1],['音调','播放已知频率',1],['音高','规划中',0],['多普勒','规划中',0]]},
+  {n:'工具', d:'频谱 / 倾角 / 标尺 / 磁场 / 惯性',
+   items:[['加速度频谱','FFT · 3 轴',1],['倾角','atan2 重力倾斜',1],['磁性标尺','磁场峰值计数',1],['磁场频谱','磁场 FFT · 3 轴',1],['惯性标尺','姿态与位移标定',1]]},
+  {n:'计时器', d:'运动秒表 / 光门 / 声门',
+   items:[['运动秒表','按键计时与阈值',1],['光门','遮光计时',1],['声门','声响计时',1]]},
+  {n:'生活', d:'掌声测量', items:[['掌声','掌声强度与次数',1]]},
+  {n:'自定义', d:'自己拼一个实验', items:[['构建器','规划中',0]]},
+  {n:'AI 教练', d:'描述现象，Agent 选实验并跑', items:[['开始对话','端侧 Agent 推理',1]]},
+];
+
+/* 只动 transform / opacity（§6.A） */
+function tween(from,to,onUpdate,dur=320){
+  if(!D){ onUpdate(to); return; }
+  const t0=performance.now();
+  const tick=now=>{
+    const p=Math.min(1,(now-t0)/dur);
+    const e=1-Math.cos(p*Math.PI*1.02)*Math.exp(-p*3.6);
+    onUpdate(from+(to-from)*Math.min(1.02,e));
+    if(p<1) requestAnimationFrame(tick); else onUpdate(to);
+  };
+  requestAnimationFrame(tick);
+}
+function wave(seed,w=366,h=120){
+  let pts=[];
+  for(let i=0;i<=24;i++){
+    const y=h/2+Math.sin((i+seed*3)*0.55)*h*0.14+Math.sin((i+seed)*0.17)*h*0.07;
+    pts.push(`${Math.round(i*w/24)},${Math.round(y)}`);
+  }
+  return pts.join(' ');
+}
+
+/* 分页：矩形段 + scaleX 拉伸（不动 width） */
+function segs(el,n){
+  el.innerHTML='';
+  const items=[];
+  for(let i=0;i<n;i++){ const s=document.createElement('i'); el.appendChild(s); items.push(s); }
+  const set=i=>items.forEach((s,k)=>s.classList.toggle('on',k===i));
+  set(0);
+  return { set, stretch(i,k){ items.forEach((s,j)=>{ s.style.transform='scaleX(1)'; s.classList.toggle('on',j===i); });
+                             if(items[k]) items[k].style.transform='scaleX(1.35)'; } };
+}
+
+/* ---------------- 主页：8 格 ---------------- */
+const G={x0:0,y0:0,w:390,h:41,gx:0,gy:40.75};   /* 326/8 = 40.75，数学化等分 */
+let focus=0; const cells=[];
+const grid=$('#grid'), segHome=segs($('#segsHome'),8);
+BOARDS.forEach((b,i)=>{
+  const col=i%2,row=(i/2)|0;
+  const el=document.createElement('div');
+  el.className='cell';
+  el.style.left=(col*195)+'px'; el.style.top=(row*81.5)+'px';
+  el.style.width='195px'; el.style.height='81px';
+  el.innerHTML=`<span class="no mono">${String(i+1).padStart(2,'0')}</span>
+    <span class="rail"></span>
+    <span class="tx"><span class="nm">${b.n}</span><span class="mt">${b.items.length} 项 · ${b.items.filter(x=>x[2]).length} 可用</span></span>
+    <span class="rt mono">›</span>`;
+  grid.appendChild(el); cells.push(el);
+});
+function renderFocus(){
+  cells.forEach((el,i)=>{
+    const on=i===focus;
+    el.classList.toggle('focus',on);
+    el.classList.toggle('dim',!on);
+    el.style.transition='transform .16s cubic-bezier(.22,1,.36,1),opacity .16s,background .16s';
+    el.style.transform=`scale(${on?1.02:1})`;
+  });
+  const b=BOARDS[focus];
+  $('#stNo').textContent=String(focus+1).padStart(2,'0');
+  $('#stName').textContent=b.n;
+  $('#stCnt').textContent=String(b.items.length);
+  segHome.set(focus);
+}
+const watch=$('#watch');
+function toLocal(e){ const r=watch.getBoundingClientRect(),k=r.width/390;
+  return {x:(e.clientX-r.left)/k,y:(e.clientY-r.top)/k}; }
+function hit(p){
+  for(let i=0;i<8;i++){
+    const col=i%2,row=(i/2)|0;
+    const x=col*195,y=112+row*81.5;
+    if(p.x>=x&&p.x<=x+195&&p.y>=y&&p.y<=y+81) return i;
+  }
+  return -1;
+}
+let holding=false,startF=0;
+grid.addEventListener('pointerdown',e=>{
+  grid.setPointerCapture(e.pointerId); holding=true; startF=focus;
+  const i=hit(toLocal(e)); if(i>=0){ focus=i; renderFocus(); }
+});
+grid.addEventListener('pointermove',e=>{
+  if(!holding) return;
+  const i=hit(toLocal(e));
+  if(i>=0&&i!==focus){ focus=i; renderFocus(); }     /* 磁吸：进格才切换 */
+});
+grid.addEventListener('pointerup',e=>{
+  if(!holding) return; holding=false;
+  const i=hit(toLocal(e));
+  if(i>=0){ focus=i; renderFocus(); openBoard(i); }
+  else { focus=startF; renderFocus(); }
+});
+
+/* ---------------- 共享元素展开（只动 transform） ---------------- */
+const flip=$('#flipLayer');
+function flipTo(srcRect,toRect,onMid){
+  if(!D){ onMid&&onMid(); return; }   /* reduced-motion / 静态模式：瞬时切换 */
+  const r=watch.getBoundingClientRect(),k=r.width/390;
+  const s={l:(srcRect.left-r.left)/k,t:(srcRect.top-r.top)/k,w:srcRect.width/k,h:srcRect.height/k};
+  const t={l:(toRect.left-r.left)/k,t:(toRect.top-r.top)/k,w:toRect.width/k,h:toRect.height/k};
+  flip.style.display='block';
+  flip.style.left=s.l+'px'; flip.style.top=s.t+'px';
+  flip.style.width=s.w+'px'; flip.style.height=s.h+'px';
+  flip.style.transform='translate(0,0) scale(1,1)';
+  flip.style.opacity='1';
+  flip.getBoundingClientRect();
+  flip.style.transition='transform .32s cubic-bezier(.22,1,.36,1),opacity .32s';
+  requestAnimationFrame(()=>{
+    flip.style.transform=`translate(${t.l-s.l}px,${t.t-s.t}px) scale(${t.w/s.w},${t.h/s.h})`;
+  });
+  setTimeout(()=>{ onMid&&onMid(); flip.style.opacity='0'; },180);
+  setTimeout(()=>{ flip.style.display='none'; },330);
+}
+
+let stack=['home'];
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==='scr-'+id));
+  document.querySelectorAll('.switch button[data-scr]').forEach(b=>b.classList.toggle('on',b.dataset.scr===id));
+}
+function openBoard(i){
+  const b=BOARDS[i];
+  $('#catTtl').textContent=['RAW SENSORS','MECHANICS','ACOUSTICS','TOOLS','TIMERS','DAILY','CUSTOM','AI COACH'][i];
+  $('#hNo').textContent='MODULE '+String(i+1).padStart(2,'0');
+  $('#hName').textContent=b.n;
+  $('#hDesc').textContent=b.d;
+  const nA=b.items.filter(x=>x[2]).length, nP=b.items.length-nA;
+  $('#hCnt').textContent=`${nA} AVAILABLE · ${nP} PLANNED`;
+  $('#footNo').textContent=String(i+1).padStart(2,'0')+' / 08';
+  const rows=$('#rows'); rows.innerHTML='';
+  b.items.forEach((it,k)=>{
+    const ok=it[2];
+    const r=document.createElement('div');
+    r.className='row'+(ok?'':' off');
+    r.innerHTML=`<span class="no mono">${String(k+1).padStart(2,'0')}</span>
+      <span class="rail"></span>
+      <span class="tx"><span class="nm">${it[0]}</span><span class="mt">${it[1]}</span></span>
+      <span class="st mono">${ok?'OPEN ›':'—'}</span>`;
+    rows.appendChild(r);
+    if(!D) return;
+    r.style.opacity=0; r.style.transform='translateY(8px)';
+    setTimeout(()=>{ r.style.transition='transform .22s cubic-bezier(.22,1,.36,1),opacity .22s';
+                     r.style.opacity=1; r.style.transform='translateY(0)'; },20+k*35);
+  });
+  const cr=cells[i].getBoundingClientRect();
+  flipTo(cr,{left:0,top:0,width:390,height:450},()=>show('cat'));
+  stack.push('cat');
+}
+
+/* 右拖返回（手势 + 磁吸；只动 transform） */
+let catX=0,catP=null;
+watch.addEventListener('pointerdown',e=>{ if($('#scr-cat').classList.contains('on')) catP=e; });
+watch.addEventListener('pointermove',e=>{
+  if(!catP) return;
+  const r=watch.getBoundingClientRect(),k=r.width/390;
+  catX=Math.max(0,(e.clientX-catP.clientX)/k);
+  const pull=catX>58?(catX-58)*0.35:0;
+  const dx=Math.min(catX+pull,300);
+  $('#scr-cat').style.transition='none';
+  $('#scr-cat').style.transform=`translateX(${dx}px)`;
+  $('#scr-home').style.transition='none';
+  $('#scr-home').style.transform=`translateX(${-40+dx*0.15}px)`;
+});
+watch.addEventListener('pointerup',()=>{
+  if(!catP) return;
+  const done=catX>130, from=catX;
+  tween(from,done?390:0,x=>{
+    $('#scr-cat').style.transform=`translateX(${x}px)`;
+    $('#scr-home').style.transform=`translateX(${-40+ (x/390)*40}px)`;
+  },done?260:300);
+  setTimeout(()=>{ $('#scr-cat').style.transition=''; $('#scr-home').style.transition='';
+    if(done){ stack.pop(); show('home'); $('#scr-home').style.transform=''; $('#scr-cat').style.transform=''; } },done?270:310);
+  catX=0; catP=null;
+});
+$('#catBack').addEventListener('click',()=>{ stack.pop(); show('home');
+  $('#scr-home').style.transform=''; $('#scr-cat').style.transform=''; });
+
+/* ---------------- 读数页 ---------------- */
+const SENSORS=[
+  {n:'加速度计', code:'ACC', u:'g',    v:['−0.19','−0.32','−0.95'], ch:'--ch-x'},
+  {n:'陀螺仪',   code:'GYRO',u:'dps',  v:['+1.2','−0.4','+0.1'],    ch:'--ch-y'},
+  {n:'磁力计',   code:'MAG', u:'mG',   v:['−131','+47','−318'],     ch:'--ch-z'},
+  {n:'光线',     code:'LIGHT',u:'lx',  v:['+128'],                  ch:'--ch-y'},
+  {n:'麦克风',   code:'MIC', u:'dBFS', v:['−42.5'],                 ch:'--ch-x'},
+  {n:'扬声器',   code:'SPK', u:'dBFS', v:['−58.0'],                 ch:'--ch-z'},
+];
+const N=SENSORS.length, segRead=segs($('#segsRead'),N);
+let pageX=0,pageIdx=0;
+$('#pages').innerHTML=SENSORS.map((s,i)=>{
+  const rows=s.v.map((v,k)=>`<div class="tr"><span class="c0 mono">${['X','Y','Z'][k]||'—'}</span>
+      <span class="c1"></span><span class="v mono">${v}</span><span class="u mono">${s.u}</span></div>`).join('');
+  return `<div class="page" data-i="${i}" style="transform:translateX(${i*390}px)">
+    <div class="rd">
+      <div class="no mono">SENSOR ${String(i+1).padStart(2,'0')} / ${String(N).padStart(2,'0')}</div>
+      <div class="nm">${s.n}</div>
+      <div class="tbl">${rows}</div>
+      <div class="tcap"><span class="mono">UPDATE 10 Hz</span><span class="mono">RANGE ±16 g</span></div>
+      <div class="chart" data-chart="${i}">
+        <div class="gl" style="top:33%"></div><div class="gl" style="top:66%"></div>
+        <svg viewBox="0 0 366 120" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+          <polyline fill="none" stroke="${getComputedStyle(document.documentElement).getPropertyValue(s.ch).trim()}"
+                    stroke-width="2" points="${wave(i)}"/></svg>
+        <div class="cap">最近 2.4 s</div><div class="tap">点一下放大 ›</div>
+      </div>
+    </div></div>`;
+}).join('');
+document.querySelectorAll('.chart').forEach(c=>c.addEventListener('click',ev=>{
+  ev.stopPropagation(); openFull(+c.dataset.chart);
+}));
+function renderRead(){
+  document.querySelectorAll('#pages .page').forEach(p=>{
+    const i=+p.dataset.i, dist=i-(pageX/390), k=Math.max(0,1-Math.abs(dist)*0.7);
+    p.style.transform=`translateX(${i*390-pageX}px)`;
+    p.style.opacity=String(0.3+0.7*k);
+  });
+  segRead.set(Math.max(0,Math.min(N-1,Math.round(pageX/390))));
+  $('#readIdx').textContent=String(Math.round(pageX/390)+1).padStart(2,'0')+' / '+String(N).padStart(2,'0');
+}
+let readP=null;
+watch.addEventListener('pointerdown',e=>{ if($('#scr-read').classList.contains('on')) readP=e; });
+watch.addEventListener('pointermove',e=>{
+  if(!readP) return;
+  const r=watch.getBoundingClientRect(),k=r.width/390;
+  const dx=(e.clientX-readP.clientX)/k;
+  pageX=Math.max(-40,Math.min((N-1)*390+40,pageIdx*390-dx)); renderRead();
+});
+watch.addEventListener('pointerup',e=>{
+  if(!readP) return;
+  const r=watch.getBoundingClientRect(),k=r.width/390;
+  const dx=(e.clientX-readP.clientX)/k;
+  let idx=Math.round((pageIdx*390-dx+(dx>0?90:-90))/390);
+  idx=Math.max(0,Math.min(N-1,idx));
+  const from=pageX,to=idx*390;
+  tween(from,to,x=>{ pageX=x; renderRead(); },280);
+  pageIdx=idx; readP=null;
+});
+
+let fullOpen=false,fullY=0;
+function openFull(i){
+  const s=SENSORS[i];
+  const src=document.querySelector(`.page[data-i="${i}"] .chart`).getBoundingClientRect();
+  $('#fullLine').setAttribute('stroke',getComputedStyle(document.documentElement).getPropertyValue(s.ch).trim());
+  $('#fullLine').setAttribute('points',wave(i,366,300));
+  $('#fullName').textContent=s.code+' · RESULTANT';
+  fullOpen=true; $('#full').classList.add('on');
+  flipTo(src,{left:0,top:56,width:390,height:300});
+}
+$('#full').addEventListener('pointerdown',e=>{ $('#full').dataset.y=e.clientY; });
+$('#full').addEventListener('pointermove',e=>{
+  if(!fullOpen) return;
+  const dy=Math.max(0,e.clientY-+$('#full').dataset.y); fullY=dy;
+  $('#fullBox').style.transform=`translateY(${dy*0.6}px) scale(${1-dy/3000})`;
+  $('#fullBox').style.opacity=String(1-dy/400);
+});
+$('#full').addEventListener('pointerup',()=>{
+  if(!fullOpen) return;
+  const done=fullY>90, from=fullY;
+  tween(from,0,x=>{
+    $('#fullBox').style.transform=`translateY(${x*0.6}px) scale(${1-x/3000})`;
+    $('#fullBox').style.opacity=String(1-x/400);
+  },220);
+  setTimeout(()=>{ $('#fullBox').style.transform=''; $('#fullBox').style.opacity='';
+    if(done){ fullOpen=false; $('#full').classList.remove('on'); } },230);
+  fullY=0;
+});
+
+document.querySelectorAll('.switch button[data-scr]').forEach(b=>b.addEventListener('click',()=>{
+  const id=b.dataset.scr;
+  if(id==='cat') openBoard(focus);
+  else { $('#full').classList.remove('on'); show(id); }
+}));
+$('#readBack').addEventListener('click',()=>show('home'));
+$('#resetBtn').addEventListener('click',()=>{
+  focus=0; pageX=0; pageIdx=0;
+  $('#scr-home').style.transform=''; $('#scr-cat').style.transform='';
+  $('#full').classList.remove('on'); show('home'); renderFocus(); renderRead();
+});
+renderFocus(); renderRead();
+const H=(location.hash||'').replace('#','');
+if(H==='cat') openBoard(3);
+else if(H==='read'){ stack.push('read'); show('read'); }
+</script>
+</body>
+</html>

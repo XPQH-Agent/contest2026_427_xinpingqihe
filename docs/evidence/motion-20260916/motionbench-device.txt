@@ -1,0 +1,6 @@
+[MOTION] iters=20000
+[MOTION] table    : 3025000 ns total, 151.25 ns/call
+[MOTION] analytic : 41768000 ns total, 2088.40 ns/call
+[MOTION] speedup  : x13 (analytic/table)
+[MOTION] compile-time switch PW_MOTION_USE_TABLE=1, table bytes=516
+[MOTION] sink=609507613 (防止被优化掉)

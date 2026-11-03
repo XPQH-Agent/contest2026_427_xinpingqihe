@@ -1,0 +1,75 @@
+Pairing,Category,Upstream Heading Font,Upstream Body Font,LVGL Heading Size,LVGL Body Size,Hierarchy Intent,Dropped
+Classic Elegant,Serif + Sans,Playfair Display,Inter,MED(20),BODY(14),"elegant, luxury, sophisticated, timeless, premium, editorial",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Modern Professional,Sans + Sans,Poppins,Open Sans,MED(20),BODY(14),"modern, professional, clean, corporate, friendly, approachab",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Tech Startup,Sans + Sans,Space Grotesk,DM Sans,MED(20),BODY(14),"tech, startup, modern, innovative, bold, futuristic",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Editorial Classic,Serif + Serif,Cormorant Garamond,Libre Baskerville,MED(20),BODY(14),"editorial, classic, literary, traditional, refined, bookish",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Minimal Swiss,Sans + Sans,Inter,Inter,MED(20),BODY(14),"minimal, clean, swiss, functional, neutral, professional",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Playful Creative,Display + Sans,Fredoka,Nunito,MED(20),BODY(14),"playful, friendly, fun, creative, warm, approachable",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Bold Statement,Display + Sans,Bebas Neue,Source Sans 3,MED(20),BODY(14),"bold, impactful, strong, dramatic, modern, headlines",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Wellness Calm,Serif + Sans,Lora,Raleway,MED(20),BODY(14),"calm, wellness, health, relaxing, natural, organic",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Developer Mono,Mono + Sans,JetBrains Mono,IBM Plex Sans,MED(20),BODY(14),"code, developer, technical, precise, functional, hacker",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Retro Vintage,Display + Serif,Abril Fatface,Merriweather,MED(20),BODY(14),"retro, vintage, nostalgic, dramatic, decorative, bold",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Geometric Modern,Sans + Sans,Outfit,Work Sans,MED(20),BODY(14),"geometric, modern, clean, balanced, contemporary, versatile",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Luxury Serif,Serif + Sans,Cormorant,Montserrat,MED(20),BODY(14),"luxury, high-end, fashion, elegant, refined, premium",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Friendly SaaS,Sans + Sans,Plus Jakarta Sans,Plus Jakarta Sans,MED(20),BODY(14),"friendly, modern, saas, clean, approachable, professional",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+News Editorial,Serif + Sans,Newsreader,Roboto,MED(20),BODY(14),"news, editorial, journalism, trustworthy, readable, informat",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Handwritten Charm,Script + Sans,Caveat,Quicksand,MED(20),BODY(14),"handwritten, personal, friendly, casual, warm, charming",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Corporate Trust,Sans + Sans,Lexend,Source Sans 3,MED(20),BODY(14),"corporate, trustworthy, accessible, readable, professional, ",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Brutalist Raw,Mono + Mono,Space Mono,Space Mono,MED(20),BODY(14),"brutalist, raw, technical, monospace, minimal, stark",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Fashion Forward,Sans + Sans,Syne,Manrope,MED(20),BODY(14),"fashion, avant-garde, creative, bold, artistic, edgy",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Soft Rounded,Sans + Sans,Varela Round,Nunito Sans,MED(20),BODY(14),"soft, rounded, friendly, approachable, warm, gentle",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Premium Sans (DM Sans),Sans + Sans,DM Sans,DM Sans,MED(20),BODY(14),"premium, modern, clean, sophisticated, versatile, balanced",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Vietnamese Friendly,Sans + Sans,Be Vietnam Pro,Noto Sans,MED(20),BODY(14),"vietnamese, international, readable, clean, multilingual, ac",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Japanese Elegant,Serif + Sans,Noto Serif JP,Noto Sans JP,MED(20),BODY(14),"japanese, elegant, traditional, modern, multilingual, readab",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Korean Modern,Sans + Sans,Noto Sans KR,Noto Sans KR,MED(20),BODY(14),"korean, modern, clean, professional, multilingual, readable",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Chinese Traditional,Serif + Sans,Noto Serif TC,Noto Sans TC,MED(20),BODY(14),"chinese, traditional, elegant, cultural, multilingual, reada",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Chinese Simplified,Sans + Sans,Noto Sans SC,Noto Sans SC,MED(20),BODY(14),"chinese, simplified, modern, professional, multilingual, rea",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Arabic Elegant,Serif + Sans,Noto Naskh Arabic,Noto Sans Arabic,MED(20),BODY(14),"arabic, elegant, traditional, cultural, RTL, readable",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Thai Modern,Sans + Sans,Noto Sans Thai,Noto Sans Thai,MED(20),BODY(14),"thai, modern, readable, clean, multilingual, accessible",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Hebrew Modern,Sans + Sans,Noto Sans Hebrew,Noto Sans Hebrew,MED(20),BODY(14),"hebrew, modern, RTL, clean, professional, readable",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Legal Professional,Serif + Sans,EB Garamond,Lato,MED(20),BODY(14),"legal, professional, traditional, trustworthy, formal, autho",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Medical Clean,Sans + Sans,Figtree,Noto Sans,MED(20),BODY(14),"medical, clean, accessible, professional, healthcare, trustw",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Financial Trust,Sans + Sans,IBM Plex Sans,IBM Plex Sans,MED(20),BODY(14),"financial, trustworthy, professional, corporate, banking, se",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Real Estate Luxury,Serif + Sans,Cinzel,Josefin Sans,MED(20),BODY(14),"real estate, luxury, elegant, sophisticated, property, premi",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Restaurant Menu,Serif + Sans,Playfair Display SC,Karla,MED(20),BODY(14),"restaurant, menu, culinary, elegant, foodie, hospitality",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Art Deco,Display + Sans,Poiret One,Didact Gothic,MED(20),BODY(14),"art deco, vintage, 1920s, elegant, decorative, gatsby",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Magazine Style,Serif + Sans,Libre Bodoni,Public Sans,MED(20),BODY(14),"magazine, editorial, publishing, refined, journalism, print",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Crypto/Web3,Sans + Sans,Orbitron,Exo 2,MED(20),BODY(14),"crypto, web3, futuristic, tech, blockchain, digital",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Gaming Bold,Display + Sans,Russo One,Chakra Petch,MED(20),BODY(14),"gaming, bold, action, esports, competitive, energetic",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Indie/Craft,Display + Sans,Amatic SC,Cabin,MED(20),BODY(14),"indie, craft, handmade, artisan, organic, creative",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Startup Bold (Outfit + Rubik),Sans + Sans,Outfit,Rubik,MED(20),BODY(14),"startup, bold, modern, innovative, confident, dynamic",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+E-commerce Clean,Sans + Sans,Rubik,Nunito Sans,MED(20),BODY(14),"ecommerce, clean, shopping, product, retail, conversion",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Academic/Research,Serif + Sans,Crimson Pro,Atkinson Hyperlegible,MED(20),BODY(14),"academic, research, scholarly, accessible, readable, educati",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Dashboard Data,Mono + Sans,Fira Code,Fira Sans,MED(20),BODY(14),"dashboard, data, analytics, code, technical, precise",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Music/Entertainment,Display + Sans,Righteous,Poppins,MED(20),BODY(14),"music, entertainment, fun, energetic, bold, performance",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Minimalist Portfolio,Sans + Sans,Archivo,Space Grotesk,MED(20),BODY(14),"minimal, portfolio, designer, creative, clean, artistic",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Kids/Education,Display + Sans,Baloo 2,Comic Neue,MED(20),BODY(14),"kids, education, playful, friendly, colorful, learning",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Wedding/Romance,Script + Serif,Great Vibes,Cormorant Infant,MED(20),BODY(14),"wedding, romance, elegant, script, invitation, feminine",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Science/Tech,Sans + Sans,Exo,Roboto Mono,MED(20),BODY(14),"science, technology, research, data, futuristic, precise",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Accessibility First,Sans + Sans,Atkinson Hyperlegible,Atkinson Hyperlegible,MED(20),BODY(14),"accessible, readable, inclusive, WCAG, dyslexia-friendly, cl",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Sports/Fitness,Sans + Sans,Barlow Condensed,Barlow,MED(20),BODY(14),"sports, fitness, athletic, energetic, condensed, action",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Luxury Minimalist,Serif + Sans,Bodoni Moda,Jost,MED(20),BODY(14),"luxury, minimalist, high-end, sophisticated, refined, premiu",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Tech/HUD Mono,Mono + Mono,Share Tech Mono,Fira Code,MED(20),BODY(14),"tech, futuristic, hud, sci-fi, data, monospaced, precise",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Pixel Retro,Display + Sans,Press Start 2P,VT323,MED(20),BODY(14),"pixel, retro, gaming, 8-bit, nostalgic, arcade",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Neubrutalist Bold,Display + Sans,Lexend Mega,Public Sans,MED(20),BODY(14),"bold, neubrutalist, loud, strong, geometric, quirky",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Academic/Archival,Serif + Serif,EB Garamond,Crimson Text,MED(20),BODY(14),"academic, old-school, university, research, serious, traditi",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Spatial Clear,Sans + Sans,Inter,Inter,MED(20),BODY(14),"spatial, legible, glass, system, clean, neutral",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Kinetic Motion,Display + Mono,Syncopate,Space Mono,MED(20),BODY(14),"kinetic, motion, futuristic, speed, wide, tech",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Gen Z Brutal,Display + Sans,Anton,Epilogue,MED(20),BODY(14),"brutal, loud, shouty, meme, internet, bold",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Bauhaus Geometric,Geometric Sans + Single Weight,Outfit,Outfit,MED(20),BODY(14),"bauhaus, geometric, constructivist, bold, uppercase, archite",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Minimalist Monochrome Editorial,Serif + Serif + Mono (Triple Stack),Playfair Display,Source Serif 4,MED(20),BODY(14),"monochrome, editorial, austere, typographic, pocket manifest",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Modern Dark Cinema (Inter System),Sans + Mono,Inter,Inter,MED(20),BODY(14),"dark, cinematic, technical, precision, clean, premium, devel",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+SaaS Mobile Boutique (Calistoga + Inter),Display Serif + Sans + Mono,Calistoga,Inter,MED(20),BODY(14),"saas, boutique, electric, warm, editorial, bold, premium, fi",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Terminal CLI Monospace,Mono + Mono (Single Family),JetBrains Mono,JetBrains Mono,MED(20),BODY(14),"terminal, cli, hacker, monospace, matrix, developer, retro-f",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Kinetic Brutalism (Space Grotesk),Geometric Sans (Single Dominant),Space Grotesk,Space Grotesk,MED(20),BODY(14),"kinetic, brutalist, aggressive, uppercase, oversized, displa",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Flat Design Mobile (System Bold),Sans + Sans,Inter,Inter,MED(20),BODY(14),"flat, clean, system, bold, geometric, cross-platform, icon, ",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Material You MD3 (Roboto System),Sans (System Default),Roboto,Roboto,MED(20),BODY(14),"material design 3, md3, android, google, tonal, friendly, ro",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Neo Brutalism Mobile (Space Grotesk Bold),Geometric Sans (Bold-Only),Space Grotesk,Space Grotesk,MED(20),BODY(14),"neo brutalism, pop art, loud, bold, heavy, stickers, mechani",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Bold Typography Mobile (Inter Poster),Sans + Serif (Display) + Mono,Inter,Playfair Display,MED(20),BODY(14),"bold typography, editorial, poster, near-black, vermillion, ",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Academia Mobile (Cormorant + Crimson + Cinzel),Serif + Book Serif + Engraved (Triple Stack),Cormorant Garamond,Crimson Pro,MED(20),BODY(14),"academia, library, mahogany, parchment, brass, scholarly, pr",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Cyberpunk Mobile (Orbitron + JetBrains Mono),Tech Display + Mono,Orbitron,JetBrains Mono,MED(20),BODY(14),"cyberpunk, neon, glitch, hud, sci-fi, dark, matrix green, ma",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Web3 Bitcoin DeFi (Space Grotesk + Inter + Mono),Geometric Sans + Sans + Mono (Triple),Space Grotesk,Inter,MED(20),BODY(14),"web3, bitcoin, defi, digital gold, fintech, crypto, trustles",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Claymorphism Mobile (Nunito + DM Sans),Display Rounded + Geometric Sans,Nunito,DM Sans,MED(20),BODY(14),"claymorphism, clay, rounded, playful, candy, bubbly, soft, 3",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Enterprise SaaS Mobile (Plus Jakarta Sans),Geometric Sans (Single Family),Plus Jakarta Sans,Plus Jakarta Sans,MED(20),BODY(14),"enterprise, saas, b2b, professional, indigo, modern, approac",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Sketch Hand-Drawn Mobile (Kalam + Patrick Hand),Handwritten + Handwritten (Dual),Kalam,Patrick Hand,MED(20),BODY(14),"sketch, hand-drawn, handwriting, human, imperfect, organic, ",字体名与 Google Fonts URL 裁掉（本板为位图子集）
+Neumorphism Mobile (Plus Jakarta Sans + System),Geometric Sans (System Fallback),Plus Jakarta Sans,Plus Jakarta Sans,MED(20),BODY(14),"neumorphism, soft ui, monochromatic, cool grey, minimal, phy",字体名与 Google Fonts URL 裁掉（本板为位图子集）

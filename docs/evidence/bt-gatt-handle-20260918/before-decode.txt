@@ -1,0 +1,8 @@
+订阅窗口: 36.405 -> 66.521
+ATT 帧总数: 68   订阅窗口内通知帧: 56
+通知 value handle 分布: 0x0000×56
+  t=36.606   Notify value_handle=0x0000 value=e7 ff 27 00 0a fc 3f 00 35 ff 31 00 00 00 01 00
+  t=37.207   Notify value_handle=0x0000 value=ea ff 26 00 10 fc 69 00 19 ff 85 00 00 00 01 00
+  t=37.609   Notify value_handle=0x0000 value=e4 ff 25 00 09 fc 69 00 12 ff 7e 00 00 00 01 00
+  …… 其余 53 条略
+❌ 有 56 条通知的句柄不是 0x0010（例如 0x0000）—— 对端会静默丢弃

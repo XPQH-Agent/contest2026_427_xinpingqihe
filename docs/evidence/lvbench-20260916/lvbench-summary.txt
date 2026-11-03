@@ -1,0 +1,23 @@
+[LVBENCH] start (LVGL 9.1.0)
+Benchmark Summary (9.1.0 )
+Empty screen, 54%, 56, 6, 6, 0
+Moving wallpaper, 83%, 53, 14, 14, 0
+Single rectangle, 62%, 63, 7, 7, 0
+Multiple rectangles, 81%, 60, 11, 11, 0
+Multiple RGB images, 86%, 51, 14, 14, 0
+Multiple ARGB images, 86%, 51, 14, 14, 0
+Rotated ARGB images, 88%, 40, 19, 19, 0
+Multiple labels, 87%, 47, 17, 16, 1
+Screen sized text, 94%, 15, 58, 58, 0
+Multiple arcs, 86%, 56, 13, 13, 0
+Span text, 90%, 28, 28, 28, 0
+BIN image, 90%, 35, 23, 23, 0
+BIN I8 image, 91%, 31, 27, 27, 0
+BIN A8 image, 81%, 60, 11, 11, 0
+Containers, 66%, 28, 20, 20, 0
+Containers with overlay, 85%, 35, 22, 22, 0
+Containers with opa, 78%, 27, 25, 25, 0
+Containers with opa_layer, 90%, 18, 46, 45, 1
+Containers with scrolling, 91%, 27, 30, 30, 0
+Widgets demo, 94%, 16, 42, 42, 0
+All scenes avg.,83%, 39, 22, 22, 0

@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<!--
+  PhyWear v3.1 交互原型（网页仿真，上板前评审）
+  ==================================================================
+  相对 v3 的两处修改（按用户反馈）：
+   ① 主页：卡片流 → **一屏 8 格 + 指下聚焦**。8 个模块一次性全部可按到；
+      "当前项"不再靠横向滑动，而是靠**手指按住并滑过**（press-and-slide）——
+      聚焦跟着手指走、带磁吸吸附、液态指示器同步、抬起即进入。
+   ② 板块页：重做版式（hero 区 + 序号/强调轨/元信息/「开始」胶囊 + 规划项弱化）。
+  保留：共享元素展开、右拖手势返回、液态指示器、磁吸、速度形变（用在读数页翻页）。
+  上板降级（用户已确认）：中心聚焦不做真缩放（LVGL 子件不随父缩放）→ 用"框宽高 + 邻项降透明 + 描边/底纹"；
+  速度形变不做 skew/scale → 用"强调条按速度伸缩 + 卡片宽度微变"。
+  浏览器直接打开即可拖动；?still=1#cat / ?still=1#read 为静态取证入口。
+-->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>PhyWear v3.1 交互原型（一屏 8 格 + 指下聚焦）</title>
+<style>
+  :root{
+    --bg:#0F172A; --card:#1B2336; --muted:#272F42; --fg:#F8FAFC; --dim:#94A3B8; --faint:#64748B;
+    --line:rgba(71,85,105,.55); --accent:#22C55E;
+    --raw:#4FC3F7; --mech:#81C784; --acou:#FFB74D; --tool:#BA68C8;
+    --time:#4DD0E1; --every:#FF8A65; --custom:#90A4AE; --ai:#F06292;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none}
+  body{background:#070B14;color:var(--fg);
+       font-family:"Noto Sans CJK SC","Source Han Sans SC","PingFang SC",system-ui,sans-serif;
+       padding:24px 30px;display:flex;gap:34px;align-items:flex-start;flex-wrap:wrap}
+  h1{font-size:19px;font-weight:600}
+  h1 span{color:var(--dim);font-size:13px;font-weight:400;margin-left:10px}
+  .hint{margin-top:8px;font-size:13px;color:var(--faint);line-height:1.7;max-width:640px}
+  .hint b{color:var(--dim);font-weight:500}
+
+  .stage{display:flex;flex-direction:column;gap:12px;align-items:center}
+  .watch{width:390px;height:450px;background:var(--bg);position:relative;overflow:hidden;
+         border-radius:26px;border:1px solid #22304A;box-shadow:0 20px 50px rgba(0,0,0,.6);
+         transform:scale(1.3);transform-origin:top center;touch-action:none}
+  .pad{height:140px}
+  .screen{position:absolute;inset:0;display:none;overflow:hidden}
+  .screen.on{display:block}
+
+  .topbar{height:54px;display:flex;align-items:center;padding:0 12px;position:relative;z-index:6}
+  .brand{font-size:24px;font-weight:700;letter-spacing:.01em;margin-left:2px}
+  .brand-sub{position:absolute;right:14px;font-size:14px;color:var(--faint)}
+  .back{width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--dim);
+        font-size:24px;border-radius:12px;transition:background .12s,transform .12s}
+  .back:active{background:var(--muted);transform:translateY(2px)}
+  .ttl{position:absolute;left:0;right:0;text-align:center;font-size:20px;font-weight:600}
+  .clock{position:absolute;right:14px;font-size:14px;color:var(--faint);font-variant-numeric:tabular-nums}
+
+  /* 主页：聚焦信息条 + 液态指示 + 8 格 */
+  .focusbar{position:relative;margin:2px 12px 0;padding:10px 12px 12px;border-radius:14px;
+            background:var(--card);border:1px solid var(--line);min-height:82px;transition:border-color .2s}
+  .focusbar .bar{position:absolute;left:12px;top:13px;width:3px;height:16px;border-radius:2px;
+                 background:var(--accent);transition:background .18s}
+  .focusbar .nm{font-size:22px;font-weight:600;margin-left:13px;line-height:1.1}
+  .focusbar .ds{font-size:13px;color:var(--dim);margin-left:13px;margin-top:7px;line-height:1.5;
+                padding-right:70px}
+  .focusbar .cnt{position:absolute;right:12px;top:12px;font-size:12px;color:var(--dim);
+                 background:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+  .ltab8{position:relative;height:10px;width:200px;margin:9px auto 0}
+  .grid{position:absolute;left:0;right:0;top:168px;height:270px;padding:0;touch-action:none}
+  .tile{position:absolute;background:var(--card);border:1px solid var(--line);border-radius:14px;
+        padding:10px 12px;display:flex;align-items:center;gap:10px}
+  .tile .chip{width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+              font-size:16px;flex:none}
+  .tile .tx{min-width:0}
+  .tile .nm{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tile .ct{font-size:12px;color:var(--faint);margin-top:2px}
+  .tile.focus{border-color:currentColor;background:var(--muted);z-index:9}
+
+  /* 板块页：hero + 行卡片 */
+  .hero{position:relative;margin:0 12px;height:72px;border-radius:16px;overflow:hidden;
+        border:1px solid var(--line);background:var(--card)}
+  .hero .wash{position:absolute;inset:0}
+  .hero .chip{position:absolute;left:12px;top:16px;width:38px;height:38px;border-radius:12px;
+              display:flex;align-items:center;justify-content:center;font-size:19px}
+  .hero .nm{position:absolute;left:60px;top:11px;font-size:24px;font-weight:700}
+  .hero .ds{position:absolute;left:60px;top:42px;font-size:12.5px;color:var(--dim);right:12px;line-height:1.4}
+  .hero .ct{position:absolute;right:10px;top:10px;font-size:12px;color:var(--dim);
+            background:rgba(15,23,42,.55);border:1px solid var(--line);border-radius:999px;padding:3px 9px}
+  .rows{margin:8px 12px 0}
+  .row{position:relative;background:var(--card);border:1px solid var(--line);border-radius:13px;
+       height:54px;display:flex;align-items:center;gap:10px;padding:0 11px;margin-bottom:6px;
+       transition:transform .13s,background .13s}
+  .row:active{transform:translateY(2px);background:var(--muted)}
+  .row .idx{font-size:13px;color:var(--faint);font-variant-numeric:tabular-nums;width:18px;flex:none}
+  .row .rail{width:3px;height:32px;border-radius:2px;flex:none}
+  .row .tx{flex:1;min-width:0}
+  .row .nm{display:block;font-size:17px;font-weight:600}
+  .row .mt{display:block;font-size:12.5px;color:var(--dim);margin-top:2px}
+  .row .go{font-size:12.5px;border-radius:999px;padding:5px 10px;flex:none;border:1px solid var(--line)}
+  .row.off{background:#161E30}
+  .row.off .nm{color:var(--faint)}
+  .row.off .mt{color:#4B5A73}
+  .row .pill{font-size:12px;color:var(--dim);background:var(--muted);border:1px solid var(--line);
+             border-radius:999px;padding:4px 10px;flex:none}
+  .foot{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-size:12px;color:var(--faint)}
+
+  /* 读数页 */
+  .page{position:absolute;inset:0;padding:58px 12px 0}
+  .sec{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--dim);margin:2px 0 10px}
+  .sec .b{width:3px;height:13px;border-radius:2px;background:var(--accent)}
+  .sec .r{flex:1;height:1px;background:var(--line);opacity:.6}
+  .kv{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:2px 14px}
+  .kvr{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;
+       border-bottom:1px solid var(--line)}
+  .kvr:last-child{border-bottom:0}
+  .kvr .k{font-size:14px;color:var(--dim)}
+  .kvr .v{font-size:28px;font-weight:600;font-variant-numeric:tabular-nums}
+  .kvr .u{font-size:14px;color:var(--dim);margin-left:6px}
+  .live{display:inline-flex;align-items:center;gap:7px;font-size:14px;color:var(--dim)}
+  .dot-live{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:breathe 2.4s infinite}
+  @keyframes breathe{0%,100%{opacity:1}50%{opacity:.45}}
+  .chart{position:relative;height:128px;border-radius:12px;overflow:hidden;margin-top:12px;
+         background:linear-gradient(180deg,rgba(39,47,66,.6),rgba(27,35,54,.25));border:1px solid var(--line)}
+  .chart .gl{position:absolute;left:0;right:0;height:1px;background:var(--line);opacity:.5}
+  .chart .cap{position:absolute;left:10px;top:8px;font-size:14px;color:var(--dim)}
+  .chart .tap{position:absolute;right:10px;bottom:8px;font-size:13px;color:var(--faint)}
+  .pages{position:absolute;inset:0}
+  .ltab{position:absolute;left:0;right:0;bottom:22px;height:26px;display:flex;align-items:center;justify-content:center}
+  .ltab .track{position:relative;height:8px;width:186px}
+  .fullchart{position:absolute;left:0;top:0;width:390px;height:450px;background:var(--bg);z-index:20;
+             display:none;padding:14px 12px 0}
+  .fullchart.on{display:block}
+  .fullchart .top{display:flex;align-items:center;gap:8px;margin:4px 0 10px;font-size:14px;color:var(--dim)}
+  .fullchart .box{position:relative;height:296px;border-radius:14px;overflow:hidden;
+                  background:linear-gradient(180deg,rgba(39,47,66,.75),rgba(27,35,54,.3));border:1px solid var(--line)}
+  .fullchart .axis{position:absolute;left:12px;right:12px;bottom:10px;display:flex;justify-content:space-between;
+                   font-size:13px;color:var(--faint)}
+  .flip{position:absolute;z-index:30;pointer-events:none;border-radius:14px;opacity:.97}
+  .gl{position:absolute;left:0;right:0;height:1px;background:var(--line);opacity:.5}
+
+  .switch{display:flex;gap:8px}
+  .switch button{background:#141C2E;color:var(--dim);border:1px solid #22304A;border-radius:9px;
+                 padding:7px 13px;font-size:13px;cursor:pointer}
+  .switch button.on{color:var(--fg);border-color:#3B4C6B;background:#1B2336}
+
+  .spec{width:520px;max-width:100%}
+  .spec h2{font-size:15px;margin:0 0 10px;font-weight:600}
+  .spec table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.65}
+  .spec th,.spec td{border:1px solid #1E2A42;padding:8px 10px;vertical-align:top;text-align:left}
+  .spec th{background:#121A2B;color:var(--dim);font-weight:500}
+  .spec td.k{width:112px;color:var(--fg)}
+  .yes{color:#7ee0a3}.mid{color:#ffce7a}.no{color:#ff9a9a}
+  .note{margin-top:14px;font-size:13px;color:var(--dim);line-height:1.85}
+  .note b{color:var(--fg);font-weight:600}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div>
+    <h1>PhyWear v3.1 交互原型 <span>一屏 8 格 + 指下聚焦 · 上板前评审</span></h1>
+    <div class="hint">
+      <b>主页</b>：按住任意模块滑动 → 聚焦跟手、顶部信息条与 8 槽指示器同步，抬起即进入（也可直接点）。
+      <b>板块页</b>：右拖返回。<b>读数页</b>：左右拖翻页、点迷你图放大、下拉收起。
+    </div>
+  </div>
+
+  <div class="watch" id="watch">
+    <section class="screen on" id="scr-home">
+      <div class="topbar"><div class="brand">PhyWear</div><div class="brand-sub">腕上物理工坊</div></div>
+      <div class="focusbar">
+        <div class="bar" id="fbBar"></div>
+        <div class="nm" id="fbName">原始传感器</div>
+        <div class="ds" id="fbDesc">加速度 / 陀螺 / 磁场 / 光 / 麦克风 / 扬声器</div>
+        <div class="cnt" id="fbCnt">6 页</div>
+      </div>
+      <div class="ltab8" id="ltab8"></div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <section class="screen" id="scr-cat">
+      <div class="topbar">
+        <div class="back" id="catBack">‹</div>
+        <div class="ttl" id="catTitle">工具</div>
+        <div class="clock">1:11</div>
+      </div>
+      <div class="hero">
+        <div class="wash" id="heroWash"></div>
+        <div class="chip" id="heroChip">✎</div>
+        <div class="nm" id="heroName">工具</div>
+        <div class="ds" id="heroDesc">频谱 / 倾角 / 标尺 / 磁场 / 惯性</div>
+        <div class="ct" id="heroCnt">5 可用</div>
+      </div>
+      <div class="rows" id="catRows"></div>
+      <div class="foot">右拖返回</div>
+    </section>
+
+    <section class="screen" id="scr-read">
+      <div class="topbar">
+        <div class="back" id="readBack">‹</div>
+        <div class="ttl">原始传感器</div>
+        <div class="clock">0:42</div>
+      </div>
+      <div class="pages" id="pages"></div>
+      <div class="ltab"><div class="track" id="trackRead"></div></div>
+    </section>
+
+    <div class="fullchart" id="fullchart">
+      <div class="top"><span style="width:3px;height:13px;border-radius:2px;background:var(--raw);display:inline-block"></span>
+        曲线 · 加速度合矢量</div>
+      <div class="box" id="fullBox">
+        <div class="gl" style="top:25%"></div><div class="gl" style="top:50%"></div><div class="gl" style="top:75%"></div>
+        <svg viewBox="0 0 366 296" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+          <polyline id="fullLine" fill="none" stroke="#4FC3F7" stroke-width="2" points=""/>
+        </svg>
+        <div class="axis"><span>−2.4 s</span><span>现在</span></div>
+      </div>
+      <div style="margin-top:12px;text-align:center;font-size:13px;color:var(--faint)">下拉收起</div>
+    </div>
+
+    <div class="flip" id="flipLayer" style="display:none"></div>
+  </div>
+
+  <div class="pad"></div>
+  <div class="switch">
+    <button data-scr="home" class="on">主页（一屏 8 格）</button>
+    <button data-scr="cat">板块页（重做）</button>
+    <button data-scr="read">读数页</button>
+    <button id="resetBtn">回到初始</button>
+  </div>
+</div>
+
+<aside class="spec">
+  <h2>v3.1 改了什么 / 为什么</h2>
+  <table>
+    <tr><th>你提的问题</th><th>v3.1 的做法</th><th>依据</th></tr>
+    <tr><td class="k">8 个模块要一屏可点</td>
+        <td>主页改回 <b>8 格一屏</b>，但保留"聚焦"语言：<b>按住并滑过</b>任意格 → 该格点亮放大（web 真缩放；上板降级为框宽高+描边+邻项降透明）、
+            顶部信息条实时显示它的名称/说明/规模、下方 8 槽液态指示器同步；<b>抬起才进入</b>。</td>
+        <td>你的要求"一次性能按到全部 8 大模块"，同时保留卡片流的"有当前项、有方向、有磁吸"</td></tr>
+    <tr><td class="k">板块页太丑</td>
+        <td>重做：<b>hero 区</b>（模块色渐晕 + 图标块 + 26px 标题 + 说明 + 规模胶囊）、行内加 <b>序号 / 3px 强调轨 / 名称+元信息 /「开始」胶囊</b>；
+            规划项整行弱化 +「规划中」胶囊；底部"右拖返回"提示。</td>
+        <td>原版行只有名称 + 一行灰字，缺层级、缺信息、缺质感</td></tr>
+    <tr><td class="k">中心聚焦降级</td><td class="yes">已确认：不做真缩放 → 框宽高 + 邻项降透明 + 描边/底纹</td><td>LVGL 子件不随父缩放</td></tr>
+    <tr><td class="k">速度形变降级</td><td class="yes">已确认：不做 skew/scale → 强调条按速度伸缩 + 卡片宽度微变；本原型只用在<b>读数页翻页</b></td><td>文字不可 skew</td></tr>
+  </table>
+
+  <h2 style="margin-top:18px">8 种质感动效：本原型用到 6 种</h2>
+  <table>
+    <tr><th>效果</th><th>用在哪</th><th>关键规则</th><th>上板可行性</th></tr>
+    <tr><td class="k">中心聚焦</td><td>主页"指下聚焦"</td><td>按到哪个格哪个格点亮；<b>视觉焦点 ≠ 业务选择</b>，抬起才提交</td><td class="mid">★★☆ 降级：框宽高+描边+邻项透明</td></tr>
+    <tr><td class="k">磁吸吸引</td><td>聚焦吸附到格子；右拖返回的落点</td><td>进入范围后越近吸得越明显，边缘不突跳；拖动中保留控制感</td><td class="yes">★★★ 纯位移混合</td></tr>
+    <tr><td class="k">液态指示器</td><td>主页 8 槽 + 读数页 6 页</td><td>先拉长再收拢；连续切换从当前形态接续，跟随最后一次选择</td><td class="yes">★★★ left/width + 圆角</td></tr>
+    <tr><td class="k">共享元素展开</td><td>格子 → 板块页；迷你图 → 全屏图</td><td>源/目标矩形对应；关闭回到仍存在的源；文字不跟着拉伸</td><td class="yes">★★★ 一个矩形动几何</td></tr>
+    <tr><td class="k">手势转场</td><td>板块页右拖返回；读数页翻页</td><td>位移映射进度；松手按距离+速度决定完成/取消；保留返回按钮</td><td class="yes">★★★ 纯几何</td></tr>
+    <tr><td class="k">速度形变</td><td>读数页快速翻页</td><td>速度=位置差÷时间差并平滑；有上限；停手恢复；正文可读</td><td class="mid">★★☆ 降级：强调条伸缩</td></tr>
+    <tr><td class="k">3D 视差 / 碰撞推挤</td><td colspan="3" class="no">✗ 仍不选：手表无指针（视差只能靠姿态传感器，会与手势抢）；界面无自由浮动元素（碰撞属纯装饰）</td></tr>
+  </table>
+
+  <div class="note">
+    <b>请重点看这两处：</b><br>
+    ① 主页按住滑动时——聚焦是否跟手、信息条与指示器换得是否顺、抬起进入是否自然；<br>
+    ② 板块页 hero + 行卡片的新版式是否够好看（上一版最丑的就是这里）。<br><br>
+    <b>你点头后</b>：先上板做主页 + 板块页两屏真机验证（同口径帧率 A/B、SRAM 核对、真机截图），再铺读数页与其余页面。
+  </div>
+</aside>
+
+<script>
+const $ = s => document.querySelector(s);
+const cssv = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function hexA(hex,a){
+  const h=hex.replace('#','');
+  const n=parseInt(h.length===3?h.split('').map(c=>c+c).join(''):h,16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+}
+function tween(from,to,onUpdate,dur=340){
+  const t0=performance.now();
+  const tick=now=>{
+    const p=Math.min(1,(now-t0)/dur);
+    const e=1-Math.cos(p*Math.PI*1.06)*Math.exp(-p*3.4);
+    onUpdate(from+(to-from)*Math.min(1.04,e));
+    if(p<1) requestAnimationFrame(tick); else onUpdate(to);
+  };
+  requestAnimationFrame(tick);
+}
+function spark(seed){
+  let p=[];
+  for(let i=0;i<=20;i++){
+    const y=17+Math.sin(i*0.7+seed)*9+Math.sin(i*0.23+seed*2)*4;
+    p.push(`${i*10},${Math.round(y)}`);
+  }
+  return p.join(' ');
+}
+function wave(seed){
+  let pts=[];
+  for(let i=0;i<=24;i++){
+    const y=66+Math.sin((i+seed*3)*0.55)*18+Math.sin((i+seed)*0.17)*9;
+    pts.push(`${Math.round(i*366/24)},${Math.round(y)}`);
+  }
+  return pts.join(' ');
+}
+
+/* 液态指示器 */
+function liquid(trackEl,n,accent,width){
+  trackEl.innerHTML='';
+  const step=width/n, dots=[];
+  for(let i=0;i<n;i++){
+    const d=document.createElement('span');
+    d.style.cssText=`position:absolute;left:${i*step+step/2-2.5}px;top:1.5px;width:5px;height:5px;
+      border-radius:2.5px;background:#3E4C63;transition:background .2s`;
+    trackEl.appendChild(d); dots.push(d);
+  }
+  const pill=document.createElement('span');
+  pill.style.cssText='position:absolute;top:0;height:8px;border-radius:4px;background:'+accent;
+  trackEl.appendChild(pill);
+  let cur=0;
+  const place=(pos,stretch)=>{
+    const cx=pos*step+step/2, w=Math.max(18,26+stretch);
+    pill.style.left=(cx-w/2)+'px'; pill.style.width=w+'px';
+    dots.forEach((d,i)=> d.style.background=(Math.abs(i-pos)<0.5)?accent:'#3E4C63');
+  };
+  place(0,0);
+  return {
+    set(pos,stretch=0){ cur=pos; place(pos,stretch); },
+    moveTo(to){
+      const from=cur, span=Math.abs(to-from)*step+26, t0=performance.now(), dur=320;
+      const tick=now=>{
+        const p=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-p,3);
+        place(from+(to-from)*e, span*(1-e)*0.9);
+        if(p<1) requestAnimationFrame(tick); else cur=to;
+      };
+      requestAnimationFrame(tick);
+    }
+  };
+}
+
+const BOARDS=[
+  {n:'原始传感器', s:'6 页',   c:'--raw',    g:'◉', d:'加速度 / 陀螺 / 磁场 / 光 / 麦克风 / 扬声器',
+   items:[['加速度计','X/Y/Z · 折线'],['陀螺仪','角速度 · 折线'],['磁力计','三轴磁场'],['光线','环境光'],['麦克风','声压波形'],['扬声器','回放电平']]},
+  {n:'力学',       s:'3 可用', c:'--mech',   g:'◍', d:'单摆 / 弹簧 / 向心力',
+   items:[['单摆','测重力加速度 g'],['弹簧','测频率 f'],['向心力','测旋转半径 r'],['碰撞','规划中']]},
+  {n:'声学',       s:'2 可用', c:'--acou',   g:'♪', d:'频谱 / 音调 / 音高 / 多普勒',
+   items:[['频谱','FFT 主频与谐波'],['音调','播放已知频率'],['音高','规划中'],['多普勒','规划中']]},
+  {n:'工具',       s:'5 可用', c:'--tool',   g:'✎', d:'频谱 / 倾角 / 标尺 / 磁场 / 惯性',
+   items:[['加速度频谱','FFT · 3 轴'],['倾角','atan2 重力倾斜'],['磁性标尺','磁场峰值计数'],['磁场频谱','磁场 FFT · 3 轴'],['惯性标尺','姿态与位移标定']]},
+  {n:'计时器',     s:'3 可用', c:'--time',   g:'◔', d:'运动秒表 / 光门 / 声门',
+   items:[['运动秒表','按键计时与阈值'],['光门','遮光计时'],['声门','声响计时']]},
+  {n:'生活',       s:'1 可用', c:'--every',  g:'⌂', d:'掌声测量',
+   items:[['掌声','掌声强度与次数']]},
+  {n:'自定义',     s:'规划中', c:'--custom', g:'＋', d:'自己拼一个实验',
+   items:[['构建器','规划中']]},
+  {n:'AI 教练',    s:'端侧',   c:'--ai',     g:'⋯', d:'描述现象，Agent 选实验并跑',
+   items:[['开始对话','端侧 Agent 推理']]},
+];
+
+/* 主页：8 格 + 指下聚焦 */
+const G={x0:12,y0:168,w:178,h:60,gx:10,gy:8};
+const grid=$('#grid'), tab8=liquid($('#ltab8'),BOARDS.length,cssv('--accent'),200);
+let focus=0; const tiles=[];
+BOARDS.forEach((b,i)=>{
+  const col=i%2,row=(i/2)|0;
+  const el=document.createElement('div');
+  el.className='tile'; el.style.color=cssv(b.c);
+  /* 注意：.grid 的 top 已经是 G.y0，tile 只需用"格内相对坐标"，
+     否则会叠加两次（上一版踩过）。命中判定用的是手表坐标，两者对得上。 */
+  el.style.left=(G.x0+col*(G.w+G.gx))+'px'; el.style.top=(row*(G.h+G.gy))+'px';
+  el.style.width=G.w+'px'; el.style.height=G.h+'px';
+  el.innerHTML=`<div class="chip" style="background:${hexA(cssv(b.c),.18)};color:${cssv(b.c)}">${b.g}</div>
+    <div class="tx"><div class="nm" style="color:var(--fg)">${b.n}</div><div class="ct">${b.s}</div></div>`;
+  grid.appendChild(el); tiles.push(el);
+});
+function renderFocus(pulse=0){
+  tiles.forEach((el,i)=>{
+    const on=i===focus;
+    el.style.transition='transform .18s cubic-bezier(.22,1,.36,1),opacity .18s,border-color .18s,background .18s';
+    el.style.transform=`scale(${on?1.06+pulse:1})`;
+    el.style.opacity=on?'1':'0.62';
+    el.classList.toggle('focus',on);
+  });
+  const b=BOARDS[focus];
+  $('#fbName').textContent=b.n;
+  $('#fbDesc').textContent=b.d;
+  $('#fbCnt').textContent=b.s;
+  $('#fbBar').style.background=cssv(b.c);
+  $('.focusbar').style.borderColor=hexA(cssv(b.c),.5);
+}
+const watch=$('#watch');
+function toLocal(e){ const r=watch.getBoundingClientRect(),k=r.width/390;
+  return {x:(e.clientX-r.left)/k,y:(e.clientY-r.top)/k}; }
+function hitTile(p){
+  for(let i=0;i<BOARDS.length;i++){
+    const col=i%2,row=(i/2)|0;
+    const x=G.x0+col*(G.w+G.gx), y=G.y0+row*(G.h+G.gy);
+    if(p.x>=x-5&&p.x<=x+G.w+5&&p.y>=y-5&&p.y<=y+G.h+5) return i;
+  }
+  return -1;
+}
+let holding=false,startFocus=0;
+grid.addEventListener('pointerdown',e=>{
+  grid.setPointerCapture(e.pointerId);
+  holding=true; startFocus=focus;
+  const i=hitTile(toLocal(e)); if(i>=0){ focus=i; renderFocus(); tab8.set(i); }
+});
+grid.addEventListener('pointermove',e=>{
+  if(!holding) return;
+  const i=hitTile(toLocal(e));
+  if(i>=0&&i!==focus){
+    focus=i;                                  /* 磁吸：进到某一格范围才切换，边缘不突跳 */
+    tween(0,1,x=>renderFocus(0.06*Math.sin(x*Math.PI)),240);
+    tab8.moveTo(i);
+  }
+});
+grid.addEventListener('pointerup',e=>{
+  if(!holding) return; holding=false;
+  const i=hitTile(toLocal(e));
+  if(i>=0){ focus=i; renderFocus(); tab8.set(i); openBoard(i); }
+  else { focus=startFocus; renderFocus(); tab8.set(focus); }
+});
+
+/* 共享元素展开 */
+const flip=$('#flipLayer');
+function flipExpand(fromRect,toRect,color,onMid){
+  if(window.__STILL){ onMid&&onMid(); return; }
+  flip.style.display='block'; flip.style.transition='none';
+  flip.style.left=fromRect.left+'px'; flip.style.top=fromRect.top+'px';
+  flip.style.width=fromRect.width+'px'; flip.style.height=fromRect.height+'px';
+  flip.style.background=color; flip.style.borderRadius=(fromRect.r??14)+'px';
+  flip.getBoundingClientRect();
+  requestAnimationFrame(()=>{
+    flip.style.transition='all .34s cubic-bezier(.22,1,.36,1)';
+    flip.style.left=toRect.left+'px'; flip.style.top=toRect.top+'px';
+    flip.style.width=toRect.width+'px'; flip.style.height=toRect.height+'px';
+    flip.style.borderRadius=(toRect.r??0)+'px';
+  });
+  setTimeout(()=>{ onMid&&onMid(); flip.style.opacity='0'; },185);
+  setTimeout(()=>{ flip.style.display='none'; flip.style.opacity='.97'; },355);
+}
+
+let stack=['home'];
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==='scr-'+id));
+  document.querySelectorAll('.switch button[data-scr]').forEach(b=>b.classList.toggle('on',b.dataset.scr===id));
+}
+function openBoard(i){
+  const b=BOARDS[i];
+  $('#catTitle').textContent=b.n;
+  $('#heroName').textContent=b.n;
+  $('#heroDesc').textContent=b.d;
+  $('#heroChip').textContent=b.g;
+  $('#heroChip').style.background=hexA(cssv(b.c),.18);
+  $('#heroChip').style.color=cssv(b.c);
+  const nA=b.items.filter(it=>!it[1].includes('规划')).length, nP=b.items.length-nA;
+  $('#heroCnt').textContent=nP?`${nA} 可用 · ${nP} 规划`:`${nA} 可用`;
+  $('#heroWash').style.background=
+    `radial-gradient(220px 150px at 22% 30%, ${hexA(cssv(b.c),.30)}, transparent 72%),
+     radial-gradient(260px 180px at 96% 110%, ${hexA(cssv(b.c),.16)}, transparent 70%)`;
+  const rows=$('#catRows'); rows.innerHTML='';
+  b.items.forEach((it,k)=>{
+    const planned=it[1].includes('规划');
+    const r=document.createElement('div');
+    r.className='row'+(planned?' off':'');
+    r.innerHTML=`<span class="idx">${String(k+1).padStart(2,'0')}</span>
+      <span class="rail" style="background:${planned?'#475569':cssv(b.c)}"></span>
+      <span class="tx"><span class="nm">${it[0]}</span><span class="mt">${planned?'尚未实现':it[1]}</span></span>
+      ${planned?'<span class="pill">规划中</span>'
+        :`<span class="go" style="color:${cssv(b.c)};border-color:${hexA(cssv(b.c),.5)};background:${hexA(cssv(b.c),.12)}">开始 ›</span>`}`;
+    rows.appendChild(r);
+    if(window.__STILL){ r.style.opacity=1; r.style.transform='none'; }
+    else{
+      r.style.opacity=0; r.style.transform='translateY(12px)';
+      setTimeout(()=>{ r.style.transition='all .26s cubic-bezier(.22,1,.36,1)';
+                       r.style.opacity=1; r.style.transform='translateY(0)'; },30+k*40);
+    }
+  });
+  const wr=watch.getBoundingClientRect(), k=wr.width/390;
+  const tr=tiles[i].getBoundingClientRect();
+  flipExpand({left:(tr.left-wr.left)/k,top:(tr.top-wr.top)/k,width:tr.width/k,height:tr.height/k,r:14},
+             {left:0,top:0,width:390,height:450,r:0}, hexA(cssv(b.c),.20),
+             ()=>showScreen('cat'));
+  stack.push('cat');
+}
+
+/* 右拖返回 */
+let catX=0, catStart=null;
+watch.addEventListener('pointerdown',e=>{ if($('#scr-cat').classList.contains('on')) catStart=e; });
+watch.addEventListener('pointermove',e=>{
+  if(!catStart) return;
+  const r=watch.getBoundingClientRect(), k=r.width/390;
+  const dx=(e.clientX-catStart.clientX)/k;
+  catX=Math.max(0,dx);
+  const pull=catX>58?(catX-58)*0.35:0;            /* 磁吸：过阈值后往"返回"目标吸 */
+  const disp=Math.min(catX+pull,300);
+  $('#scr-cat').style.transition='none'; $('#scr-cat').style.transform=`translateX(${disp}px)`;
+  $('#scr-home').style.transition='none';
+  $('#scr-home').style.transform=`translateX(${-60+disp*0.2}px) scale(${0.96+disp*0.00012})`;
+});
+watch.addEventListener('pointerup',e=>{
+  if(!catStart) return;
+  const done=catX>130, from=catX, dur=done?280:320, t0=performance.now();
+  const tick=now=>{
+    const p=Math.min(1,(now-t0)/dur);
+    const e2=done?1-Math.pow(1-p,3):Math.sin(p*Math.PI/2);
+    const x=done?from+(390-from)*e2:from*(1-e2);
+    $('#scr-cat').style.transform=`translateX(${x}px)`;
+    $('#scr-home').style.transform=`translateX(${-60+(x/390)*60}px) scale(${0.96+(x/390)*0.04})`;
+    if(p<1) requestAnimationFrame(tick);
+    else{
+      $('#scr-cat').style.transition=''; $('#scr-home').style.transition='';
+      if(done){ stack.pop(); showScreen('home'); $('#scr-home').style.transform=''; $('#scr-cat').style.transform=''; }
+    }
+  };
+  requestAnimationFrame(tick); catX=0; catStart=null;
+});
+$('#catBack').addEventListener('click',()=>{ stack.pop(); showScreen('home');
+  $('#scr-home').style.transform=''; $('#scr-cat').style.transform=''; });
+
+/* 读数页 */
+const SENSORS=[
+  {n:'加速度计',u:'g',   v:['−0.19','−0.32','−0.95'],acc:'--raw', color:'#4FC3F7'},
+  {n:'陀螺仪',  u:'dps', v:['+1.2','−0.4','+0.1'],   acc:'--raw', color:'#64B5F6'},
+  {n:'磁力计',  u:'mG',  v:['−131','+47','−318'],    acc:'--raw', color:'#AED581'},
+  {n:'光线',    u:'lx',  v:['+128'],                 acc:'--raw', color:'#FFB74D'},
+  {n:'麦克风',  u:'dBFS',v:['−42.5'],                acc:'--acou',color:'#FFB74D'},
+  {n:'扬声器',  u:'dBFS',v:['−58.0'],                acc:'--acou',color:'#FFB74D'},
+];
+const N=SENSORS.length, tabRead=liquid($('#trackRead'),N,cssv('--raw'),186);
+let pageX=0,pageIdx=0;
+$('#pages').innerHTML=SENSORS.map((s,i)=>{
+  const rows=s.v.map((v,k)=>`<div class="kvr"><span class="k">${['X','Y','Z'][k]||''}</span>
+      <span><span class="v">${v}</span><span class="u">${s.u}</span></span></div>`).join('');
+  return `<div class="page" data-i="${i}" style="transform:translateX(${i*390}px)">
+    <div class="sec"><span class="b" style="background:${cssv(s.acc)}"></span>${s.n}
+      <span class="r"></span><span class="live"><span class="dot-live"></span>实时</span></div>
+    <div class="kv">${rows}</div>
+    <div class="chart" data-chart="${i}">
+      <div class="gl" style="top:33%"></div><div class="gl" style="top:66%"></div>
+      <svg viewBox="0 0 366 128" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+        <polyline fill="none" stroke="${cssv(s.acc)}" stroke-width="2" points="${wave(i)}"/></svg>
+      <div class="cap">最近 2.4 s</div><div class="tap">点一下放大 ›</div>
+    </div></div>`;
+}).join('');
+document.querySelectorAll('.chart').forEach(c=>c.addEventListener('click',ev=>{
+  ev.stopPropagation(); openFullChart(+c.dataset.chart);
+}));
+function renderRead(){
+  document.querySelectorAll('#pages .page').forEach(p=>{
+    const i=+p.dataset.i, dist=i-(pageX/390), k=Math.max(0,1-Math.abs(dist)*0.7);
+    const squeeze=1+Math.min(0.03,Math.abs(readV)*0.0004);
+    p.style.transform=`translateX(${i*390-pageX}px) scale(${(0.92+0.08*k)*squeeze},1)`;
+    p.style.opacity=0.35+0.65*k;
+  });
+  tabRead.set(Math.max(0,Math.min(N-1,pageX/390)));
+  const t=performance.now()/900;
+  document.querySelectorAll('#pages polyline').forEach((pl,i)=>{
+    if(Math.abs(i-pageX/390)<0.6) pl.setAttribute('points',wave(i+Math.round(t*2)));
+  });
+}
+let readV=0, readStart=null;
+watch.addEventListener('pointerdown',e=>{ if($('#scr-read').classList.contains('on')) readStart=e; });
+watch.addEventListener('pointermove',e=>{
+  if(!readStart) return;
+  const r=watch.getBoundingClientRect(), k=r.width/390;
+  const dx=(e.clientX-readStart.clientX)/k; readV=dx;
+  pageX=Math.max(-40,Math.min((N-1)*390+40,pageIdx*390-dx)); renderRead();
+});
+watch.addEventListener('pointerup',e=>{
+  if(!readStart) return;
+  const r=watch.getBoundingClientRect(), k=r.width/390;
+  const dx=(e.clientX-readStart.clientX)/k;
+  let idx=Math.round((pageIdx*390-dx+(dx>0?90:-90))/390);
+  idx=Math.max(0,Math.min(N-1,idx));
+  const from=pageX,to=idx*390,t0=performance.now(),dur=300;
+  const tick=now=>{
+    const p=Math.min(1,(now-t0)/dur),e2=1-Math.pow(1-p,3);
+    pageX=from+(to-from)*e2; renderRead();
+    if(p<1) requestAnimationFrame(tick); else{ tabRead.moveTo(from/390,idx); readV=0; }
+  };
+  requestAnimationFrame(tick); pageIdx=idx; readStart=null;
+});
+
+let fullOpen=false,fullY=0;
+function openFullChart(i){
+  const s=SENSORS[i];
+  const src=document.querySelector(`.page[data-i="${i}"] .chart`).getBoundingClientRect();
+  const wr=watch.getBoundingClientRect(),k=wr.width/390;
+  $('#fullLine').setAttribute('stroke',cssv(s.acc));
+  $('#fullLine').setAttribute('points',wave(i).replace(/(\d+),(\d+)/g,(m,x,y)=>`${x},${Math.round(y*2.3)}`));
+  fullOpen=true; $('#fullchart').classList.add('on');
+  $('#fullchart').style.transition='none'; $('#fullchart').style.opacity='0.2';
+  flipExpand({left:(src.left-wr.left)/k,top:(src.top-wr.top)/k,width:src.width/k,height:src.height/k,r:12},
+             {left:0,top:56,width:390,height:296,r:14}, hexA(cssv(s.acc),.16));
+  requestAnimationFrame(()=>{ $('#fullchart').style.transition='opacity .26s'; $('#fullchart').style.opacity='1'; });
+}
+$('#fullchart').addEventListener('pointerdown',e=>{ $('#fullchart').dataset.y=e.clientY; });
+$('#fullchart').addEventListener('pointermove',e=>{
+  if(!fullOpen) return;
+  const dy=Math.max(0,e.clientY-+$('#fullchart').dataset.y); fullY=dy;
+  $('#fullBox').style.transform=`translateY(${dy}px) scale(${1-dy/2400})`;
+  $('#fullBox').style.opacity=String(1-dy/400);
+});
+$('#fullchart').addEventListener('pointerup',()=>{
+  if(!fullOpen) return;
+  const done=fullY>90, from=fullY, dur=260, t0=performance.now();
+  const tick=now=>{
+    const p=Math.min(1,(now-t0)/dur), x=from*(1-p);
+    $('#fullBox').style.transform=`translateY(${x}px) scale(${1-x/2400})`;
+    $('#fullBox').style.opacity=String(1-x/400);
+    if(p<1) requestAnimationFrame(tick);
+    else{ $('#fullBox').style.transform=''; $('#fullBox').style.opacity='';
+          if(done){ fullOpen=false; $('#fullchart').classList.remove('on'); } }
+  };
+  requestAnimationFrame(tick); fullY=0;
+});
+
+document.querySelectorAll('.switch button[data-scr]').forEach(b=>b.addEventListener('click',()=>{
+  const id=b.dataset.scr;
+  if(id==='cat') openBoard(focus);
+  else { $('#fullchart').classList.remove('on'); showScreen(id); }
+}));
+$('#readBack').addEventListener('click',()=>showScreen('home'));
+$('#resetBtn').addEventListener('click',()=>{
+  focus=0; pageX=0; pageIdx=0;
+  $('#scr-home').style.transform=''; $('#scr-cat').style.transform=''; $('#fullchart').classList.remove('on');
+  showScreen('home'); renderFocus(); tab8.set(0); renderRead();
+});
+if(location.search.indexOf('still')>=0) window.__STILL=true;
+renderFocus(); tab8.set(0); renderRead();
+setInterval(renderRead,120);
+const H=(location.hash||'').replace('#','');
+if(H==='cat') openBoard(3);
+else if(H==='read'){ stack.push('read'); showScreen('read'); }
+</script>
+</body>
+</html>

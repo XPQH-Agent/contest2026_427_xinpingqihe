@@ -1,0 +1,2 @@
+[0m[phywear] alive t=30s loops/s=34 fps=34
+[0m[phywear] alive t=60s loops/s=36 fps=36

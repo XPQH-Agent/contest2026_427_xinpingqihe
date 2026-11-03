@@ -1,0 +1,7 @@
+PASS  理想情况：连上→订阅→写 ping  期望 True 实得 True
+PASS  没连上（其余证据齐全）  期望 False 实得 False
+PASS  写入发生在连接之前 —— 那是自检写的，不能算  期望 False 实得 False
+PASS  连上后通知报错 —— 要 FAIL  期望 False 实得 False
+PASS  先 OFF 后 ON（手机来回切过订阅）—— 仍应 PASS  期望 True 实得 True
+------------------------------------------------------------
+判定器自测：✅ 全部符合预期

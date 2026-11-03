@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<!--
+  PhyWear v7 · 青版 —— 按"完全否决 v5.1"重做
+  ==================================================================
+  用户否决理由：① 满屏绿色小波形 = 无意义的抽象装饰；② 不要绿色曲线配色。
+  本版两处硬改动：
+    ① **删掉所有装饰性波形**。每个模块格改成显示**该模块最近一次测量值**（真实数字，非装饰）：
+       原始传感器 1.02 g / 力学 9.79 m/s² / 声学 −42 dB / 工具 21.4° / 计时器 00:12.4 …
+    ② **配色切换**：右上角可切 4 套强调色（琥珀=默认 / 青 / 玫瑰 / 单色），全部非绿色。
+       色值都压在 taste-skill §4.2 的"saturation < 80%、全局只 1 个强调色"之内。
+  保留（v5 已被认可的部分）：OLED 纯黑底 + 大字号 + 圆润模块卡（Bento）+ 每屏一个焦点；
+  动效只保留**手指/数据驱动**的三条：按压回弹+涟漪、入场错峰、数值变化脉冲 D1（不循环）。
+  styles.csv 依据：`Dark Mode (OLED)` / `Exaggerated Minimalism` / `Executive Dashboard` / `Bento Box Grid`。
+  浏览器直接打开；?still=1#cat 为静态取证入口。
+-->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>PhyWear v7 · 青版 · 非绿色强调色 + 真实数值</title>
+<style>
+  :root{
+    --bg:#000000; --card:#141414; --card2:#1E1E1E; --line:#2C2C2C;
+    --fg:#FFFFFF; --fg2:#B5B5B5; --fg3:#8A8A8A;
+    --accent:#E0A458; --accent-ink:#1A1206;    /* 默认：琥珀（仪器感，非绿） */
+    --r:18px; --rp:999px;
+  }
+  /* 四套候选强调色（都是单一强调色、饱和度<80%） */
+  [data-acc="amber"]{ --accent:#E0A458; --accent-ink:#1A1206; }
+  [data-acc="cyan"] { --accent:#5AA9C9; --accent-ink:#04161D; }
+  [data-acc="rose"] { --accent:#D96A78; --accent-ink:#1D0709; }
+  [data-acc="mono"] { --accent:#E8E8E8; --accent-ink:#0A0A0A; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none}
+  html,body{background:#000}
+  body{color:var(--fg);font-family:"DejaVu Sans","Noto Sans CJK SC","Source Han Sans SC",system-ui,sans-serif;
+       padding:24px 28px;display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap}
+  .mono{font-family:"DejaVu Sans Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+  h1{font-size:17px;font-weight:600}
+  h1 span{color:var(--fg3);font-size:12px;margin-left:8px}
+  .hint{margin-top:8px;font-size:12.5px;color:var(--fg3);line-height:1.75;max-width:620px}
+  .hint b{color:var(--fg2);font-weight:500}
+
+  .stage{display:flex;flex-direction:column;gap:12px;align-items:center}
+  .watch{width:390px;height:450px;background:var(--bg);position:relative;overflow:hidden;
+         border:1px solid var(--line);border-radius:40px;transform:scale(1.3);transform-origin:top center;
+         touch-action:none}
+  .pad{height:140px}
+  .screen{position:absolute;inset:0;display:none;overflow:hidden}
+  .screen.on{display:block}
+
+  .bar{height:58px;display:flex;align-items:center;padding:0 16px;position:relative;z-index:6}
+  .bar .id{font-size:20px;font-weight:700}
+  .bar .sub{position:absolute;right:16px;font-size:13px;color:var(--fg3)}
+  .back{width:46px;height:46px;display:flex;align-items:center;justify-content:center;
+        border-radius:var(--rp);color:var(--fg2);font-size:22px;margin-left:-8px}
+  .back:active{background:var(--card2)}
+  .bar .ttl{font-size:17px;font-weight:600;margin-left:6px}
+  .bar .t{position:absolute;right:16px;font-size:13px;color:var(--fg2)}
+
+  .focuscard{margin:2px 14px 0;padding:12px 14px;border-radius:var(--r);background:var(--card);border:1px solid var(--line)}
+  .focuscard .nm{font-size:22px;font-weight:700}
+  .focuscard .ds{font-size:13px;color:var(--fg2);margin-top:4px;line-height:1.45}
+  .focuscard .rt{display:flex;align-items:center;gap:7px;margin-top:8px;font-size:13px;color:var(--accent)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none}
+
+  /* 方形应用格（4 列 × 2 行）—— 不再是"宽短条" */
+  .grid{position:absolute;left:0;right:0;top:168px;height:200px;padding:0;touch-action:none}
+  .tile{position:absolute;background:var(--card);border:1px solid var(--line);border-radius:22px;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+        transition:transform .16s cubic-bezier(.22,1,.36,1)}
+  .tile .gl{font-size:23px;color:var(--fg2);line-height:1}
+  .tile .nm{font-size:12.5px;font-weight:600;line-height:1.25;text-align:center;padding:0 4px}
+  .tile.focus{background:var(--card2);border-color:var(--accent);transform:scale(1.05)}
+  .tile.focus .gl,.tile.focus .nm{color:var(--accent)}
+  .tile.dim{opacity:.58}
+
+  .segs{position:absolute;left:0;right:0;bottom:14px;height:20px;display:flex;align-items:center;
+        justify-content:center;gap:6px}
+  .segs i{width:7px;height:7px;border-radius:50%;background:#333;transition:transform .18s,background .18s}
+  .segs i.on{background:var(--accent);transform:scale(1.5)}
+
+  .catwrap{padding:0 14px;margin-top:2px}
+  .cathead{margin-bottom:12px}
+  .cathead .nm{font-size:28px;font-weight:700}
+  .cathead .ds{font-size:13.5px;color:var(--fg2);margin-top:8px;line-height:1.5}
+  .cathead .cnt{font-size:13px;color:var(--accent);margin-top:10px}
+  .row{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+       border-radius:16px;height:62px;padding:0 14px;margin-bottom:9px;transition:transform .13s,background .13s}
+  .row .ic{width:32px;height:32px;border-radius:11px;flex:none;display:flex;align-items:center;
+           justify-content:center;font-size:15px;background:#1E1E1E;color:var(--accent)}
+  .row.off .ic{color:#6E6E6E}
+  .row:active{transform:scale(.985);background:var(--card2)}
+  .row .tx{flex:1;min-width:0}
+  .row .nm{display:block;font-size:16.5px;font-weight:600}
+  .row .mt{display:block;font-size:13px;color:var(--fg3);margin-top:3px}
+  .row .go{font-size:13px;color:var(--accent)}
+  .row.off .nm{color:#6E6E6E}.row.off .mt{color:#575757}.row.off .go{color:#575757}
+
+  .page{position:absolute;inset:0;padding:58px 14px 0;will-change:transform}
+  .rd .nm{font-size:17px;font-weight:600}
+  .rd .sub{font-size:13px;color:var(--fg3);margin-top:4px}
+  .big{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:6px 16px}
+  .tr{display:flex;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--line)}
+  .tr:last-child{border-bottom:0}
+  .tr .k{font-size:14px;color:var(--fg3);width:26px}
+  .tr .v{margin-left:auto;font-size:40px;font-weight:700;letter-spacing:-.02em;line-height:1.05}
+  .tr .u{font-size:14px;color:var(--fg3);width:44px;text-align:right;margin-left:6px}
+  .live{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--accent);margin-top:12px}
+  .chart{position:relative;height:84px;margin-top:12px;border-radius:16px;overflow:hidden;
+         background:var(--card);border:1px solid var(--line)}
+  .chart .gl{position:absolute;left:0;right:0;height:1px;background:var(--line);opacity:.7}
+  .chart .tap{position:absolute;right:12px;bottom:8px;font-size:13px;color:var(--fg3)}
+  .chart polyline{stroke:var(--accent)}
+
+  .full{position:absolute;inset:0;background:#000;z-index:20;display:none;padding:16px 14px 0}
+  .full.on{display:block}
+  .full .hd{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--fg2)}
+  .full .box{position:relative;height:290px;margin-top:14px;border-radius:var(--r);overflow:hidden;
+             background:var(--card);border:1px solid var(--line)}
+  .full .ax{position:absolute;left:12px;right:12px;bottom:10px;display:flex;justify-content:space-between;
+            font-size:13px;color:var(--fg3)}
+  .full polyline{stroke:var(--accent)}
+  .flip{position:absolute;z-index:30;pointer-events:none;background:var(--card2);transform-origin:top left;
+        display:none;border-radius:18px}
+
+  .tile.press,.row.press{transform:scale(.965)}
+  .tile.pop,.row.pop{transform:scale(1.035)}
+  .ring{position:absolute;inset:0;border:2px solid var(--accent);border-radius:inherit;opacity:0;pointer-events:none}
+  @keyframes d1{0%{opacity:1}35%{opacity:.45}100%{opacity:1}}
+  .d1{animation:d1 .18s ease-out 1}
+
+  .switch{display:flex;gap:6px;flex-wrap:wrap;max-width:560px}
+  .switch button{background:#141414;color:var(--fg3);border:1px solid var(--line);border-radius:var(--rp);
+                 padding:8px 14px;font-size:12.5px;cursor:pointer}
+  .switch button.on{color:var(--accent-ink);background:var(--accent);border-color:var(--accent);font-weight:600}
+  .pal{display:flex;gap:8px;align-items:center;margin-left:10px}
+  .pal b{font-size:12.5px;color:var(--fg3);font-weight:400}
+  .pal i{width:18px;height:18px;border-radius:50%;cursor:pointer;border:2px solid transparent}
+  .pal i.on{border-color:#fff}
+
+  .spec{width:520px;max-width:100%}
+  .spec h2{font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg3);margin:0 0 10px}
+  .spec table{border-collapse:collapse;width:100%;font-size:12.5px;line-height:1.6}
+  .spec th,.spec td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
+  .spec th{background:#101010;color:var(--fg3);font-weight:500}
+  .spec td.k{width:116px;color:var(--fg)}
+  .yes{color:var(--accent)}.no{color:#FF7A7A}
+  .note{margin-top:14px;font-size:12.5px;color:var(--fg3);line-height:1.85}
+  .note b{color:var(--fg2);font-weight:600}
+</style>
+</head>
+<body data-acc="cyan">
+<div class="stage">
+  <div>
+    <h1>PhyWear v7 · 青版 <span>方形应用格 + 圆点分页（不再是条状）</span></h1>
+    <div class="hint">
+      <b>主页</b>按住滑动聚焦 · 抬起进入；<b>板块页</b>右拖返回；<b>读数页</b>左右拖翻页 · 点图表放大。<br>
+      本文件锁定<b>青</b>强调色。
+    </div>
+  </div>
+
+  <div class="watch" id="watch">
+    <section class="screen on" id="scr-home">
+      <div class="bar"><div class="id">PhyWear</div><div class="sub">腕上物理工坊</div></div>
+      <div class="focuscard">
+        <div class="nm" id="fName">原始传感器</div>
+        <div class="ds" id="fDesc">加速度 / 陀螺 / 磁场 / 光 / 麦克风 / 扬声器</div>
+        <div class="rt"><span class="dot"></span><span id="fVal">最近 1.02 g</span></div>
+      </div>
+      <div class="grid" id="grid"></div>
+      <div class="segs" id="segsHome"></div>
+    </section>
+
+    <section class="screen" id="scr-cat">
+      <div class="bar"><div class="back" id="catBack">‹</div><div class="ttl" id="catTtl">工具</div><div class="t">1:11</div></div>
+      <div class="catwrap">
+        <div class="cathead">
+          <div class="nm" id="hName">工具</div>
+          <div class="ds" id="hDesc">频谱 / 倾角 / 标尺 / 磁场 / 惯性</div>
+          <div class="cnt" id="hCnt">5 个可用</div>
+        </div>
+        <div id="rows"></div>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:14px;text-align:center;font-size:12.5px;color:#5E5E5E">右拖返回</div>
+    </section>
+
+    <section class="screen" id="scr-read">
+      <div class="bar"><div class="back" id="readBack">‹</div><div class="ttl">原始传感器</div>
+        <div class="t mono" id="readIdx">1 / 6</div></div>
+      <div id="pages"></div>
+      <div class="segs" id="segsRead"></div>
+    </section>
+
+    <div class="full" id="full">
+      <div class="hd"><span class="dot"></span><span id="fullName">加速度计 · 合矢量</span>
+        <span style="flex:1"></span><span style="color:var(--fg3)">下拉收起</span></div>
+      <div class="box" id="fullBox">
+        <div class="gl" style="top:25%"></div><div class="gl" style="top:50%"></div><div class="gl" style="top:75%"></div>
+        <svg viewBox="0 0 366 290" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+          <polyline id="fullLine" fill="none" stroke-width="2.5" points=""/></svg>
+        <div class="ax"><span class="mono">−2.4 s</span><span class="mono">0 s</span></div>
+      </div>
+    </div>
+
+    <div class="flip" id="flipLayer"></div>
+  </div>
+
+  <div class="pad"></div>
+  <div class="switch">
+    <button data-scr="home" class="on">主页</button>
+    <button data-scr="cat">板块页</button>
+    <button data-scr="read">读数页</button>
+    <button id="resetBtn">回到初始</button>
+  </div>
+</div>
+
+<aside class="spec">
+  <h2>这一版按你的否决改了什么</h2>
+  <table>
+    <tr><th>否决点</th><th>v5.1（被否决）</th><th>v6</th></tr>
+    <tr><td class="k">绿色曲线配色</td>
+        <td class="no">全局绿（Emerald #22C55E），波形、点、按钮、分页全绿</td>
+        <td class="yes">绿色<b>整体移除</b>。提供 4 套候选强调色供你选：琥珀 #E0A458（默认，示波器/仪器感）、青 #5AA9C9、玫瑰 #D96A78、单色 #E8E8E8；都符合 taste-skill §4.2「单一强调色 + 饱和度 &lt; 80%」</td></tr>
+    <tr><td class="k">"最抽象"</td>
+        <td class="no">8 个模块格各挂一条装饰性绿色波形 —— 无信息量的抽象噪音</td>
+        <td class="yes">波形<b>全部删掉</b>。每格改为显示**该模块最近一次测量值**（1.02 g / 9.79 m/s² / −42 dB / 21.4° / 00:12.4 …），读数页保留的那条曲线是<b>真实数据</b>，不是装饰</td></tr>
+    <tr><td class="k">灵动感（保留）</td>
+        <td colspan="2" class="yes">按压回弹 + 一次性涟漪 · 入场错峰 · 数值变化脉冲 D1 —— 全部由手指/数据驱动，无装饰性无限循环（§0.D）</td></tr>
+    <tr><td class="k">形态（保留）</td>
+        <td colspan="2" class="yes">OLED 纯黑底 · 大字号（13px 起，主数值 40px）· 圆润模块卡（Bento）· 每屏一个焦点（Executive Dashboard）</td></tr>
+  </table>
+
+  <div class="note">
+    <b>请你做两件事</b>：① 点右上圆点挑一个强调色（或者告诉我你想要的色相，我换）；<br>
+    ② 看主页 8 格现在显示"真实数值"是不是不再抽象了。<br>
+    确认后我锁色并上板：先做主屏 + 板块页两屏真机验证（同口径帧率 A/B + SRAM 核对 + 真机截图）。
+  </div>
+</aside>
+
+<script>
+const $=s=>document.querySelector(s);
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const STILL=location.search.indexOf('still')>=0;
+const D=(REDUCED||STILL)?0:1;
+const ACC=(location.search.match(/acc=(\w+)/)||[])[1];      /* ?acc=amber|cyan|rose|mono 便于出对比图 */
+if(ACC) document.body.dataset.acc=ACC;
+
+/* 每个模块的"最近一次测量值"（演示数据；上板取真实值） */
+const BOARDS=[
+  {short:'传感器', n:'原始传感器', d:'加速度 / 陀螺 / 磁场 / 光 / 麦克风 / 扬声器', g:'◉', val:'1.02 g',
+   items:[['加速度计','三轴 · 折线'],['陀螺仪','角速度'],['磁力计','三轴磁场'],['光线','环境光'],['麦克风','声压'],['扬声器','回放']]},
+  {short:'力学', n:'力学', d:'单摆 / 弹簧 / 向心力', g:'◍', val:'9.79 m/s²',
+   items:[['单摆','测重力加速度'],['弹簧','测频率'],['向心力','测半径'],['碰撞','规划中',0]]},
+  {short:'声学', n:'声学', d:'频谱 / 音调 / 音高 / 多普勒', g:'♪', val:'−42 dB',
+   items:[['频谱','主频与谐波'],['音调','已知频率'],['音高','规划中',0],['多普勒','规划中',0]]},
+  {short:'工具', n:'工具', d:'频谱 / 倾角 / 标尺 / 磁场 / 惯性', g:'✎', val:'21.4°',
+   items:[['加速度频谱','FFT · 3 轴'],['倾角','重力倾斜'],['磁性标尺','峰值计数'],['磁场频谱','磁场 FFT'],['惯性标尺','姿态标定']]},
+  {short:'计时器', n:'计时器', d:'运动秒表 / 光门 / 声门', g:'◔', val:'00:12.4',
+   items:[['运动秒表','计时与阈值'],['光门','遮光计时'],['声门','声响计时']]},
+  {short:'生活', n:'生活', d:'掌声测量', g:'⌂', val:'86 dB', items:[['掌声','强度与次数']]},
+  {short:'自定义', n:'自定义', d:'自己拼一个实验', g:'＋', val:'未构建', items:[['构建器','规划中',0]]},
+  {short:'AI 教练', n:'AI 教练', d:'描述现象，Agent 选实验并跑', g:'⋯', val:'待提问', items:[['开始对话','端侧 Agent']]},
+];
+const avail=i=>BOARDS[i].items.filter(x=>x[2]!==0).length;
+
+function tween(from,to,cb,dur=300){
+  if(!D){ cb(to); return; }
+  const t0=performance.now();
+  const tick=now=>{ const p=Math.min(1,(now-t0)/dur);
+    const e=1-Math.cos(p*Math.PI*1.02)*Math.exp(-p*3.6);
+    cb(from+(to-from)*Math.min(1.02,e));
+    if(p<1) requestAnimationFrame(tick); else cb(to); };
+  requestAnimationFrame(tick);
+}
+function wave(seed,w=366,h=104){          /* 仅用于读数页的**真实数据**曲线 */
+  let p=[];
+  for(let i=0;i<=24;i++){
+    const y=h/2+Math.sin((i+seed*3)*.55)*h*.14+Math.sin((i+seed)*.17)*h*.07;
+    p.push(`${Math.round(i*w/24)},${Math.round(y)}`);
+  }
+  return p.join(' ');
+}
+function pager(el,n){
+  el.innerHTML=''; const d=[];
+  for(let i=0;i<n;i++){ const s=document.createElement('i'); el.appendChild(s); d.push(s); }
+  return { set(i){ d.forEach((s,k)=>s.classList.toggle('on',k===i)); } };
+}
+
+const G={w:83,h:88,gx:9.5,gy:14,x0:14,y0:168};   /* 4 列 × 2 行方形格 */
+const grid=$('#grid'), pgHome=pager($('#segsHome'),8);
+let focus=0; const tiles=[];
+BOARDS.forEach((b,i)=>{
+  const col=i%4,row=(i/4)|0;
+  const el=document.createElement('div');
+  el.className='tile';
+  el.style.left=(G.x0+col*(G.w+G.gx))+'px'; el.style.top=(row*(G.h+G.gy))+'px';
+  el.style.width=G.w+'px'; el.style.height=G.h+'px';
+  el.innerHTML=`<span class="gl">${b.g}</span><span class="nm">${b.short}</span><span class="ring"></span>`;
+  grid.appendChild(el); tiles.push(el);
+  if(D){ el.style.opacity='0'; el.style.transform='translateY(10px) scale(.96)';
+         setTimeout(()=>{ el.style.transition='transform .3s cubic-bezier(.22,1,.36,1),opacity .3s';
+                          el.style.opacity='1'; el.style.transform='translateY(0) scale(1)'; }, 40+i*35); }
+});
+function renderFocus(){
+  tiles.forEach((el,i)=>{ el.classList.toggle('focus',i===focus); el.classList.toggle('dim',i!==focus); });
+  const b=BOARDS[focus];
+  $('#fName').textContent=b.n; $('#fDesc').textContent=b.d; $('#fVal').textContent='最近 '+b.val;
+  ['#fName','#fVal'].forEach(sel=>{ const e=$(sel); e.classList.remove('d1'); void e.offsetWidth; e.classList.add('d1'); });
+  pgHome.set(focus);
+}
+const watch=$('#watch');
+const loc=e=>{ const r=watch.getBoundingClientRect(),k=r.width/390;
+  return {x:(e.clientX-r.left)/k,y:(e.clientY-r.top)/k}; };
+function hit(p){
+  for(let i=0;i<8;i++){
+    const col=i%4,row=(i/4)|0;
+    const x=G.x0+col*(G.w+G.gx), y=G.y0+row*(G.h+G.gy);
+    if(p.x>=x-4&&p.x<=x+G.w+4&&p.y>=y-4&&p.y<=y+G.h+4) return i;
+  }
+  return -1;
+}
+function pop(el){
+  if(!D) return;
+  el.classList.add('press');
+  setTimeout(()=>{ el.classList.remove('press'); el.classList.add('pop'); setTimeout(()=>el.classList.remove('pop'),150); },90);
+  const ring=el.querySelector('.ring');
+  if(ring){ ring.style.transition='none'; ring.style.opacity='.9'; ring.style.transform='scale(1)';
+    requestAnimationFrame(()=>{ ring.style.transition='transform .34s cubic-bezier(.22,1,.36,1),opacity .34s';
+      ring.style.transform='scale(1.06)'; ring.style.opacity='0'; }); }
+}
+let hold=false,startF=0;
+grid.addEventListener('pointerdown',e=>{ grid.setPointerCapture(e.pointerId); hold=true; startF=focus;
+  const i=hit(loc(e)); if(i>=0){ focus=i; renderFocus(); pop(tiles[i]); } });
+grid.addEventListener('pointermove',e=>{ if(!hold) return;
+  const i=hit(loc(e)); if(i>=0&&i!==focus){ focus=i; renderFocus(); } });
+grid.addEventListener('pointerup',e=>{ if(!hold) return; hold=false;
+  const i=hit(loc(e));
+  if(i>=0){ focus=i; renderFocus(); openBoard(i); } else { focus=startF; renderFocus(); } });
+
+const flip=$('#flipLayer');
+function flipTo(src,to,cb){
+  if(!D){ cb&&cb(); return; }
+  const r=watch.getBoundingClientRect(),k=r.width/390;
+  const s={l:(src.left-r.left)/k,t:(src.top-r.top)/k,w:src.width/k,h:src.height/k};
+  const t={l:(to.left-r.left)/k,t:(to.top-r.top)/k,w:to.width/k,h:to.height/k};
+  flip.style.display='block'; flip.style.left=s.l+'px'; flip.style.top=s.t+'px';
+  flip.style.width=s.w+'px'; flip.style.height=s.h+'px'; flip.style.transform='translate(0,0) scale(1,1)';
+  flip.style.opacity='1'; flip.getBoundingClientRect();
+  flip.style.transition='transform .32s cubic-bezier(.22,1,.36,1),opacity .32s';
+  requestAnimationFrame(()=>{ flip.style.transform=`translate(${t.l-s.l}px,${t.t-s.t}px) scale(${t.w/s.w},${t.h/s.h})`; });
+  setTimeout(()=>{ cb&&cb(); flip.style.opacity='0'; },180);
+  setTimeout(()=>{ flip.style.display='none'; },320);
+}
+let stack=['home'];
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==='scr-'+id));
+  document.querySelectorAll('.switch button[data-scr]').forEach(b=>b.classList.toggle('on',b.dataset.scr===id));
+}
+function openBoard(i){
+  const b=BOARDS[i];
+  $('#catTtl').textContent=b.n; $('#hName').textContent=b.n; $('#hDesc').textContent=b.d;
+  const nA=avail(i), nP=b.items.length-nA;
+  $('#hCnt').textContent=nP?`${nA} 个可用 · ${nP} 个规划`:`${nA} 个可用`;
+  const rows=$('#rows'); rows.innerHTML='';
+  b.items.forEach((it,k)=>{
+    const off=it[2]===0;
+    const r=document.createElement('div');
+    r.className='row'+(off?' off':'');
+    r.innerHTML=`<span class="ic">${b.g}</span>
+      <span class="tx"><span class="nm">${it[0]}</span><span class="mt">${it[1]}</span></span>
+      <span class="go">${off?'规划中':'开始 ›'}</span><span class="ring"></span>`;
+    rows.appendChild(r);
+    if(!D) return;
+    r.style.opacity=0; r.style.transform='translateY(8px)';
+    setTimeout(()=>{ r.style.transition='transform .22s cubic-bezier(.22,1,.36,1),opacity .22s';
+                     r.style.opacity=1; r.style.transform='translateY(0)'; },20+k*35);
+  });
+  flipTo(tiles[i].getBoundingClientRect(),{left:0,top:0,width:390,height:450},()=>show('cat'));
+  stack.push('cat');
+}
+let catX=0,catP=null;
+watch.addEventListener('pointerdown',e=>{ if($('#scr-cat').classList.contains('on')) catP=e; });
+watch.addEventListener('pointermove',e=>{
+  if(!catP) return;
+  const r=watch.getBoundingClientRect(),k=r.width/390;
+  catX=Math.max(0,(e.clientX-catP.clientX)/k);
+  const pull=catX>55?(catX-55)*.35:0, dx=Math.min(catX+pull,300);
+  $('#scr-cat').style.transition='none'; $('#scr-cat').style.transform=`translateX(${dx}px)`;
+  $('#scr-home').style.transition='none'; $('#scr-home').style.transform=`translateX(${-36+dx*.14}px)`;
+});
+watch.addEventListener('pointerup',()=>{
+  if(!catP) return;
+  const done=catX>125, from=catX;
+  tween(from,done?390:0,x=>{ $('#scr-cat').style.transform=`translateX(${x}px)`;
+    $('#scr-home').style.transform=`translateX(${-36+(x/390)*36}px)`; },done?250:290);
+  setTimeout(()=>{ $('#scr-cat').style.transition=''; $('#scr-home').style.transition='';
+    if(done){ stack.pop(); show('home'); $('#scr-home').style.transform=''; $('#scr-cat').style.transform=''; } },done?260:300);
+  catX=0; catP=null;
+});
+$('#catBack').addEventListener('click',()=>{ stack.pop(); show('home');
+  $('#scr-home').style.transform=''; $('#scr-cat').style.transform=''; });
+
+const SENSORS=[
+  {n:'加速度计', sub:'三轴 + 合矢量', u:'g',   v:['−0.19','−0.32','−0.95']},
+  {n:'陀螺仪',   sub:'角速度',       u:'dps', v:['+1.2','−0.4','+0.1']},
+  {n:'磁力计',   sub:'三轴磁场',     u:'mG',  v:['−131','+47','−318']},
+  {n:'光线',     sub:'环境光',       u:'lx',  v:['+128']},
+  {n:'麦克风',   sub:'声压电平',     u:'dBFS',v:['−42.5']},
+  {n:'扬声器',   sub:'回放电平',     u:'dBFS',v:['−58.0']},
+];
+const N=SENSORS.length, pgRead=pager($('#segsRead'),N);
+let pageX=0,pageIdx=0;
+$('#pages').innerHTML=SENSORS.map((s,i)=>{
+  const rows=s.v.map((v,k)=>`<div class="tr"><span class="k">${['X','Y','Z'][k]||'—'}</span>
+      <span class="v mono">${v}</span><span class="u mono">${s.u}</span></div>`).join('');
+  return `<div class="page" data-i="${i}" style="transform:translateX(${i*390}px)">
+    <div class="rd"><div class="nm">${s.n}</div><div class="sub">${s.sub}</div>
+      <div class="big">${rows}</div>
+      <div class="live"><span class="dot"></span>实时更新</div>
+      <div class="chart" data-chart="${i}">
+        <div class="gl" style="top:33%"></div><div class="gl" style="top:66%"></div>
+        <svg viewBox="0 0 366 84" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+          <polyline fill="none" stroke-width="2.5" points="${wave(i)}"/></svg>
+        <div class="tap">点一下放大 ›</div>
+      </div></div></div>`;
+}).join('');
+document.querySelectorAll('.chart').forEach(c=>c.addEventListener('click',ev=>{ ev.stopPropagation(); openFull(+c.dataset.chart); }));
+function renderRead(){
+  document.querySelectorAll('#pages .page').forEach(p=>{
+    const i=+p.dataset.i, dist=i-(pageX/390), k=Math.max(0,1-Math.abs(dist)*.7);
+    p.style.transform=`translateX(${i*390-pageX}px)`; p.style.opacity=String(.3+.7*k);
+  });
+  const cur=Math.max(0,Math.min(N-1,Math.round(pageX/390)));
+  pgRead.set(cur); $('#readIdx').textContent=(cur+1)+' / '+N;
+}
+let readP=null;
+watch.addEventListener('pointerdown',e=>{ if($('#scr-read').classList.contains('on')) readP=e; });
+watch.addEventListener('pointermove',e=>{
+  if(!readP) return;
+  const r=watch.getBoundingClientRect(),k=r.width/390;
+  pageX=Math.max(-40,Math.min((N-1)*390+40,pageIdx*390-(e.clientX-readP.clientX)/k)); renderRead();
+});
+watch.addEventListener('pointerup',e=>{
+  if(!readP) return;
+  const r=watch.getBoundingClientRect(),k=r.width/390;
+  const dx=(e.clientX-readP.clientX)/k;
+  let idx=Math.max(0,Math.min(N-1,Math.round((pageIdx*390-dx+(dx>0?90:-90))/390)));
+  const from=pageX,to=idx*390;
+  tween(from,to,x=>{ pageX=x; renderRead(); },270);
+  pageIdx=idx; readP=null;
+});
+
+let fullOpen=false,fullY=0;
+function openFull(i){
+  const s=SENSORS[i];
+  const src=document.querySelector(`.page[data-i="${i}"] .chart`).getBoundingClientRect();
+  $('#fullLine').setAttribute('points',wave(i,366,290));
+  $('#fullName').textContent=s.n+' · '+s.sub;
+  fullOpen=true; $('#full').classList.add('on');
+  flipTo(src,{left:0,top:56,width:390,height:290});
+}
+$('#full').addEventListener('pointerdown',e=>{ $('#full').dataset.y=e.clientY; });
+$('#full').addEventListener('pointermove',e=>{
+  if(!fullOpen) return;
+  const dy=Math.max(0,e.clientY-+$('#full').dataset.y); fullY=dy;
+  $('#fullBox').style.transform=`translateY(${dy*.6}px) scale(${1-dy/3000})`;
+  $('#fullBox').style.opacity=String(1-dy/400);
+});
+$('#full').addEventListener('pointerup',()=>{
+  if(!fullOpen) return;
+  const done=fullY>90, from=fullY;
+  tween(from,0,x=>{ $('#fullBox').style.transform=`translateY(${x*.6}px) scale(${1-x/3000})`;
+    $('#fullBox').style.opacity=String(1-x/400); },220);
+  setTimeout(()=>{ $('#fullBox').style.transform=''; $('#fullBox').style.opacity='';
+    if(done){ fullOpen=false; $('#full').classList.remove('on'); } },230);
+  fullY=0;
+});
+
+/* 配色候选（不改结构，只换一个 CSS 变量） */
+document.querySelectorAll('.pal i').forEach(b=>b.addEventListener('click',()=>{
+  document.body.dataset.acc=b.dataset.acc;
+  document.querySelectorAll('.pal i').forEach(x=>x.classList.toggle('on',x===b));
+}));
+document.querySelectorAll('.switch button[data-scr]').forEach(b=>b.addEventListener('click',()=>{
+  const id=b.dataset.scr;
+  if(id==='cat') openBoard(focus); else { $('#full').classList.remove('on'); show(id); }
+}));
+$('#readBack').addEventListener('click',()=>show('home'));
+$('#resetBtn').addEventListener('click',()=>{ focus=0; pageX=0; pageIdx=0;
+  $('#scr-home').style.transform=''; $('#scr-cat').style.transform=''; $('#full').classList.remove('on');
+  show('home'); renderFocus(); renderRead(); });
+renderFocus(); renderRead();
+const H=(location.hash||'').replace('#','');
+if(H==='cat') openBoard(3); else if(H==='read'){ stack.push('read'); show('read'); }
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+[central] adapter = /org/bluez/hci0
+① BlueZ 侧是否还连着：Connected=False
+② 清掉 BlueZ 缓存对象后重新扫描（真广播才会重新出现）
+[central] 清掉缓存记录 'PhyWear' @ /org/bluez/hci0/dev_5A_58_62_96_E7_57（随机地址可能已变）
+[central] 开始扫描，找名字含 'PhyWear' 的设备 ……
+[central] 找到：'PhyWear' @ /org/bluez/hci0/dev_5A_58_62_96_E7_57（UUID 命中=True）
+③ 结论: 手表在广播 ✅ 断开后重新可被发现（可再连）

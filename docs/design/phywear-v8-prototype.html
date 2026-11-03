@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<!--
+  PhyWear v8 —— 少圆角矩形 + 主题页(Agent 语音切换) + 宫格/卡片流双交互
+  ==================================================================
+  按用户三条要求：
+   ① **少圆角矩形**（依据 taste-skill §4.4「cards ONLY when elevation communicates hierarchy；
+      otherwise group with border-t/divide-y」+ §4.4「VISUAL_DENSITY>7 时泛用卡片容器被禁」+
+      本队 stacks/lvgl.csv「EPIC 只对 radius=0 直通」）。规则：
+        内容容器 圆角 0（用 1px 细线分组） · 格子 10px · 交互胶囊/圆点 999（唯一允许的圆）
+      于是"卡片套卡片"的观感消失，绘制量也小（少圆角=少 CPU 掩码）。
+   ② **主题页 + Agent 语音切换 + 渐变过渡**：主题页列出 4 套主题（玫瑰/青/琥珀/单色），
+      可直接点选，也可以"对 Agent 说：切成青色"——模拟语音识别 → 渐变 600ms 切过去 + 顶部提示条。
+      渐变实现：全部颜色走 CSS 变量 + `transition: background-color/color/border-color .6s`，
+      外加一层强调色"洗色"遮罩淡出（只动 opacity，符合 §6.A）。
+   ③ **双交互共存**：主页支持「宫格」与「卡片流(v3)」两套——卡片流=横向拖动+中心聚焦+磁吸+共享元素展开；
+      宫格=一屏 8 格+按住滑动聚焦。在主题/布局页可切，评审栏也能切。
+  仍是 OLED 纯黑 + 单一强调色 + 大数字 + 真实数值；无装饰波形、无渐变背景（只有"洗色"遮罩）、无阴影。
+-->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>PhyWear v8 · 少圆角 + 主题(语音) + 双交互</title>
+<style>
+  :root{
+    --bg:#000; --card:#141414; --card2:#1E1E1E; --line:#2C2C2C; --line2:#3A3A3A;
+    --fg:#FFF; --fg2:#C2C2C2; --fg3:#9C9C9C;   /* 带色底上提亮一档，保可读 */
+    --accent:#D96A78; --ink:#1D0709;
+    --wash-top:.16; --wash-bottom:.10;      /* 背景底晕强度（一个变量调） */
+    --r-tile:10px; --r-pill:999px;    /* 内容容器不再有圆角 */
+  }
+  [data-theme="rose"]  { --accent:#D96A78; --ink:#1D0709; }
+  [data-theme="cyan"]  { --accent:#5AA9C9; --ink:#04161D; }
+  [data-theme="amber"] { --accent:#E0A458; --ink:#1A1206; }
+  [data-theme="mono"]  { --accent:#E8E8E8; --ink:#0A0A0A; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none}
+  html,body{background:#000}
+  body{color:var(--fg);font-family:"DejaVu Sans","Noto Sans CJK SC",system-ui,sans-serif;padding:22px 26px;
+       display:flex;gap:30px;align-items:flex-start;flex-wrap:wrap;
+       transition:background-color .6s,color .6s}
+  .mono{font-family:"DejaVu Sans Mono",monospace;font-variant-numeric:tabular-nums}
+  h1{font-size:17px;font-weight:600}
+  h1 span{color:var(--fg3);font-size:12px;margin-left:8px}
+  .hint{margin-top:8px;font-size:12.5px;color:var(--fg3);line-height:1.75;max-width:640px}
+  .hint b{color:var(--fg2);font-weight:500}
+
+  .stage{display:flex;flex-direction:column;gap:12px;align-items:center}
+  .watch{width:390px;height:450px;background:var(--bg);position:relative;overflow:hidden;
+         border:1px solid var(--line2);border-radius:36px;transform:scale(1.28);transform-origin:top center;
+         touch-action:none;transition:background-color .6s,border-color .6s}
+  .pad{height:140px}
+  .screen{position:absolute;inset:0;display:none;overflow:hidden}
+  .screen.on{display:block}
+  .wash{position:absolute;inset:0;background:var(--accent);opacity:0;pointer-events:none;z-index:40;
+        transition:opacity .45s ease-out}
+
+  /* 光流体：两团跟随"当前模块位置"漂移的强调色环境光（v3 的效果搬回来）
+     规矩：只用当前主题的单一强调色 · 透明度 ≤ .18 · 只动 transform/opacity · 由交互/数据驱动（不循环） */
+  /* 底晕：2 段竖直线性渐变（EPIC 支持的唯一渐变形态，上板可原样落） */
+  .bgwash{position:absolute;inset:0;z-index:0;pointer-events:none;
+          background:linear-gradient(180deg, var(--accent) 0%, rgba(0,0,0,0) 58%);
+          opacity:var(--wash-top,.16);transition:opacity .6s,background .6s}
+  .bgwash2{position:absolute;inset:0;z-index:0;pointer-events:none;
+           background:linear-gradient(0deg, var(--accent) 0%, rgba(0,0,0,0) 46%);
+           opacity:var(--wash-bottom,.10);transition:opacity .6s,background .6s}
+  /* 光流体：两团跟随模块位置漂移的强调色环境光（加大加亮版） */
+  .glow{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+  .glow i{position:absolute;left:0;top:0;width:430px;height:360px;border-radius:50%;
+          background:radial-gradient(circle at 50% 50%, var(--accent), transparent 70%);
+          will-change:transform,opacity;
+          transition:transform .6s cubic-bezier(.22,1,.36,1),opacity .6s,background .6s}
+  .glow i.a{opacity:.34}
+  .glow i.b{opacity:.20}
+
+  .bar{height:56px;display:flex;align-items:center;padding:0 20px 0 14px;   /* 右侧 20px：时间/⋯/版本号左移一点点 */position:relative;z-index:6;
+       border-bottom:1px solid var(--line);transition:border-color .6s}
+  .bar .id{font-size:19px;font-weight:700}
+  .bar .sub{position:absolute;right:66px;font-size:12.5px;color:var(--fg3)}   /* 让开右侧麦克风槽位 */
+  .back{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:var(--r-pill);
+        color:var(--fg2);font-size:21px;margin-left:-6px}
+  .back:active{background:var(--card2)}
+  .bar .ttl{font-size:16px;font-weight:600;margin-left:6px}
+  .bar .t{position:absolute;right:66px;font-size:12.5px;color:var(--fg2);font-variant-numeric:tabular-nums}
+  .mic{width:38px;height:38px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--card);
+       color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:15px}
+  .mic.rec{background:var(--accent);color:var(--ink);border-color:var(--accent)}
+  .rgroup{margin-left:auto;display:flex;align-items:center;gap:8px;padding-right:46px}  /* ⋯ 也让开麦克风 */
+  /* 全局语音：所有页顶栏同一个入口（不用进设置页） */
+  .gmic{position:absolute;right:20px;top:9px;width:38px;height:38px;border-radius:var(--r-pill);
+        border:1px solid var(--line);background:var(--card);color:var(--accent);
+        display:flex;align-items:center;justify-content:center;font-size:15px;z-index:8}
+  .gmic.rec{background:var(--accent);color:var(--ink);border-color:var(--accent)}
+  .lpill{display:none}                       /* 旧的一行字提示：废弃，改用麦克风角标 */
+  .gmic.listening::after{content:'';position:absolute;right:-3px;bottom:-3px;width:11px;height:11px;
+        border-radius:50%;background:var(--accent);border:2px solid var(--bg);animation:d1 1.2s ease-in-out infinite}
+  .vpanel{position:absolute;left:14px;right:14px;bottom:16px;background:var(--card2);border:1px solid var(--line2);
+          border-radius:16px;padding:12px 14px;z-index:60;display:none}
+  .vpanel.on{display:block}
+  .vpanel .h{font-size:13px;color:var(--accent);display:flex;align-items:center;gap:8px}
+  .vpanel .t{font-size:15px;margin-top:8px;line-height:1.4}
+  .vpanel .cmds{font-size:12px;color:var(--fg3);margin-top:10px;line-height:1.8}
+  .set{width:38px;height:38px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--card);
+       color:var(--fg2);display:flex;align-items:center;justify-content:center;font-size:17px;letter-spacing:1px}
+  .set:active{background:var(--card2)}
+
+  /* 内容块：圆角 0 + 细线分组（不再"卡片套卡片"） */
+  .blk{border-top:1px solid var(--line);padding:12px 14px;transition:border-color .6s}
+  .blk .lb{font-size:12.5px;color:var(--fg3);letter-spacing:.02em}
+  .big{display:flex;align-items:baseline;gap:6px}
+  .big .v{font-size:46px;font-weight:700;letter-spacing:-.02em;line-height:1.02}
+  .big .u{font-size:13.5px;color:var(--fg3)}
+  .big .k{font-size:13.5px;color:var(--fg3)}
+  .iline{display:flex;gap:16px;font-size:13px;color:var(--fg2);margin-top:6px}
+
+  /* 主页：宫格（8 格，圆角 10 = 允许的"格子"级圆角） */
+  .grid{position:absolute;left:0;right:0;top:186px;height:200px;padding:0 14px;touch-action:none}
+  .tile{position:absolute;background:var(--card);border:1px solid var(--line);border-radius:var(--r-tile);
+        display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+        transition:transform .16s cubic-bezier(.22,1,.36,1),background-color .6s,border-color .6s}
+  .tile .gl{font-size:23px;color:var(--fg2)}
+  .tile .nm{font-size:12.5px;font-weight:600;text-align:center;padding:0 4px;line-height:1.25}
+  .tile.focus{background:var(--card2);border-color:var(--accent);transform:scale(1.05)}
+  .tile.focus .gl,.tile.focus .nm{color:var(--accent)}
+  .tile.dim{opacity:.6}
+
+  /* 主页：卡片流（v3 交互） */
+  .flow{position:absolute;left:0;right:0;top:150px;height:216px;z-index:6}
+  .fcard{position:absolute;left:50%;top:0;width:246px;height:200px;margin-left:-123px;background:var(--card);
+         border:1px solid var(--line);border-radius:var(--r-tile);padding:14px;display:flex;flex-direction:column;gap:10px;
+         transition:background-color .6s,border-color .6s}
+  .fcard .hd{display:flex;align-items:center;gap:9px}
+  .fcard .gl{font-size:20px;color:var(--fg2)}
+  .fcard .nm{font-size:19px;font-weight:700}
+  .fcard .ds{font-size:13px;color:var(--fg2);line-height:1.55;margin-top:auto}
+  .fcard .vl{font-size:13px;color:var(--accent)}
+  .fcard.center{border-color:var(--accent)}
+
+  .segs{position:absolute;left:0;right:0;bottom:14px;display:flex;justify-content:center;gap:7px}
+  .segs i{width:7px;height:7px;border-radius:50%;background:#333;transition:transform .18s,background-color .6s}
+  .segs i.on{background:var(--accent);transform:scale(1.5)}
+
+  /* 列表行：细线分隔 + 图标块，不再是"卡片行" */
+  .li{display:flex;align-items:center;gap:12px;padding:0 14px;height:60px;border-bottom:1px solid var(--line)}
+  .li .ic{width:30px;height:30px;border-radius:8px;background:var(--card2);color:var(--accent);flex:none;
+          display:flex;align-items:center;justify-content:center;font-size:14px}
+  .li .tx{flex:1;min-width:0}
+  .li .nm{display:block;font-size:16px;font-weight:600}
+  .li .mt{display:block;font-size:12.5px;color:var(--fg3);margin-top:2px}
+  .li .rt{font-size:12.5px;color:var(--accent)}
+  .li .rt.dim{color:#6E6E6E}
+  .li .sw{width:22px;height:22px;border-radius:50%;border:2px solid transparent}
+  .li .sw.on{border-color:var(--fg)}
+
+  .page{position:absolute;inset:0;padding:56px 0 0;will-change:transform}
+  .chart{position:relative;height:76px;margin:10px 14px 0;border:1px solid var(--line);background:#0B0B0B}
+  .chart .gl{position:absolute;left:0;right:0;height:1px;background:var(--line);opacity:.7}
+  .chart svg{position:absolute;inset:0;width:100%;height:100%}
+  .chart polyline{fill:none;stroke:var(--accent);stroke-width:2.5;transition:stroke .6s}
+
+  .acts{display:flex;gap:10px;padding:12px 14px 0}
+  .b{flex:1;height:48px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;
+     font-size:15px;border:1px solid var(--line);background:var(--card);color:var(--fg2)}
+  .b.pri{background:var(--accent);color:var(--ink);border-color:var(--accent);font-weight:700}
+  .step{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line)}
+  .step .ic{width:30px;height:30px;border-radius:8px;background:var(--card2);color:var(--accent);
+            display:flex;align-items:center;justify-content:center;font-size:14px}
+  .step .tx{flex:1}
+  .step .k{font-size:12.5px;color:var(--fg3)}
+  .step .v{font-size:18px;font-weight:600;margin-top:2px}
+  .rnd{width:42px;height:42px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--card2);
+       display:flex;align-items:center;justify-content:center;font-size:19px;color:var(--fg)}
+
+  .toast{position:absolute;left:14px;right:14px;bottom:16px;background:var(--card2);border:1px solid var(--line2);
+         border-radius:var(--r-pill);padding:10px 14px;font-size:13px;color:var(--fg);opacity:0;z-index:50;
+         transition:opacity .3s;display:flex;align-items:center;gap:8px}
+  .toast.on{opacity:1}
+  .toast .d{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+
+  .flip{position:absolute;z-index:30;pointer-events:none;background:var(--card2);transform-origin:top left;display:none}
+  .tile.press,.fcard.press{transform:scale(.965)}
+  .tile.pop,.fcard.pop{transform:scale(1.035)}
+  @keyframes d1{0%{opacity:1}35%{opacity:.45}100%{opacity:1}}
+  .d1{animation:d1 .18s ease-out 1}
+
+  .ctl{display:flex;gap:6px;flex-wrap:wrap;max-width:600px;align-items:center}
+  .ctl button{background:#141414;color:var(--fg3);border:1px solid var(--line);border-radius:var(--r-pill);
+              padding:8px 13px;font-size:12.5px;cursor:pointer;transition:background-color .6s,color .6s}
+  .ctl button.on{color:var(--ink);background:var(--accent);border-color:var(--accent);font-weight:600}
+  .sp{width:14px}
+  .dotsw{width:18px;height:18px;border-radius:50%;cursor:pointer;border:2px solid transparent}
+  .dotsw.on{border-color:#fff}
+
+  .spec{width:520px;max-width:100%}
+  .spec h2{font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg3);margin:0 0 10px}
+  .spec table{border-collapse:collapse;width:100%;font-size:12.5px;line-height:1.6}
+  .spec th,.spec td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
+  .spec th{background:#101010;color:var(--fg3);font-weight:500}
+  .spec td.k{width:118px;color:var(--fg)}
+  .note{margin-top:14px;font-size:12.5px;color:var(--fg3);line-height:1.85}
+  .note b{color:var(--fg2);font-weight:600}
+</style>
+</head>
+<body data-theme="rose">
+<div class="stage">
+  <div>
+    <h1>PhyWear v8 <span>少圆角 · 主题页(Agent 语音切换) · 宫格/卡片流共存</span></h1>
+    <div class="hint">
+      <b>主页</b>按住滑动聚焦 · 抬起进入；<b>卡片流</b>左右拖（v3 交互）；<b>主题页</b>点色即换，或按麦克风对 Agent 说"切成青色"。<br>
+      评审栏也能直接切主题与布局。
+    </div>
+  </div>
+
+  <div class="watch" id="watch">
+    <div class="bgwash"></div><div class="bgwash2"></div>
+    <div class="glow" id="glow"><i class="a" id="gA"></i><i class="b" id="gB"></i></div>
+    <div class="wash" id="wash"></div>
+
+    <!-- 主页（宫格 / 卡片流 两套共存） -->
+    <section class="screen on" id="scr-home">
+      <div class="bar"><div class="id">PhyWear</div>
+        <div class="rgroup"><span class="sub" style="position:static">腕上物理工坊</span>
+          <span class="set" id="setBtn">⋯</span></div></div>
+      <div class="blk" style="border-top:0">
+        <div class="lb">当前模块</div>
+        <div class="big"><span class="v" id="fName" style="font-size:26px">传感器</span></div>
+        <div class="iline"><span id="fDesc">加速度 / 陀螺 / 磁场 / 光 / 麦克风 / 扬声器</span></div>
+        <div class="iline"><span style="color:var(--accent)" id="fVal">最近 1.02 g</span></div>
+      </div>
+      <div class="grid" id="grid"></div>
+      <div class="flow" id="flow" style="display:none"></div>
+      <div class="segs" id="segsHome"></div>
+    </section>
+
+    <!-- 板块页 -->
+    <section class="screen" id="scr-cat">
+      <div class="bar"><div class="back" id="catBack">‹</div><div class="ttl" id="catTtl">工具</div><div class="t">1:11</div></div>
+      <div class="blk" style="border-top:0">
+        <div class="lb" id="hNo" style="color:var(--accent)">MODULE 04</div>
+        <div class="big"><span class="v" id="hName" style="font-size:28px">工具</span></div>
+        <div class="iline"><span id="hDesc">频谱 / 倾角 / 标尺 / 磁场 / 惯性</span></div>
+        <div class="iline"><span id="hCnt" style="color:var(--accent)">5 个可用</span></div>
+      </div>
+      <div id="rows"></div>
+      <div style="padding:12px 14px;font-size:12px;color:#5E5E5E">右拖返回</div>
+    </section>
+
+    <!-- 读数页（去容器：数字直接落在黑底 + 细线） -->
+    <section class="screen" id="scr-read">
+      <div class="bar"><div class="back" id="readBack">‹</div><div class="ttl">原始传感器</div>
+        <div class="t mono" id="readIdx">1 / 6</div></div>
+      <div id="pages"></div>
+      <div class="segs" id="segsRead"></div>
+    </section>
+
+    <!-- 设置列表页（主页 ⋯ 进入；主题与布局是其中一项） -->
+    <section class="screen" id="scr-set">
+      <div class="bar"><div class="back" id="setBack">‹</div><div class="ttl">设置</div><div class="t">v0.1</div></div>
+      <div id="setRows"></div>
+      <div style="padding:12px 14px;font-size:12px;color:#5E5E5E">点「主题与布局」可换主题 / 换主页布局 / 用语音切换</div>
+    </section>
+
+    <!-- 主题 / 布局页 -->
+    <section class="screen" id="scr-theme">
+      <div class="bar"><div class="back" id="themeBack">‹</div><div class="ttl">主题与布局</div>
+        <div class="mic" id="mic">🎙</div></div>
+      <div class="blk" style="border-top:0">
+        <div class="lb">主题（点一下即换 · 渐变 600ms）</div>
+      </div>
+      <div id="themes"></div>
+      <div class="blk">
+        <div class="lb">主页布局</div>
+        <div class="iline" style="margin-top:8px">
+          <span>宫格：一屏 8 格，按住滑动聚焦</span></div>
+        <div class="iline"><span>卡片流：左右拖，中心聚焦（v3 交互）</span></div>
+        <div class="acts">
+          <span class="b" id="layGrid">宫格</span>
+          <span class="b" id="layFlow">卡片流</span>
+        </div>
+      </div>
+      <div class="blk">
+        <div class="lb">Agent 语音（主动功能）</div>
+        <div class="iline" style="margin-top:6px"><span>按下面按钮开始说话："切成青色" / "换成玫瑰" / "用单色" / "换琥珀"</span></div>
+        <div class="iline"><span style="color:var(--fg3)">浏览器真识别（Web Speech API）；用 file:// 打开会退回演示流程</span></div>
+        <div class="acts"><span class="b pri" id="voiceBtn">🎙 说一句试试</span></div>
+      </div>
+      <div class="toast" id="toast"><span class="d"></span><span id="toastTx">已切换</span></div>
+    </section>
+
+    <div class="vpanel" id="vpanel">
+      <div class="h"><span class="d" style="width:7px;height:7px;border-radius:50%;background:var(--accent)"></span>
+        <span id="vState">聆听中…</span></div>
+      <div class="t" id="vText">—</div>
+      <div class="cmds">可说：切主题（玫瑰/青/琥珀/单色）· 打开单摆 · 打开倾角 · 回主页 · 打开设置</div>
+    </div>
+    <div class="flip" id="flipLayer"></div>
+  </div>
+
+  <div class="pad"></div>
+  <div class="ctl">
+    <button data-scr="home" class="on">主页</button>
+    <button data-scr="cat">板块页</button>
+    <button data-scr="read">读数页</button>
+    <button data-scr="set">设置</button>
+    <button data-scr="theme">主题/布局</button>
+    <span class="sp"></span>
+    <b style="font-size:12.5px;color:var(--fg3);font-weight:400">主题</b>
+    <i class="dotsw on" data-t="rose"  style="background:#D96A78"></i>
+    <i class="dotsw" data-t="cyan"  style="background:#5AA9C9"></i>
+    <i class="dotsw" data-t="amber" style="background:#E0A458"></i>
+    <i class="dotsw" data-t="mono"  style="background:#E8E8E8"></i>
+    <span class="sp"></span>
+    <b style="font-size:12.5px;color:var(--fg3);font-weight:400">布局</b>
+    <button id="layGrid2" class="on">宫格</button>
+    <button id="layFlow2">卡片流</button>
+  </div>
+</div>
+
+<aside class="spec">
+  <h2>v8 按你三条要求怎么做的</h2>
+  <table>
+    <tr><th>要求</th><th>做法</th></tr>
+    <tr><td class="k">圆角矩形太多</td>
+        <td>依据 taste-skill §4.4（cards 只在表达层级时用；否则 <code>border-t</code>/<code>divide-y</code> 分组）+ §4.4「VISUAL_DENSITY&gt;7 禁泛用卡片容器」+ 本队 <code>stacks/lvgl.csv</code>「EPIC 只对 radius=0 直通」，
+            改成**三级圆角尺度**：<b>内容容器 0</b>（改用 1px 细线分组，主页/板块/读数/主题页都不再用"大圆角卡片"）、
+            <b>格子 10px</b>（8 个模块格、卡片流卡）、<b>交互 999</b>（按钮/麦克风/圆点）。
+            圆角矩形数量从"每屏 6~10 个"降到"3~4 个"，且都落在真正需要形体的元素上。</td></tr>
+    <tr><td class="k">主题页 + Agent 语音切换 + 渐变</td>
+        <td>新增<b>主题与布局页</b>：4 套主题（玫瑰/青/琥珀/单色）列表 + 主页布局切换 + <b>Agent 语音</b>入口。
+            切换不是瞬间：所有颜色走 CSS 变量，全局 <code>transition .6s</code>；再叠一层强调色"洗色"遮罩（只动 opacity，符合 §6.A）。
+            点麦克风会模拟一轮语音：聆听 → 识别"切换青色主题" → 渐变切换 + 顶部提示条。</td></tr>
+    <tr><td class="k">v3 交互与当前共存</td>
+        <td>主页保留两套：<b>宫格</b>（一屏 8 格 + 按住滑动聚焦，v7）与<b>卡片流</b>（横向拖动 + 中心聚焦 + 磁吸吸附 + 共享元素展开，v3）。
+            在主题/布局页或评审栏一键切换，两套共用同一套色板与动效约束。</td></tr>
+  </table>
+  <div class="note">
+    仍然遵守：OLED 纯黑 · 单一强调色（饱和度&lt;80%）· 无装饰波形/无渐变背景/无阴影 ·
+    只动 transform/opacity · prefers-reduced-motion 退化 · 动效不循环（按压回弹+涟漪 / 入场错峰 / 数值脉冲 D1）。<br><br>
+    <b>下一步</b>：你定主题色（玫瑰 or 青）+ 定主页默认布局（宫格 or 卡片流），我就把这套铺到全部子页并上板。
+  </div>
+</aside>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const STILL=location.search.indexOf('still')>=0;
+const D=(REDUCED||STILL)?0:1;
+let THEME=(location.search.match(/t=(\w+)/)||[])[1]||'rose';
+let LAYOUT=(location.search.match(/lay=(\w+)/)||[])[1]||'grid';
+
+const BOARDS=[
+  {s:'传感器', n:'原始传感器', d:'加速度 / 陀螺 / 磁场 / 光 / 麦克风 / 扬声器', g:'◉', val:'1.02 g',
+   items:[['加速度计','三轴 · 折线'],['陀螺仪','角速度'],['磁力计','三轴磁场'],['光线','环境光'],['麦克风','声压'],['扬声器','回放']]},
+  {s:'力学', n:'力学', d:'单摆 / 弹簧 / 向心力', g:'◍', val:'9.79 m/s²',
+   items:[['单摆','测重力加速度'],['弹簧','测频率'],['向心力','测半径'],['碰撞','规划中',0]]},
+  {s:'声学', n:'声学', d:'频谱 / 音调 / 音高 / 多普勒', g:'♪', val:'−42 dB',
+   items:[['频谱','主频与谐波'],['音调','已知频率'],['音高','规划中',0],['多普勒','规划中',0]]},
+  {s:'工具', n:'工具', d:'频谱 / 倾角 / 标尺 / 磁场 / 惯性', g:'✎', val:'21.4°',
+   items:[['加速度频谱','FFT · 3 轴'],['倾角','重力倾斜'],['磁性标尺','峰值计数'],['磁场频谱','磁场 FFT'],['惯性标尺','姿态标定']]},
+  {s:'计时器', n:'计时器', d:'运动秒表 / 光门 / 声门', g:'◔', val:'00:12.4',
+   items:[['运动秒表','计时与阈值'],['光门','遮光计时'],['声门','声响计时']]},
+  {s:'生活', n:'生活', d:'掌声测量', g:'⌂', val:'86 dB', items:[['掌声','强度与次数']]},
+  {s:'自定义', n:'自定义', d:'自己拼一个实验', g:'＋', val:'未构建', items:[['构建器','规划中',0]]},
+  {s:'AI 教练', n:'AI 教练', d:'描述现象，Agent 选实验并跑', g:'⋯', val:'待提问', items:[['开始对话','端侧 Agent']]},
+];
+const AVAIL=i=>BOARDS[i].items.filter(x=>x[2]!==0).length;
+const THEMES=[['rose','玫瑰','#D96A78'],['cyan','青','#5AA9C9'],['amber','琥珀','#E0A458'],['mono','单色','#E8E8E8']];
+
+function tween(from,to,cb,dur=300){
+  if(!D){ cb(to); return; }
+  const t0=performance.now();
+  const tick=now=>{ const p=Math.min(1,(now-t0)/dur);
+    const e=1-Math.cos(p*Math.PI*1.02)*Math.exp(-p*3.6);
+    cb(from+(to-from)*Math.min(1.02,e));
+    if(p<1) requestAnimationFrame(tick); else cb(to); };
+  requestAnimationFrame(tick);
+}
+function pager(el,n){
+  el.innerHTML=''; const d=[];
+  for(let i=0;i<n;i++){ const s=document.createElement('i'); el.appendChild(s); d.push(s); }
+  return { set(i){ d.forEach((s,k)=>s.classList.toggle('on',k===i)); } };
+}
+/* ---- 主题：渐变切换（变量过渡 + 洗色遮罩） ---- */
+function applyTheme(t,announce){
+  if(!t) return; THEME=t;
+  document.body.dataset.theme=t;
+  $$('.dotsw').forEach(x=>x.classList.toggle('on',x.dataset.t===t));
+  const w=$('#wash');
+  if(w&&D){ w.style.transition='none'; w.style.opacity='.14';
+    requestAnimationFrame(()=>{ w.style.transition='opacity .45s ease-out'; w.style.opacity='0'; }); }
+  buildThemeList();
+  if(typeof updateGlow==='function') updateGlow(LAYOUT==='grid'?(focus+0.5)/8:Math.min(1,Math.max(0,fOffset/(252*7))));
+  if(announce) toast('已切换为 '+THEMES.find(x=>x[0]===t)[1]+' 主题');
+}
+let toastT=null;
+function toast(tx){
+  const el=$('#toast'); $('#toastTx').textContent=tx; el.classList.add('on');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('on'),1800);
+}
+/* ---- 主页：宫格 + 卡片流 ---- */
+const G={w:83,h:88,gx:9.5,gy:14,x0:14,y0:186};
+const grid=$('#grid'), flow=$('#flow'), pgHome=pager($('#segsHome'),8);
+let focus=0, fOffset=0, tiles=[], fcards=[];
+BOARDS.forEach((b,i)=>{
+  const col=i%4,row=(i/4)|0;
+  const el=document.createElement('div');
+  el.className='tile';
+  el.style.left=(G.x0+col*(G.w+G.gx))+'px'; el.style.top=(row*(G.h+G.gy))+'px';
+  el.style.width=G.w+'px'; el.style.height=G.h+'px';
+  el.innerHTML=`<span class="gl">${b.g}</span><span class="nm">${b.s}</span>`;
+  grid.appendChild(el); tiles.push(el);
+  const fc=document.createElement('div');
+  fc.className='fcard';
+  fc.innerHTML=`<div class="hd"><span class="gl">${b.g}</span><span class="nm">${b.n}</span></div>
+    <div class="ds">${b.d}</div><div class="vl">最近 ${b.val}</div>`;
+  flow.appendChild(fc); fcards.push(fc);
+  if(D){ el.style.opacity='0'; el.style.transform='translateY(10px) scale(.96)';
+    setTimeout(()=>{ el.style.transition='transform .3s cubic-bezier(.22,1,.36,1),opacity .3s';
+      el.style.opacity='1'; el.style.transform='translateY(0) scale(1)'; }, 40+i*32); }
+});
+function updateGlow(t){            /* t: 0..1 表示"当前模块在 8 个里的位置" */
+  const A=$('#gA'), B=$('#gB'); if(!A||!B) return;
+  const ax = -140 + t*430,  ay = -90 + Math.sin(t*Math.PI)*70;
+  const bx =  240 - t*380,  by =  210 - Math.sin(t*Math.PI)*80;
+  A.style.transform=`translate(${ax}px,${ay}px)`;
+  B.style.transform=`translate(${bx}px,${by}px)`;
+  if(!D) return;                                  /* reduced-motion / 静态：只给位置，不做呼吸 */
+}
+function renderHome(){
+  const body=BOARDS[focus];
+  updateGlow(LAYOUT==='grid' ? (focus+0.5)/8 : Math.min(1,Math.max(0,fOffset/(252*7))));
+  $('#fName').textContent=body.s; $('#fDesc').textContent=body.d; $('#fVal').textContent='最近 '+body.val;
+  ['#fName','#fVal'].forEach(s=>{const e=$(s); e.classList.remove('d1'); void e.offsetWidth; e.classList.add('d1');});
+  if(LAYOUT==='grid'){
+    grid.style.display=''; flow.style.display='none';
+    tiles.forEach((el,i)=>{ el.classList.toggle('focus',i===focus); el.classList.toggle('dim',i!==focus); });
+    pgHome.set(focus);
+  } else {
+    grid.style.display='none'; flow.style.display='';
+    const SP=252;
+    fcards.forEach((el,i)=>{
+      const dist=i-(fOffset/SP), k=Math.max(0,1-Math.abs(dist)*.62);
+      el.style.transform=`translateX(${dist*SP}px) scale(${.8+.2*k})`;
+      el.style.opacity=String(.3+.7*k);
+      el.classList.toggle('center',Math.abs(dist)<.5);
+      el.style.zIndex=String(100-Math.round(Math.abs(dist)*10));
+    });
+    pgHome.set(Math.max(0,Math.min(7,Math.round(fOffset/SP))));
+  }
+}
+function setLayout(l){
+  LAYOUT=l; $$('#layGrid,#layGrid2').forEach(b=>b.classList.toggle('on',l==='grid'));
+  $$('#layFlow,#layFlow2').forEach(b=>b.classList.toggle('on',l==='flow'));
+  renderHome();
+}
+const watch=$('#watch');
+const loc=e=>{const r=watch.getBoundingClientRect(),k=r.width/390;return{x:(e.clientX-r.left)/k,y:(e.clientY-r.top)/k};};
+function hit(p){
+  if(LAYOUT!=='grid') return -1;
+  for(let i=0;i<8;i++){const col=i%4,row=(i/4)|0;
+    const x=G.x0+col*(G.w+G.gx),y=G.y0+row*(G.h+G.gy);
+    if(p.x>=x-4&&p.x<=x+G.w+4&&p.y>=y-4&&p.y<=y+G.h+4) return i;}
+  return -1;
+}
+function pop(el){
+  if(!D||!el) return;
+  el.classList.add('press');
+  setTimeout(()=>{el.classList.remove('press');el.classList.add('pop');setTimeout(()=>el.classList.remove('pop'),150);},90);
+}
+let hold=false,startF=0,dragX=0,flowStart=0;
+grid.addEventListener('pointerdown',e=>{grid.setPointerCapture(e.pointerId);hold=true;startF=focus;
+  const i=hit(loc(e)); if(i>=0){focus=i;renderHome();pop(tiles[i]);}});
+grid.addEventListener('pointermove',e=>{if(!hold)return;const i=hit(loc(e));if(i>=0&&i!==focus){focus=i;renderHome();}});
+grid.addEventListener('pointerup',e=>{if(!hold)return;hold=false;const i=hit(loc(e));
+  if(i>=0){focus=i;renderHome();openBoard(i);}else{focus=startF;renderHome();}});
+flow.addEventListener('pointerdown',e=>{flow.setPointerCapture(e.pointerId);dragX=0;flowStart=fOffset;});
+flow.addEventListener('pointermove',e=>{
+  const r=watch.getBoundingClientRect(),k=r.width/390;
+  dragX=(e.clientX-r.left-r.width/2)/k;
+  const lim=(BOARDS.length-1)*252;
+  fOffset=Math.max(-60,Math.min(lim+60,flowStart-dragX)); renderHome();
+});
+flow.addEventListener('pointerup',()=>{
+  const SP=252, idx=Math.max(0,Math.min(7,Math.round(fOffset/SP)));
+  const from=fOffset;
+  tween(from,idx*SP,x=>{fOffset=x;renderHome();},320);
+  focus=idx; fOffset=idx*SP; setTimeout(renderHome,340);
+});
+function openBoard(i){
+  const b=BOARDS[i];
+  $('#catTtl').textContent=b.n; $('#hName').textContent=b.n; $('#hDesc').textContent=b.d;
+  $('#hNo').textContent='MODULE '+String(i+1).padStart(2,'0');
+  const nA=AVAIL(i), nP=b.items.length-nA;
+  $('#hCnt').textContent=nP?`${nA} 个可用 · ${nP} 个规划`:`${nA} 个可用`;
+  const rows=$('#rows'); rows.innerHTML='';
+  b.items.forEach((it,k)=>{
+    const off=it[2]===0;
+    const r=document.createElement('div');
+    r.className='li'+(off?' off':'');
+    r.innerHTML=`<span class="ic">${b.g}</span><span class="tx"><span class="nm" ${off?'style="color:#6E6E6E"':''}>${it[0]}</span>
+      <span class="mt">${it[1]}</span></span><span class="rt${off?' dim':''}">${off?'规划中':'开始 ›'}</span>`;
+    rows.appendChild(r);
+  });
+  stack.push('cat'); show('cat');
+}
+let stack=['home'];
+function show(id){
+  $$('.screen').forEach(s=>s.classList.toggle('on',s.id==='scr-'+id));
+  $$('.ctl button[data-scr]').forEach(b=>b.classList.toggle('on',b.dataset.scr===id));
+}
+/* 读数页 */
+const SENSORS=[['加速度计','三轴 + 合矢量','g',['−0.19','−0.32','−0.95']],
+  ['陀螺仪','角速度','dps',['+1.2','−0.4','+0.1']],['磁力计','三轴磁场','mG',['−131','+47','−318']],
+  ['光线','环境光','lx',['+128']],['麦克风','声压电平','dBFS',['−42.5']],['扬声器','回放电平','dBFS',['−58.0']]];
+const N=SENSORS.length, pgRead=pager($('#segsRead'),N);
+let pageX=0,pageIdx=0;
+$('#pages').innerHTML=SENSORS.map((s,i)=>{
+  const rows=s[3].map((v,k)=>`<div class="blk" style="display:flex;align-items:baseline;gap:8px">
+      <span class="lb" style="width:24px">${['X','Y','Z'][k]||'—'}</span>
+      <span class="mono" style="margin-left:auto;font-size:38px;font-weight:700;letter-spacing:-.02em">${v}</span>
+      <span class="lb" style="width:42px;text-align:right">${s[2]}</span></div>`).join('');
+  return `<div class="page" data-i="${i}" style="transform:translateX(${i*390}px)">
+    <div class="blk" style="border-top:0"><div class="lb">SENSOR ${String(i+1).padStart(2,'0')} / 06</div>
+      <div class="big"><span class="v" style="font-size:20px">${s[0]}</span></div>
+      <div class="iline"><span>${s[1]}</span></div></div>
+    ${rows}
+    <div class="blk" style="display:flex;align-items:center;gap:8px">
+      <span class="d" style="width:8px;height:8px;border-radius:50%;background:var(--accent)"></span>
+      <span style="font-size:13px;color:var(--accent)">实时更新</span>
+      <span style="margin-left:auto;font-size:12.5px;color:var(--fg3)">10 Hz</span></div>
+    <div class="chart" data-chart="${i}">
+      <div class="gl" style="top:33%"></div><div class="gl" style="top:66%"></div>
+      <svg viewBox="0 0 340 76" preserveAspectRatio="none"><polyline points="0,50 20,44 40,38 60,42 80,52 100,58 120,50 140,36 160,28 180,34 200,48 220,56 240,46 260,32 280,26 300,34 320,48 340,54"/></svg>
+    </div>
+  </div>`;
+}).join('');
+function renderRead(){
+  $$('#pages .page').forEach(p=>{
+    const i=+p.dataset.i,dist=i-(pageX/390),k=Math.max(0,1-Math.abs(dist)*.7);
+    p.style.transform=`translateX(${i*390-pageX}px)`; p.style.opacity=String(.3+.7*k);
+  });
+  const cur=Math.max(0,Math.min(N-1,Math.round(pageX/390)));
+  pgRead.set(cur); $('#readIdx').textContent=(cur+1)+' / '+N;
+}
+let readP=null;
+watch.addEventListener('pointerdown',e=>{if($('#scr-read').classList.contains('on'))readP=e;});
+watch.addEventListener('pointermove',e=>{
+  if(!readP)return; const r=watch.getBoundingClientRect(),k=r.width/390;
+  pageX=Math.max(-40,Math.min((N-1)*390+40,pageIdx*390-(e.clientX-readP.clientX)/k)); renderRead();
+});
+watch.addEventListener('pointerup',e=>{
+  if(!readP)return; const r=watch.getBoundingClientRect(),k=r.width/390;
+  const dx=(e.clientX-readP.clientX)/k;
+  const idx=Math.max(0,Math.min(N-1,Math.round((pageIdx*390-dx+(dx>0?90:-90))/390)));
+  const from=pageX; tween(from,idx*390,x=>{pageX=x;renderRead();},270); pageIdx=idx; readP=null;
+});
+/* 设置列表页（第 4 种页型：图标块行 + 右侧当前值） */
+const SETROWS=[
+  ['◑','主题与布局','主题 / 主页布局 / 语音切换','theme'],
+  ['文','语言','界面语言','中文 ›'],
+  ['屏','屏幕常亮','测量时保持亮屏','开 ›'],
+  ['存','数据导出','CSV · 通过串口','可用 ›'],
+  ['◷','采样率','原始传感器页刷新','10 Hz ›'],
+  ['?','关于 PhyWear','版本 / 许可 / 归属','v0.1 ›'],
+  ['◎','始终聆听','全局语音免按键（离线时降级为指令芯片）','off'],
+
+];
+function buildSetRows(){
+  const el=$('#setRows'); if(!el) return;
+  el.innerHTML=SETROWS.map(r=>`<div class="li" data-go="${r[3]||''}">
+    <span class="ic">${r[0]}</span>
+    <span class="tx"><span class="nm">${r[1]}</span><span class="mt">${r[2]}</span></span>
+    <span class="rt">${r[3]==='theme'?'进入 ›':r[3]}</span></div>`).join('');
+  $$('#setRows .li').forEach(li=>li.addEventListener('click',()=>{
+    const g=li.dataset.go, rt=li.querySelector('.rt');
+    if(g==='theme') { show('theme'); }
+    else if(g==='off' || g==='on'){                       /* 始终聆听开关 */
+      ALWAYS = !ALWAYS;
+      li.dataset.go = ALWAYS?'on':'off';
+      rt.textContent = ALWAYS?'开 ›':'off';
+      toast(ALWAYS?'始终聆听：已开启（说"手表…"开头）':'始终聆听：已关闭');
+      if(ALWAYS) startAlways(); else stopAlways();
+    }
+    else if(g) toast('（演示）'+g);
+  }));
+}
+
+/* 主题页列表 */
+function buildThemeList(){
+  const el=$('#themes'); if(!el) return;
+  el.innerHTML=THEMES.map(t=>`<div class="li" data-th="${t[0]}">
+    <span class="sw" style="background:${t[2]}"></span>
+    <span class="tx"><span class="nm">${t[1]}主题</span><span class="mt">单一强调色 · 饱和度 &lt; 80%</span></span>
+    <span class="rt${THEME===t[0]?'':' dim'}">${THEME===t[0]?'当前':'切换 ›'}</span></div>`).join('');
+  $$('#themes .li').forEach(li=>li.addEventListener('click',()=>applyTheme(li.dataset.th,true)));
+}
+/* ---- 语音切主题：**真识别**优先（Web Speech API，需 http://localhost 或 https），失败回退演示 ---- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+function applyVoiceText(t){
+  $('#vText').textContent='「'+t+'」';
+  const thememap=[[/青|蓝|cyan/i,'cyan'],[/玫瑰|粉|红|rose/i,'rose'],[/琥珀|橙|黄|amber/i,'amber'],[/单色|黑白|灰|极简|mono/i,'mono']];
+  for(const [re,k] of thememap){ if(re.test(t)){ applyTheme(k,true); setTimeout(hideVoice,900); return; } }
+  if(/回主页|主页|返回/.test(t)){ show('home'); toast('OK · 回主页'); setTimeout(hideVoice,800); return; }
+  if(/设置/.test(t)){ show('set'); toast('OK · 打开设置'); setTimeout(hideVoice,800); return; }
+  const hit=BOARDS.findIndex(b=>new RegExp(b.s+'|'+b.n).test(t)) ;
+  if(hit>=0){ focus=hit; renderHome(); openBoard(hit); toast('OK · 打开'+BOARDS[hit].n); setTimeout(hideVoice,800); return; }
+  toast('没听清：「'+t+'」');
+  setTimeout(hideVoice,1400);
+}
+function showVoice(){ $('#vpanel').classList.add('on'); $('#vState').textContent='聆听中…'; $('#vText').textContent='—'; }
+function hideVoice(){ $('#vpanel').classList.remove('on'); }
+/* 始终聆听：连续识别；只对含唤醒词"手表"或明确指令的句子动作 */
+let ALWAYS=false, recAlways=null;
+function startAlways(){
+  if(!SR){ toast('此浏览器不支持 → 用按键模式'); ALWAYS=false; return; }
+  const loop=()=>{
+    if(!ALWAYS) return;
+    recAlways=new SR(); recAlways.lang='zh-CN'; recAlways.continuous=true; recAlways.interimResults=false;
+    recAlways.onresult=ev=>{
+      const t=ev.results[ev.results.length-1][0].transcript;
+      if(/手表|PhyWear|phywear/i.test(t) || /切|换|打开|回主页|设置/.test(t)) applyVoiceText(t.replace(/手表|PhyWear|phywear/gi,''));
+    };
+    recAlways.onend=()=>{ if(ALWAYS) loop(); };
+    recAlways.onerror=()=>{ if(ALWAYS) loop(); };
+    try{ recAlways.start(); }catch(e){}
+  };
+  loop();
+  $$('.gmic').forEach(m=>m.classList.add('listening'));      /* 角标小圆点=始终聆听中 */
+}
+function stopAlways(){ ALWAYS=false; try{ recAlways&&recAlways.stop(); }catch(e){} $$('.gmic').forEach(m=>m.classList.remove('listening')); }
+function startVoice(){
+  const mic=$('#mic'); mic.classList.add('rec');
+  $$('.gmic').forEach(m=>m.classList.add('rec')); showVoice();
+  if(!SR){
+    toast('此浏览器不支持语音识别 → 演示流程');
+    setTimeout(()=>{ mic.classList.remove('rec'); voiceOnce(); },800); return;
+  }
+  try{
+    rec = new SR(); rec.lang='zh-CN'; rec.interimResults=false; rec.maxAlternatives=1;
+    toast('请说：切成青色 / 换成玫瑰 / 用单色 / 换琥珀');
+    rec.onresult = ev => applyVoiceText(ev.results[0][0].transcript);
+    rec.onerror  = () => { toast('麦克风不可用（file:// 需改用 http://127.0.0.1）→ 演示流程'); mic.classList.remove('rec'); voiceOnce(); };
+    rec.onend    = () => { mic.classList.remove('rec'); $$('.gmic').forEach(m=>m.classList.remove('rec')); if(!ALWAYS) setTimeout(hideVoice,1200); };
+    rec.start();
+  }catch(e){ mic.classList.remove('rec'); voiceOnce(); }
+}
+
+/* 演示流程（真识别不可用时的兜底） */
+const VOICE=[['cyan','青'],['rose','玫瑰'],['mono','单色'],['amber','琥珀']];
+let voiceN=0;
+function voiceOnce(){
+  const [t,zh]=VOICE[voiceN++%VOICE.length];
+  const mic=$('#mic'); mic.classList.add('rec'); toast('聆听中…');
+  setTimeout(()=>{ toast('识别："切换到'+zh+'主题"'); },900);
+  setTimeout(()=>{ mic.classList.remove('rec'); applyTheme(t,true); },1800);
+}
+/* 评审栏与页面内控件 */
+$$('.ctl button[data-scr]').forEach(b=>b.addEventListener('click',()=>{
+  const id=b.dataset.scr; if(id==='cat') openBoard(focus); else show(id);
+}));
+$$('.dotsw').forEach(d=>d.addEventListener('click',()=>applyTheme(d.dataset.t,true)));
+$('#layGrid').addEventListener('click',()=>setLayout('grid'));
+$('#layFlow').addEventListener('click',()=>setLayout('flow'));
+$('#layGrid2').addEventListener('click',()=>setLayout('grid'));
+$('#layFlow2').addEventListener('click',()=>setLayout('flow'));
+$('#mic').addEventListener('click',startVoice);
+$('#voiceBtn').addEventListener('click',startVoice);
+/* 全局入口：每页顶栏插入同一个麦克风（按一下即唤起） */
+$$('.bar').forEach(b=>{
+  if(b.querySelector('.gmic')) return;
+  const m=document.createElement('div'); m.className='mic gmic'; m.textContent='🎙';
+  b.appendChild(m); m.addEventListener('click',startVoice);
+});
+/* 键盘快捷：V 键 = 按一下说话（桌面评审用） */
+addEventListener('keydown',e=>{ if(e.key==='v'||e.key==='V') startVoice(); });
+$('#catBack').addEventListener('click',()=>show('home'));
+$('#readBack').addEventListener('click',()=>show('home'));
+$('#themeBack').addEventListener('click',()=>show('home'));
+$('#setBtn').addEventListener('click',()=>show('set'));
+$('#setBack').addEventListener('click',()=>show('home'));
+$$('.chart').forEach(c=>c.addEventListener('click',()=>toast('图表放大（上板接 pw_scope 全屏）')));
+applyTheme(THEME,false); setLayout(LAYOUT); buildSetRows(); renderHome(); renderRead();
+const H=(location.hash||'').replace('#','');
+if(H==='cat') openBoard(3); else if(H==='read') show('read');
+else if(H==='theme') show('theme'); else if(H==='set') show('set');
+</script>
+</body>
+</html>

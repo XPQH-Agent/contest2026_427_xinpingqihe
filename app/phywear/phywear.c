@@ -1,0 +1,2096 @@
+/****************************************************************************
+ * apps/examples/phywear/phywear.c
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.  The
+ * ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ ****************************************************************************/
+
+/* PhyWear 腕上智慧物理工坊 —— LVGL GUI 入口。
+ *
+ *   phywear                  启动 GUI（主菜单宫格 → 板块导航）
+ *   phywear pendulum [L]     摆测 g 实验（串口文本输出，不经 GUI）
+ *
+ * GUI 模块划分（对应 UI 里程碑）：
+ *   phywear_ui.c      屏幕管理器 + 主菜单 + 实验列表（UI-1）
+ *   phywear_raw.c     原始传感器 4 页横滑（UI-2）
+ *   phywear_sensors.c 传感器 /dev 访问层（物理单位换算）
+ */
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include <nuttx/config.h>
+
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <malloc.h>
+#include <math.h>
+#include <time.h>
+#include <unistd.h>
+
+#include <lvgl/lvgl.h>
+
+/* P0：主循环休眠上限（ms）。10 = 改动前的固定行为；1~2 = 低延迟模式。
+ * 可回退开关：改回 10 即完全恢复原状。 */
+
+/* P0 性能探针（2026-09-16）：按秒打印 fps、LVGL 渲染耗时均值/峰值、主循环次数。
+ * 为什么需要：30 s 心跳的 fps 是**平均**，会把"图线 10 Hz 才重绘"的空闲时间平均进去，
+ * 掩盖了小脏区连续更新时能达到的瞬时帧率（用户在轨迹页看到过 60 FPS）。
+ * 设 0 可整体关掉（零开销）。 */
+
+#ifndef PW_PERF_PROBE
+#  define PW_PERF_PROBE 0   /* 默认关：置 1 打开每秒 [PERF] 行（fps/渲染耗时），优化时用 */
+#endif
+
+#ifndef PW_LOOP_SLEEP_MAX_MS
+#  define PW_LOOP_SLEEP_MAX_MS 2   /* A/B 实测：0（忙等）与 2 ms 的 fps 完全相同（48~49），
+                                     * 故取 2 ms 省 CPU；10 = 改动前的固定行为 */
+#endif
+
+/* 纯 GUI 模式下，开机后在**后台**把蓝牙 host 栈起起来（不阻塞界面）。
+ * 置 0 可整体关掉（那时只有点开「蓝牙」页或跑 `phywear cap bt` 才会起栈）。 */
+#ifndef PW_BT_AUTOSTART
+#  define PW_BT_AUTOSTART 1
+#endif
+
+#include <nuttx/input/touchscreen.h>
+#include <nuttx/sensors/lsm6dsl.h>
+#include <nuttx/sensors/mmc5603.h>
+
+#include "pw_analysis.h"
+#include "phywear_sensors.h"
+#include "phywear_ui.h"
+#include "pw_btprobe.h"
+#include "pw_net.h"
+#include "pw_bt.h"
+#include "pw_btgatt.h"
+#include "pw_btppp.h"
+#if defined(CONFIG_LV_USE_DEMO_BENCHMARK)
+#  include <demos/benchmark/lv_demo_benchmark.h>
+#endif
+#include "pw_motion.h"
+#include "pw_ahrs.h"
+#include "pw_calib.h"
+#include "phywear_imu.h"
+#include "phywear_pend.h"
+#include "phywear_spec.h"
+#include "phywear_spring.h"
+#include "phywear_centri.h"
+#include "phywear_incline.h"
+#include "phywear_ruler.h"
+#include "phywear_time.h"
+#include "phywear_life.h"
+#include "phywear_i18n.h"
+#include "pw_ai.h"
+#include "pw_shot.h"
+#include "pw_skill.h"
+#include "pw_watch.h"
+#include "pw_tone.h"
+#include "phywear_raw.h"
+
+#include <nuttx/video/fb.h>
+
+/****************************************************************************
+ * Private Data: FPS 探针（替换 LVGL 显示 flush，统计每秒实际渲染帧数）
+ ****************************************************************************/
+
+static int             g_fps_fd = -1;
+static unsigned char  *g_fps_mem;
+static size_t          g_fps_frame;     /* 单帧字节数 */
+static volatile uint32_t g_fps_cnt;
+
+/* 见 phywear_ui.h：界面线程推帧计数（单调增），给 pw_bt.c 的取证用。 */
+uint32_t pw_ui_flush_count(void)
+{
+  return g_fps_cnt;
+}
+static volatile uint32_t g_loop_next_ms;   /* LVGL 建议的下次休眠上限（ms） */
+
+#if PW_PERF_PROBE
+static volatile uint32_t g_perf_us_sum;   /* 渲染耗时累加（us） */
+static volatile uint32_t g_perf_us_max;   /* 渲染耗时峰值（us） */
+static volatile uint32_t g_perf_n;        /* 渲染帧数 */
+static struct timespec   g_perf_t0;       /* 本轮渲染起点 */
+#endif
+
+
+/* 计帧：挂 LVGL 显示事件，而不是替换 flush 回调。
+ * lv_refr.c 只在"本轮真的有区域重绘"时才发 LV_EVENT_RENDER_READY，
+ * 所以这就是这一页真正刷新了多少帧；且模拟器/真机都成立
+ * （真机没有 /dev/fb0，原来那套 flush 探针在真机上装不上，fps 恒为 0）。 */
+
+static void pw_fps_render_cb(lv_event_t *e)
+{
+#if PW_PERF_PROBE
+  lv_event_code_t code = lv_event_get_code(e);
+
+  if (code == LV_EVENT_RENDER_START)
+    {
+      clock_gettime(CLOCK_MONOTONIC, &g_perf_t0);
+      return;
+    }
+
+  if (code == LV_EVENT_RENDER_READY)
+    {
+      struct timespec t1;
+      uint32_t us;
+
+      clock_gettime(CLOCK_MONOTONIC, &t1);
+      us = (uint32_t)((t1.tv_sec - g_perf_t0.tv_sec) * 1000000L +
+                      (t1.tv_nsec - g_perf_t0.tv_nsec) / 1000L);
+
+      g_perf_us_sum += us;
+      g_perf_n++;
+      if (us > g_perf_us_max)
+        {
+          g_perf_us_max = us;
+        }
+
+      g_fps_cnt++;
+      return;
+    }
+#endif
+
+  if (lv_event_get_code(e) == LV_EVENT_RENDER_READY)
+    {
+      g_fps_cnt++;
+    }
+}
+
+static void pw_fps_flush(lv_display_t *disp, const lv_area_t *area,
+                         uint8_t *px)
+{
+  /* 把绘制缓冲写回 fb 基址（单帧），恢复显示。
+   * 计帧不在这里做，交给 pw_fps_render_cb（避免双计）。 */
+  if (g_fps_mem != NULL && px != NULL && g_fps_frame > 0)
+    {
+      memcpy(g_fps_mem, px, g_fps_frame);
+    }
+
+  lv_display_flush_ready(disp);
+}
+
+static void pw_fps_init(lv_display_t *disp)
+{
+  struct fb_videoinfo_s vi;
+  struct fb_planeinfo_s pi;
+
+  /* 先挂计帧事件（与有没有 /dev/fb0 无关，真机也能统计帧率） */
+
+  lv_display_add_event_cb(disp, pw_fps_render_cb, LV_EVENT_RENDER_READY, NULL);
+#if PW_PERF_PROBE
+  lv_display_add_event_cb(disp, pw_fps_render_cb, LV_EVENT_RENDER_START, NULL);
+#endif
+
+  g_fps_fd = open("/dev/fb0", O_RDWR);
+  if (g_fps_fd < 0)
+    {
+      printf("WARN: fps probe: open /dev/fb0 failed: %d\n", errno);
+      return;
+    }
+
+  if (ioctl(g_fps_fd, FBIOGET_VIDEOINFO, (unsigned long)&vi) < 0 ||
+      ioctl(g_fps_fd, FBIOGET_PLANEINFO, (unsigned long)&pi) < 0)
+    {
+      close(g_fps_fd);
+      g_fps_fd = -1;
+      return;
+    }
+
+  g_fps_frame = (size_t)vi.yres * pi.stride;   /* 单帧 = yres*stride */
+  g_fps_mem  = mmap(NULL, pi.fblen, PROT_READ | PROT_WRITE,
+                    MAP_SHARED | MAP_FILE, g_fps_fd, 0);
+  if (g_fps_mem == MAP_FAILED)
+    {
+      g_fps_mem = NULL;
+      g_fps_frame = 0;
+      close(g_fps_fd);
+      g_fps_fd = -1;
+      return;
+    }
+
+  lv_display_set_flush_cb(disp, pw_fps_flush);
+  printf("FPS probe: fb %ux%u frame=%u\n",
+         vi.xres, vi.yres, (unsigned)g_fps_frame);
+}
+
+#ifndef M_PI
+#  define M_PI 3.14159265358979323846
+#endif
+
+/****************************************************************************
+ * Private Function Prototypes
+ ****************************************************************************/
+
+static int phywear_pendulum(int argc, FAR char *argv[]);
+static int phywear_magread(int argc, FAR char *argv[]);
+static int phywear_spring(int argc, FAR char *argv[]);
+static int phywear_centripetal(int argc, FAR char *argv[]);
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: phywear_pendulum
+ *
+ * Description:
+ *   摆测 g 实验（phyphox pendulum 移植）：采集陀螺仪 ~50Hz 持续 PEND_SAMPLES
+ *   点（约 10s），三轴求和 → 自相关测周期 T → g = 4π²L/T²。
+ *   用法：phywear pendulum [摆长L米，默认0.5]
+ *   结果打印到串口（纯文本，供实验阶段读数）。
+ *
+ ****************************************************************************/
+
+#define PEND_SAMPLES   500     /* 10s @ 50Hz */
+#define PEND_DT        0.02f   /* 采样间隔秒 */
+
+static int phywear_pendulum(int argc, FAR char *argv[])
+{
+  struct lsm6dsl_sensor_data_s imu;
+  FAR float *gyr;
+  float length = 0.5f;
+  int fd;
+  int i;
+  float T;
+  float f;
+  float g;
+
+  if (argc > 2)
+    {
+      length = strtof(argv[2], NULL);
+    }
+
+  if (length <= 0.01f)
+    {
+      printf("ERROR: 摆长 L 无效（需 >0.01m）\n");
+      return -EINVAL;
+    }
+
+  gyr = malloc(PEND_SAMPLES * sizeof(float));
+  if (gyr == NULL)
+    {
+      printf("ERROR: 内存不足\n");
+      return -ENOMEM;
+    }
+
+  fd = open("/dev/lsm6dsl0", O_RDONLY);
+  if (fd < 0)
+    {
+      printf("ERROR: 打开 /dev/lsm6dsl0 失败\n");
+      free(gyr);
+      return -ENODEV;
+    }
+
+  ioctl(fd, SNIOC_START, 0);
+
+  printf("摆测g：采样 %d 点 @ ~%dHz（%.1fs）……请让板子作单摆摆动\n",
+         PEND_SAMPLES, (int)(1.0f / PEND_DT), PEND_SAMPLES * PEND_DT);
+  fflush(stdout);
+
+  for (i = 0; i < PEND_SAMPLES; i++)
+    {
+      if (ioctl(fd, SNIOC_LSM6DSLSENSORREAD, (unsigned long)&imu) == 0)
+        {
+          /* 三轴陀螺求和（phyphox anyGyr 思路：保留符号，单轴摆动即可） */
+
+          gyr[i] = (float)imu.g_x_data + imu.g_y_data + imu.g_z_data;
+        }
+      else
+        {
+          gyr[i] = 0.0f;
+        }
+
+      usleep((useconds_t)(PEND_DT * 1000000.0f));   /* ~20ms */
+    }
+
+  close(fd);
+
+  /* 自相关测周期 */
+
+  T = pw_signal_period(gyr, PEND_SAMPLES, PEND_DT);
+  free(gyr);
+
+  if (T <= 0.0f)
+    {
+      printf("摆测g：未检测到稳定周期（摆动幅度不够或采集异常）\n");
+      return 0;
+    }
+
+  f = 1.0f / T;
+  g = 4.0f * (float)M_PI * (float)M_PI * length / (T * T);
+
+  printf("摆测g结果：周期 T=%.4fs  频率 f=%.3fHz\n", T, f);
+  printf("  L=%.3fm → g = 4π²L/T² = %.3f m/s²（理论 9.81）\n", length, g);
+  return 0;
+}
+
+/****************************************************************************
+ * Name: phywear_magread
+ *
+ * Description:
+ *   连续打印地磁原始读数（mG + |B|），用法：phywear magread [次数，默认20]
+ *   供磁偏置验证用：无斩波、走正常连续测量路径。
+ *
+ ****************************************************************************/
+
+#define MAGREAD_SCALE  0.0625f   /* counts → mG */
+
+static int phywear_magread(int argc, FAR char *argv[])
+{
+  struct mmc5603_data_s d;
+  int n = 20;
+  int fd;
+  int i;
+
+  if (argc > 2)
+    {
+      n = atoi(argv[2]);
+    }
+
+  fd = open("/dev/mag0", O_RDONLY);
+  if (fd < 0)
+    {
+      printf("ERROR: 打开 /dev/mag0 失败\n");
+      return -ENODEV;
+    }
+
+  for (i = 0; i < n; i++)
+    {
+      float x;
+      float y;
+      float z;
+      float mag;
+
+      if (read(fd, &d, sizeof(d)) != sizeof(d))
+        {
+          printf("read fail\n");
+          break;
+        }
+
+      x = d.x * MAGREAD_SCALE;
+      y = d.y * MAGREAD_SCALE;
+      z = d.z * MAGREAD_SCALE;
+      mag = sqrtf(x * x + y * y + z * z);
+
+      printf("%3d X%+8.1f Y%+8.1f Z%+8.1f |B|%6.0f mG\n",
+             i, x, y, z, mag);
+      usleep(30 * 1000);
+    }
+
+  close(fd);
+  return 0;
+}
+
+/****************************************************************************
+ * Name: phywear_spring
+ *
+ * Description:
+ *   弹簧振子实验（phyphox spring 移植，串口文本版，供物理实测）：
+ *   采集加速度矢量模 |a| @~50Hz 持续 N 秒 → EMA 去重力 → 自相关测周期
+ *   T → f=1/T。用法：phywear spring [秒，默认10]
+ *
+ ****************************************************************************/
+
+#define SPRING_DT        0.02f    /* 采样间隔秒 */
+
+static int phywear_spring(int argc, FAR char *argv[])
+{
+  struct lsm6dsl_sensor_data_s imu;
+  FAR float *buf;
+  float ema = 0.0f;
+  float secs = 10.0f;
+  int nsamples;
+  int fd;
+  int i;
+  float T;
+  float f;
+
+  if (argc > 2)
+    {
+      secs = strtof(argv[2], NULL);
+    }
+
+  if (secs < 2.0f)
+    {
+      secs = 2.0f;
+    }
+
+  if (secs > 60.0f)
+    {
+      secs = 60.0f;
+    }
+
+  nsamples = (int)(secs / SPRING_DT);
+
+  buf = malloc(nsamples * sizeof(float));
+  if (buf == NULL)
+    {
+      printf("ERROR: 内存不足\n");
+      return -ENOMEM;
+    }
+
+  fd = open("/dev/lsm6dsl0", O_RDONLY);
+  if (fd < 0)
+    {
+      printf("ERROR: 打开 /dev/lsm6dsl0 失败\n");
+      free(buf);
+      return -ENODEV;
+    }
+
+  ioctl(fd, SNIOC_START, 0);
+
+  printf("弹簧振子：采样 %d 点 @ ~%dHz（%.1fs）……请让重物竖直振动\n",
+         nsamples, (int)(1.0f / SPRING_DT), secs);
+  fflush(stdout);
+
+  for (i = 0; i < nsamples; i++)
+    {
+      float m;
+
+      if (ioctl(fd, SNIOC_LSM6DSLSENSORREAD, (unsigned long)&imu) == 0)
+        {
+          m = sqrtf((float)imu.x_data * imu.x_data +
+                    (float)imu.y_data * imu.y_data +
+                    (float)imu.z_data * imu.z_data) / 1000.0f;
+        }
+      else
+        {
+          m = 0.0f;
+        }
+
+      /* |a| 单位 g；EMA 去重力直流 → 振荡分量 */
+
+      ema = ema * 0.99f + m * 0.01f;
+      buf[i] = m - ema;
+      usleep((useconds_t)(SPRING_DT * 1000000.0f));
+    }
+
+  close(fd);
+
+  T = pw_signal_period(buf, nsamples, SPRING_DT);
+  free(buf);
+
+  if (T <= 0.0f)
+    {
+      printf("弹簧振子：未检测到稳定周期（振动幅度不够或采集异常）\n");
+      return 0;
+    }
+
+  f = 1.0f / T;
+  printf("弹簧振子结果：周期 T=%.4fs  频率 f=%.3fHz\n", (double)T,
+         (double)f);
+  printf("  公式：f = 1/T（自相关法，phyphox 同款，非 FFT）\n");
+  return 0;
+}
+
+/****************************************************************************
+ * Name: phywear_centripetal
+ *
+ * Description:
+ *   向心加速度实验（phyphox centripetal 移植，串口文本版）：
+ *   acc+gyr @2Hz 同步采集 N 秒 → (ω², a_c) 点对（a_c=√(|a|²−g²) 去重力）
+ *   → r = 过原点最小二乘斜率。用法：phywear centripetal [秒，默认20]
+ *
+ ****************************************************************************/
+
+#define CENTRI_DT        0.5f     /* 采样间隔秒（2Hz） */
+
+static int phywear_centripetal(int argc, FAR char *argv[])
+{
+  struct lsm6dsl_sensor_data_s imu;
+  float secs = 20.0f;
+  float num = 0.0f;
+  float den = 0.0f;
+  int npoints = 0;
+  int nsamples;
+  int fd;
+  int i;
+
+  if (argc > 2)
+    {
+      secs = strtof(argv[2], NULL);
+    }
+
+  if (secs < 3.0f)
+    {
+      secs = 3.0f;
+    }
+
+  if (secs > 120.0f)
+    {
+      secs = 120.0f;
+    }
+
+  nsamples = (int)(secs / CENTRI_DT);
+
+  fd = open("/dev/lsm6dsl0", O_RDONLY);
+  if (fd < 0)
+    {
+      printf("ERROR: 打开 /dev/lsm6dsl0 失败\n");
+      return -ENODEV;
+    }
+
+  ioctl(fd, SNIOC_START, 0);
+
+  printf("向心加速度：采样 %d 点 @2Hz（%.1fs）……请让手表绕竖直轴转圈\n",
+         nsamples, secs);
+  printf("（转盘或手腕画圈，边转边改变转速；轴保持竖直）\n");
+  fflush(stdout);
+
+  for (i = 0; i < nsamples; i++)
+    {
+      float am;
+      float wr;
+      float ac;
+
+      if (ioctl(fd, SNIOC_LSM6DSLSENSORREAD, (unsigned long)&imu) != 0)
+        {
+          continue;
+        }
+
+      /* |a| mg；|gyr| rad/s（mdps → π/180/1000） */
+
+      am = sqrtf((float)imu.x_data * imu.x_data +
+                 (float)imu.y_data * imu.y_data +
+                 (float)imu.z_data * imu.z_data);
+      wr = sqrtf((float)imu.g_x_data * imu.g_x_data +
+                 (float)imu.g_y_data * imu.g_y_data +
+                 (float)imu.g_z_data * imu.g_z_data) *
+           (float)M_PI / 180.0f / 1000.0f;
+
+      if (wr < 0.3f)
+        {
+          usleep((useconds_t)(CENTRI_DT * 1000000.0f));
+          continue;
+        }
+
+      ac = sqrtf(am * am - 1000.0f * 1000.0f);
+      if (!(ac > 50.0f))
+        {
+          usleep((useconds_t)(CENTRI_DT * 1000000.0f));
+          continue;
+        }
+
+      /* a_c m/s²：mg → g → m/s² */
+
+      ac = ac / 1000.0f * 9.81f;
+
+      {
+        float x = wr * wr;
+
+        num += ac * x;
+        den += x * x;
+        npoints++;
+        printf("  pt %3d: w=%5.2f rad/s  a=%6.3f m/s^2  r=%6.3f m\n",
+               npoints, (double)wr, (double)ac,
+               den > 0.0f ? (double)(num / den) : 0.0);
+      }
+
+      usleep((useconds_t)(CENTRI_DT * 1000000.0f));
+    }
+
+  close(fd);
+
+  if (npoints < 3 || den <= 0.0f)
+    {
+      printf("向心加速度：有效点不足（%d），请转得更快/更稳\n", npoints);
+      return 0;
+    }
+
+  printf("向心加速度结果：r = Σ(a·ω²)/Σ(ω⁴) = %.4f m（%d 点）\n",
+         (double)(num / den), npoints);
+  printf("  公式：a = r·ω²，过原点最小二乘斜率\n");
+  return 0;
+}
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/* imubench 起始页（pw_cap_open 与 main 都要用） */
+static int g_imu_bench_page = 2;
+
+/* 截图专用：按名字打开指定屏。root 走 pw_ui_root()（它自己 open），
+ * 其余返回待打开的 screen 对象。返回 1 表示名字有效。
+ * 真机不带 cap 子命令时这段代码不会被执行，保留不影响固件行为。 */
+
+int pw_cap_open(const char *name)
+{
+  lv_obj_t *scr = NULL;
+
+  if (strcmp(name, "bt") == 0) { pw_bt_init(); return 1; }
+  if      (strcmp(name, "root")      == 0) { pw_ui_root(); return 1; }
+  /* 取证专用：主页 + 蓝牙已启动。
+   * 为什么要单独一个名字：金标主页截图（shot root）必须保持"不依赖外部
+   * 事件"，否则一键验收会去等一个永远不会来的 BLE 连接；而"连上以后主页
+   * 那枚点是蓝的"又非证明不可。所以把"主页 + 起蓝牙 + 等链路"单独做成
+   * 一个取证入口，两边互不影响。 */
+  else if (strcmp(name, "bthome")    == 0) { if (!pw_bt_is_up()) pw_bt_init();
+                                             pw_ui_root(); return 1; }
+  /* 取证：主页 + 等"连上 → 再断开"之后再出图。
+   * 为什么需要：用户报的现象就是"连过之后断开了，手表还显示已连接"。
+   * 要证明它现在会翻回未连接，就得**真的经历一次断开**再拍 ——
+   * 而 shot 是"开机后第一个 GUI"，没法先连一次再重启拍照。 */
+  else if (strcmp(name, "btafter")   == 0) { if (!pw_bt_is_up()) pw_bt_init();
+                                             pw_ui_root(); return 1; }
+  /* 同上，但拍的是**蓝牙页**而不是主页：主页那枚点走 ui_bt_tick，
+   * 蓝牙页的状态走 btp_tick —— 两条不同的刷新路径，都得证。 */
+  else if (strcmp(name, "btlog")     == 0) { if (!pw_bt_is_up()) pw_bt_init();
+                                             scr = pw_bt_screen(); }
+  else if (strcmp(name, "voice")     == 0) scr = pw_voice_screen();
+  else if (strncmp(name, "board", 5) == 0 && name[5] >= '0' && name[5] <= '5')
+                                          { return pw_ui_open_board(name[5] - '0'); }
+  else if (strcmp(name, "tools")     == 0) { return pw_ui_open_board(2); }
+  else if (strcmp(name, "mech")      == 0) { return pw_ui_open_board(0); }
+  else if (strcmp(name, "raw")       == 0) scr = pw_raw_screen();
+  else if (strcmp(name, "pendulum")  == 0) scr = pw_pendulum_screen();
+  else if (strcmp(name, "spring")    == 0) scr = pw_spring_screen();
+  else if (strcmp(name, "centri")    == 0) scr = pw_centri_screen();
+  else if (strcmp(name, "incline")   == 0) scr = pw_incline_screen();
+  else if (strcmp(name, "ruler")     == 0) scr = pw_ruler_screen();
+  else if (strcmp(name, "spec_accel")== 0) scr = pw_spec_accel_screen();
+  else if (strcmp(name, "spec_mic")  == 0) scr = pw_spec_mic_screen();
+  else if (strcmp(name, "spec_mag")  == 0) scr = pw_spec_mag_screen();
+  else if (strcmp(name, "stopwatch") == 0) scr = pw_motion_stopwatch_screen();
+  else if (strcmp(name, "lightgate") == 0) scr = pw_light_gate_screen();
+  else if (strcmp(name, "acousticgate") == 0) scr = pw_acoustic_gate_screen();
+  else if (strcmp(name, "applause")  == 0) scr = pw_applause_screen();
+  else if (strcmp(name, "settings")  == 0) scr = pw_settings_screen();
+  else if (strcmp(name, "tone")      == 0) scr = pw_tone_screen();
+  else if (strcmp(name, "mic")       == 0) { scr = pw_raw_screen(); pw_raw_goto(4); }
+  else if (strcmp(name, "spk")       == 0) { scr = pw_raw_screen(); pw_raw_goto(5); }
+  else if (strcmp(name, "gyro")      == 0) { scr = pw_raw_screen(); pw_raw_goto(1); }
+  else if (strcmp(name, "mag")       == 0) { scr = pw_raw_screen(); pw_raw_goto(2); }
+  else if (strcmp(name, "rawcurve")  == 0) { scr = pw_raw_screen();
+                                             pw_raw_set_view(PW_RAW_VIEW_CURVE); }
+  else if (strcmp(name, "imu")       == 0) scr = pw_imu_screen();
+  else if (strcmp(name, "imubench")  == 0) { pw_imu_bench(1);
+                                             scr = pw_imu_screen();
+                                             pw_imu_goto(g_imu_bench_page); }
+  else if (strcmp(name, "imubias")   == 0) { scr = pw_imu_screen(); pw_imu_goto(1); }
+  else if (strcmp(name, "imu6")      == 0) { scr = pw_imu_screen(); pw_imu_goto(2); }
+  else if (strcmp(name, "imumag")    == 0) { scr = pw_imu_screen(); pw_imu_goto(3); }
+  else if (strcmp(name, "imutraj")   == 0) { scr = pw_imu_screen(); pw_imu_goto(4); }
+  else if (strcmp(name, "imutrajbench") == 0) { pw_imu_bench(1);
+                                             scr = pw_imu_screen();
+                                             pw_imu_goto(4); }
+  else if (strcmp(name, "btlink")    == 0) scr = pw_bt_screen();
+  else if (strcmp(name, "about")     == 0) scr = pw_about_screen();
+  else if (strcmp(name, "ai")        == 0) scr = pw_ai_coach_screen();
+  else return 0;
+
+  if (scr != NULL)
+    {
+      pw_scr_open(scr);
+    }
+
+  return 1;
+}
+
+/* 蓝牙页取证：等链路起来的上限（见主循环里的说明）。
+ * 宿主 pw_ble_central.py 实测 ~7 s 连上；45 s 是“够用但不至于卡死巡检”的值。 */
+#define PW_SHOT_BT_WAIT_MS  45000
+
+/* 链路起来之后还要再静默这么久才出图（见主循环里的说明）。
+ * 为什么要静默：连接/订阅/写特征会让 BT 侧往控制台打一行行日志
+ * （[bt] B3 connected / ccc changed / [bt] msg in …），
+ * 而截图是把上千行像素以文本形式从**同一个控制台**流出去的 ——
+ * 两者一交叉就会撕掉像素行，pwshot 逐行校验直接拒收整帧
+ * （实测：连接期间截 btlink 稳定报 1/1829 line(s) missing）。
+ * 宿主侧的动作几秒内就做完了，等它说完再出图即可。 */
+#define PW_SHOT_BT_QUIET_MS 4000
+
+/* 截图巡检顺序：覆盖全部主屏 / 实验页 / 工具页 / 生活页 / 设置 / 关于
+ * 注意：每页打开后不再返回上级，最后一次统一回根屏即可。 */
+
+static FAR const char *const g_cap_seq[] =
+{
+  "root",
+  "raw",
+  "pendulum",
+  "spring",
+  "centri",
+  "incline",
+  "ruler",
+  "spec_accel",
+  "spec_mic",
+  "spec_mag",
+  "stopwatch",
+  "lightgate",
+  "acousticgate",
+  "applause",
+  "settings",
+  "btlink",
+  "about",
+};
+
+#define PW_SHOT_MAIN_COUNT \
+  ((int)(sizeof(g_cap_seq) / sizeof(g_cap_seq[0])))
+
+/* 说明 / 数据页巡检（真机截图第二阶段）。
+ *
+ * 这些页不是主屏，而是各实验的第二页（说明页或数据曲线页），需要 bench
+ * 注入合成信号才有内容；因此每页都要先开 bench、再建屏、最后滚到第 2 页。
+ * 打开顺序与 phywear.c 里各 bench 子命令保持一致。
+ *
+ * 铁律 4：这些页里的数值是 bench 注入的合成数据，不是真实测量结果。
+ */
+
+struct pw_shot_p2_s
+{
+  FAR const char *name;
+  void (*bench)(int on, int page_interval_s, int start_page);
+  lv_obj_t *(*screen)(void);
+};
+
+static const struct pw_shot_p2_s g_p2_seq[] =
+{
+  { "20_pend_p2",         pw_pend_bench,     pw_pendulum_screen         },
+  { "21_spring_p2",       pw_spring_bench,   pw_spring_screen           },
+  { "22_centri_p2",       pw_centri_bench,   pw_centri_screen           },
+  { "23_incline_p2",      pw_incline_bench,  pw_incline_screen          },
+  { "24_ruler_p2",        pw_ruler_bench,    pw_ruler_screen            },
+  { "25_spec_p2",         pw_spec_bench,     pw_spec_accel_screen       },
+  { "26_stopwatch_p2",    pw_time_bench,     pw_motion_stopwatch_screen },
+  { "27_lightgate_p2",    pw_time_bench,     pw_light_gate_screen       },
+  { "28_acousticgate_p2", pw_time_bench,     pw_acoustic_gate_screen    },
+  { "29_applause_p2",     pw_applause_bench, pw_applause_screen         },
+};
+
+#define PW_SHOT_P2_COUNT \
+  ((int)(sizeof(g_p2_seq) / sizeof(g_p2_seq[0])))
+
+/* Open shot-plan entry `idx`: 0..MAIN_COUNT-1 are the main pages, the rest are
+ * the bench-injected second pages. */
+
+static void pw_shot_goto(int idx)
+{
+  if (idx < PW_SHOT_MAIN_COUNT)
+    {
+      pw_cap_open(g_cap_seq[idx]);
+    }
+  else
+    {
+      const struct pw_shot_p2_s *entry = &g_p2_seq[idx - PW_SHOT_MAIN_COUNT];
+
+      entry->bench(1, 0, 0);          /* Enable injection before screen build */
+      pw_scr_open(entry->screen());
+      entry->bench(1, 0, 1);          /* Now scroll to the second page */
+    }
+}
+
+static FAR const char *pw_shot_label(int idx)
+{
+  if (idx < PW_SHOT_MAIN_COUNT)
+    {
+      return g_cap_seq[idx];
+    }
+
+  return g_p2_seq[idx - PW_SHOT_MAIN_COUNT].name;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+int main(int argc, FAR char *argv[])
+{
+  lv_nuttx_dsc_t info;
+  lv_nuttx_result_t result;
+  int bench_interval = 0;
+  int bench_page = 0;
+  bool bench_mode = false;
+  bool spec_bench_mode = false;
+  bool spec_bench_mic = false;
+  bool spec_bench_mag = false;
+  bool spring_bench_mode = false;
+  bool centri_bench_mode = false;
+  bool incline_bench_mode = false;
+  bool ruler_bench_mode = false;
+  bool time_bench_mode = false;
+  bool life_bench_mode = false;
+
+  int  time_bench_kind = 0;   /* 0=motion 1=light 2=acoustic */
+  bool open_raw = false;      /* 调试：直接打开 Raw Sensors 页 */
+  bool demo_mode = false;     /* 自动演示：模拟点击验证 / 录屏 */
+  const char *cap_screen = NULL;
+  bool lvbench_mode = false;     /* phywear lvbench：跑 LVGL 官方 benchmark */  /* 截图专用：phywear cap <name> 打开指定屏并驻留 */
+  bool shot_once = false;         /* --shot[=ms]: dump one console screenshot */
+  bool shot_sweep = false;        /* --sweep[=ms]: dump the 16 main pages */
+  bool shot_p2 = false;           /* --p2[=ms]: dump the 10 bench pages */
+  int  shot_p2_only = -1;         /* --p2only=<idx>: dump one bench page */
+  int  shot_settle_ms = PW_SHOT_SETTLE_MS;       /* Main page settle time */
+  int  shot_p2_settle_ms = PW_SHOT_P2_SETTLE_MS; /* Bench page settle time */
+  int  shot_first = 0;            /* First shot-plan index to visit */
+  int  shot_last = 0;             /* One past the last shot-plan index */
+  int  shot_idx = 0;              /* Current shot-plan index */
+  struct timespec shot_t0;        /* When the current page was opened */
+  static long shot_bt_conn_ms;    /* 首次看到蓝牙已连接的时刻（相对 shot_t0） */
+  static int  shot_bt_phase;      /* btafter 用：0=等连上 1=等断开 */
+#ifdef CONFIG_EXAMPLES_PHYWEAR_SIM_ZH_DEMO
+  bool cap_sweep = false;         /* 截图巡检：phywear capsweep [停留秒] */
+  int  cap_sweep_dwell = 4;       /* 每页停留秒数（宿主机按此间隔抓帧） */
+  int  cap_sweep_idx = 0;
+  time_t cap_sweep_last = 0;
+#endif
+
+#ifdef CONFIG_EXAMPLES_PHYWEAR_SIM_ZH_DEMO
+  /* 模拟器截图专用：强制中文界面（所有页面均按中文 UI 渲染）。
+   * 仅仿真器/模拟器验收用，真机禁用此配置。
+   * 注意：仅在“无子命令”启动（argc==1）时才强制进入 demo 自导航；
+   * 若带子命令（raw/bench/spring/...），必须尊重其参数，以便逐页截图。 */
+  pw_i18n_set_zh(true);
+  if (argc == 1)
+    {
+      demo_mode = true;
+    }
+#endif
+
+  /* Console screenshot flags, accepted anywhere on the command line:
+   *
+   *   --shot[=<ms>]   dump one frame of whatever page this run opens
+   *   --sweep[=<ms>]  dump the 16 main pages
+   *   --p2[=<ms>]     dump the 10 bench-injected second pages
+   *   --all[=<ms>]    both of the above (26 frames, one run)
+   *
+   * They are peeled out of argv here so that the positional parsing below is
+   * unchanged, and they may be combined with any mode, e.g.
+   *   phywear lang zh --all=3000
+   *   phywear lang zh specbench 0 1 --shot=6000
+   *
+   * One process can only run the GUI once per board boot: a second phywear
+   * run after the first exits hangs in the LCD driver, so a full capture
+   * session is always a single run.
+   */
+
+  {
+    int rd;
+    int wr = 1;
+
+    for (rd = 1; rd < argc; rd++)
+      {
+        if (strncmp(argv[rd], "--shot", 6) == 0 &&
+            (argv[rd][6] == '\0' || argv[rd][6] == '='))
+          {
+            shot_once = true;
+            if (argv[rd][6] == '=')
+              {
+                shot_settle_ms = atoi(&argv[rd][7]);
+              }
+
+            continue;
+          }
+
+        if (strncmp(argv[rd], "--sweep", 7) == 0 &&
+            (argv[rd][7] == '\0' || argv[rd][7] == '='))
+          {
+            shot_sweep = true;
+            if (argv[rd][7] == '=')
+              {
+                shot_settle_ms = atoi(&argv[rd][8]);
+              }
+
+            continue;
+          }
+
+        if (strncmp(argv[rd], "--all", 5) == 0 &&
+            (argv[rd][5] == '\0' || argv[rd][5] == '='))
+          {
+            shot_sweep = true;
+            shot_p2 = true;
+            if (argv[rd][5] == '=')
+              {
+                shot_settle_ms = atoi(&argv[rd][6]);
+                shot_p2_settle_ms = shot_settle_ms;
+              }
+
+            continue;
+          }
+
+        if (strncmp(argv[rd], "--p2only=", 9) == 0)
+          {
+            shot_p2 = true;
+            shot_p2_only = atoi(&argv[rd][9]);
+            if (shot_p2_only < 0 || shot_p2_only >= PW_SHOT_P2_COUNT)
+              {
+                shot_p2_only = 0;
+              }
+
+            continue;
+          }
+
+        if (strncmp(argv[rd], "--p2", 4) == 0 &&
+            (argv[rd][4] == '\0' || argv[rd][4] == '='))
+          {
+            shot_p2 = true;
+            if (argv[rd][4] == '=')
+              {
+                shot_p2_settle_ms = atoi(&argv[rd][5]);
+              }
+
+            continue;
+          }
+
+        argv[wr++] = argv[rd];
+      }
+
+    argc = wr;
+  }
+
+  if (shot_settle_ms < 200)
+    {
+      shot_settle_ms = 200;
+    }
+  else if (shot_settle_ms > 60000)
+    {
+      shot_settle_ms = 60000;
+    }
+
+  if (shot_p2_settle_ms < 200)
+    {
+      shot_p2_settle_ms = 200;
+    }
+  else if (shot_p2_settle_ms > 60000)
+    {
+      shot_p2_settle_ms = 60000;
+    }
+
+  /* phywear lang en|zh → 预设 GUI 语言（i18n，默认英文），其余参数按正常
+   * GUI 处理。供模拟器/无 UI 入口期验收用；设备端语言 UI 入口待接。 */
+  if (argc >= 3 && strcmp(argv[1], "lang") == 0)
+    {
+      pw_i18n_set_zh(strcmp(argv[2], "zh") == 0);
+      argv += 2;
+      argc -= 2;
+    }
+
+  /* 调试/模拟器视觉验证：phywear raw → 直接打开 Raw Sensors 页（免触摸） */
+  if (argc > 1 && strcmp(argv[1], "raw") == 0)
+    {
+      open_raw = true;
+      argc = 1;
+    }
+
+  /* 模拟器截图专用：phywear cap <name> → 打开指定主屏/实验页并驻留，
+   * 便于逐页截取中文 UI（不注入数据、不自动翻页）。 */
+  if (argc > 2 && strcmp(argv[1], "cap") == 0)
+    {
+      cap_screen = argv[2];
+      argc = 1;
+    }
+
+  /* 动效计时：查表 vs 解析式（P1-2 的"计算节省量"必须实测） */
+
+  /* LVGL 官方 benchmark 跑分：`phywear lvbench`（跑完自动在屏幕与串口给汇总表） */
+
+  if (argc > 1 && strcmp(argv[1], "lvbench") == 0)
+    {
+#if defined(CONFIG_LV_USE_DEMO_BENCHMARK)
+      lvbench_mode = true;
+      argc = 1;
+#else
+      printf("lvbench: 本固件未编入 LVGL benchmark（CONFIG_LV_USE_DEMO_BENCHMARK=n）\n");
+      return 0;
+#endif
+    }
+
+  if (argc > 1 && strcmp(argv[1], "motionbench") == 0)
+    {
+      pw_motion_bench((argc > 2) ? atoi(argv[2]) : 20000);
+      return 0;
+    }
+
+  if (argc > 1 && strcmp(argv[1], "bthci") == 0)
+    {
+      pw_bt_probe();
+      return 0;
+    }
+
+  /* 任务 3 的替代通路：USB CDC-ACM + SLIP（本板无无线网卡，见 pw_net.c 注释） */
+  if (argc > 1 && strcmp(argv[1], "net") == 0)
+    {
+      pw_net_up();
+      return 0;
+    }
+
+  /* 任务 3 的第二条替代通路：**PPP over BLE**（见 pw_btppp.c）。
+   * 与 `net` 一样是"做完就退"，不进 GUI —— 这条链路要长期挂着跑 pppd，
+   * 再拉一个 GUI 只会白占内存（本板 SRAM 已 96%）。 */
+  if (argc > 1 && strcmp(argv[1], "btppp") == 0)
+    {
+      pw_bt_init();
+      pw_btppp_start();
+      return 0;
+    }
+
+  /* Real-device screenshot: `phywear shot <name>` opens the page, dumps one
+   * frame to the console and exits.  Same as `phywear cap <name> --shot`;
+   * the host side decoder is tools/pwshot.py. */
+
+  if (argc > 2 && strcmp(argv[1], "shot") == 0)
+    {
+      cap_screen = argv[2];
+      shot_once = true;
+      argc = 1;
+    }
+
+  /* 模拟器截图巡检：phywear capsweep [停留秒] → 依次打开全部页面，
+   * 每页停留 N 秒并把页名打印到控制台（宿主机据此逐帧抓取 /dev/fb0）。
+   * 仅模拟器截图构建（SIM_ZH_DEMO）可用：页表与状态变量都在该配置下定义。 */
+
+#ifdef CONFIG_EXAMPLES_PHYWEAR_SIM_ZH_DEMO
+  if (argc > 1 && strcmp(argv[1], "capsweep") == 0)
+    {
+      cap_sweep = true;
+      if (argc > 2)
+        {
+          cap_sweep_dwell = atoi(argv[2]);
+          if (cap_sweep_dwell < 1)  cap_sweep_dwell = 1;
+          if (cap_sweep_dwell > 60) cap_sweep_dwell = 60;
+        }
+      argc = 1;
+    }
+#endif
+
+  /* 自动演示：phywear demo → 自动点击穿过菜单/板块/实验页（验证/录屏用） */
+  if (argc > 1 && strcmp(argv[1], "demo") == 0)
+    {
+      demo_mode = true;
+      argc = 1;
+    }
+
+  /* phywear pendbench [秒 [起始页]] → 性能测试：合成摆动 + 自动翻页
+   * （秒=0 表示不自动翻页但保持 bench 注入与统计输出） */
+  if (argc > 1 && strcmp(argv[1], "pendbench") == 0)
+    {
+      bench_mode = true;
+      bench_interval = (argc > 2) ? atoi(argv[2]) : 12;
+      bench_page = (argc > 3) ? atoi(argv[3]) : 0;
+    }
+
+  /* 频谱 bench：specbench=[加速度频谱] / micspecbench=[麦克风频谱] /
+   * magspecbench=[地磁频谱]，合成多音注入 + 自动翻页 + perf 统计 */
+  if (argc > 1 &&
+      (strcmp(argv[1], "specbench") == 0 ||
+       strcmp(argv[1], "micspecbench") == 0 ||
+       strcmp(argv[1], "magspecbench") == 0))
+    {
+      spec_bench_mic = (strncmp(argv[1], "mic", 3) == 0);
+      spec_bench_mag = (strncmp(argv[1], "mag", 3) == 0);
+      spec_bench_mode = true;
+      bench_mode = true;
+      bench_interval = (argc > 2) ? atoi(argv[2]) : 12;
+      bench_page = (argc > 3) ? atoi(argv[3]) : 0;
+    }
+
+  /* 弹簧 bench：springbench [秒 [起始页]] → 合成 2.0Hz 振荡 + 自动翻页 */
+
+  if (argc > 1 && strcmp(argv[1], "springbench") == 0)
+    {
+      spring_bench_mode = true;
+      bench_mode = true;
+      bench_interval = (argc > 2) ? atoi(argv[2]) : 12;
+      bench_page = (argc > 3) ? atoi(argv[3]) : 0;
+    }
+
+  /* 向心 bench：centribench [秒 [起始页]] → 合成转圈（r=0.15m） */
+
+  if (argc > 1 && strcmp(argv[1], "centribench") == 0)
+    {
+      centri_bench_mode = true;
+      bench_mode = true;
+      bench_interval = (argc > 2) ? atoi(argv[2]) : 12;
+      bench_page = (argc > 3) ? atoi(argv[3]) : 0;
+    }
+
+  /* 工具/计时器/生活 bench：
+   *   inclinebench / rulerbench / applausebench [秒 [起始页]]
+   *   timebench motion|light|acoustic [秒 [起始页]] */
+  if (argc > 1 && strcmp(argv[1], "inclinebench") == 0)
+    {
+      incline_bench_mode = true;
+      bench_mode = true;
+      bench_interval = (argc > 2) ? atoi(argv[2]) : 12;
+      bench_page = (argc > 3) ? atoi(argv[3]) : 0;
+    }
+
+  if (argc > 1 && strcmp(argv[1], "rulerbench") == 0)
+    {
+      ruler_bench_mode = true;
+      bench_mode = true;
+      bench_interval = (argc > 2) ? atoi(argv[2]) : 12;
+      bench_page = (argc > 3) ? atoi(argv[3]) : 0;
+    }
+
+  if (argc > 1 && strcmp(argv[1], "timebench") == 0)
+    {
+      time_bench_mode = true;
+      bench_mode = true;
+      time_bench_kind = (argc > 2 && strcmp(argv[2], "light") == 0) ? 1 :
+                        (argc > 2 && strcmp(argv[2], "acoustic") == 0) ? 2 : 0;
+      bench_interval = (argc > 3) ? atoi(argv[3]) : 12;
+      bench_page = (argc > 4) ? atoi(argv[4]) : 0;
+    }
+
+  if (argc > 1 && strcmp(argv[1], "applausebench") == 0)
+    {
+      life_bench_mode = true;
+      bench_mode = true;
+      bench_interval = (argc > 2) ? atoi(argv[2]) : 12;
+      bench_page = (argc > 3) ? atoi(argv[3]) : 0;
+    }
+
+  /* 子命令：phywear spkpa 0|1 → 直接开关功放（听感 A/B 用） */
+
+  if (argc > 2 && strcmp(argv[1], "spkpa") == 0)
+    {
+      int on = atoi(argv[2]) != 0;
+      int rc = pw_tone_set_pa(on);
+
+      printf("spkpa: %s -> %d\n", on ? "on" : "off", on);
+      return rc == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+
+  /* 子命令：phywear coach <自然语言请求…> → 与 AI 教练页按钮完全相同的路径
+   * （向端侧 Agent 发请求；回复异步落在 pw_ai 消息日志里，页面/日志可见）。
+   * 无头环境（串口 / 模拟器脚本）用它验证整条链路；发完等待回复打印出来。 */
+
+  if (argc > 2 && strcmp(argv[1], "coach") == 0)
+    {
+      char text[192];
+      char seen[4][192];
+      int n = 0;
+      int i;
+      int rc;
+      int waited;
+
+      text[0] = '\0';
+      for (i = 2; i < argc && n < (int)sizeof(text) - 2; i++)
+        {
+          n += snprintf(text + n, sizeof(text) - n, "%s%s",
+                        i > 2 ? " " : "", argv[i]);
+        }
+
+      memset(seen, 0, sizeof(seen));
+      for (i = 0; i < pw_ai_log_count() && i < 4; i++)
+        {
+          const char *old = pw_ai_log_line(i);
+
+          if (old != NULL)
+            {
+              strncpy(seen[i], old, sizeof(seen[i]) - 1);
+            }
+        }
+
+      rc = pw_ai_ask(text);
+      printf("coach: \"%s\" -> rc=%d (%s)\n", text, rc,
+             rc == 0 ? "sent to agent" : "agent unavailable");
+
+      if (rc == 0)
+        {
+          for (waited = 0; waited < 200; waited++)   /* 最多等 20 s */
+            {
+              const char *line = pw_ai_log_line(0);
+
+              if (line != NULL && strncmp(line, seen[0], sizeof(seen[0]) - 1) != 0)
+                {
+                  printf("coach reply: %s\n", line);
+                  break;
+                }
+
+              usleep(100000);
+            }
+
+          if (waited >= 200)
+            {
+              printf("coach: no reply within 20 s\n");
+            }
+        }
+
+      return rc == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+
+  /* 子命令：phywear micread [n] → 连续读麦克风并打印峰值/有效值（自检） */
+
+  /* 子命令：phywear imubench [页] —— 标定 UI 的**注入**演示/自测：
+   *   注入已知零偏/刻度/硬铁中心，并自动走完标定流程（不需要人手、不需要触摸）。
+   *   画面标题带 [BENCH]，避免把注入数据当测量。页：0 实时 1 零偏 2 六面 3 磁。 */
+
+  if (argc > 1 && strcmp(argv[1], "imubench") == 0)
+    {
+      g_imu_bench_page = (argc > 2) ? atoi(argv[2]) : 2;
+      cap_screen = "imubench";        /* 具体开屏与注入在 pw_cap_open 分支里做 */
+    }
+
+  /* 子命令：phywear ahrs [秒] —— 姿态解算。
+   *   不带参数：只跑合成数据自检（主机/模拟器/真机都能跑，判断实现是否退化）。
+   *   带秒数  ：自检之后再跑**实时姿态读数**：真机用 oneshot 读 IMU/磁，
+   *             用 CLOCK_MONOTONIC 算**真实 dt**（不是固定标称值），
+   *             每 0.5s 打印 roll/pitch/yaw 与零偏估计。
+   *             磁力计拿不到时自动退化为 6 轴（模拟器就没有 /dev/mag0）。
+   *   这条子命令是 ③ 惯性标尺的"真机可验证"入口，不依赖 LVGL。 */
+
+  if (argc > 1 && strcmp(argv[1], "ahrs") == 0)
+    {
+      struct pw_ahrs_s ah;
+      float err = 0.0f;
+      int   rc = pw_ahrs_selftest(&err);
+      int   secs = (argc > 2) ? atoi(argv[2]) : 0;
+
+      printf("ahrs selftest: rc=%d max_attitude_err=%.3f deg\n",
+             rc, (double)err);
+
+      if (secs <= 0)
+        {
+          return rc == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+        }
+
+      pw_ahrs_init(&ah);
+
+      /* 磁力计走的是 pw_sensors_open() 建好的缓存 fd（没有 oneshot 版本），
+       * 所以这条无头子命令必须自己把传感器打开一次，否则 mag 恒为 off、
+       * 偏航只能靠陀螺积分漂（实测 -2.2 dps 零偏 → ~2°/s 漂移）。 */
+
+      (void)pw_sensors_open();
+
+      {
+        struct timespec t0;
+        struct timespec t1;
+        float last_print = 0.0f;
+        int   nmag = 0;
+        int   n = 0;
+
+        clock_gettime(CLOCK_MONOTONIC, &t0);
+
+        for (;;)
+          {
+            struct pw_imu_s imu;
+            struct pw_mag_s mag;
+            float a[3];
+            float g[3];
+            float m[3];
+            float dt;
+            int   have_mag = 0;
+
+            clock_gettime(CLOCK_MONOTONIC, &t1);
+            dt = (float)(t1.tv_sec - t0.tv_sec) +
+                 (float)(t1.tv_nsec - t0.tv_nsec) * 1e-9f;
+            t0 = t1;
+
+            if (dt <= 0.0f || dt > 0.5f)
+              {
+                dt = 0.02f;
+              }
+
+            if (pw_sensors_read_imu_oneshot(&imu) != 0)
+              {
+                usleep(20 * 1000);
+                continue;
+              }
+
+            a[0] = imu.ax / 1000.0f;
+            a[1] = imu.ay / 1000.0f;
+            a[2] = imu.az / 1000.0f;
+            g[0] = imu.gx * 1.745329e-5f;
+            g[1] = imu.gy * 1.745329e-5f;
+            g[2] = imu.gz * 1.745329e-5f;
+
+            if (pw_sensors_read_mag(&mag) == 0)
+              {
+                m[0] = (float)mag.x;
+                m[1] = (float)mag.y;
+                m[2] = (float)mag.z;
+                have_mag = 1;
+                nmag++;
+              }
+
+            pw_ahrs_update(&ah, a, g, have_mag ? m : NULL, dt);
+            n++;
+
+            last_print += dt;
+            if (last_print >= 0.5f)
+              {
+                float r;
+                float p;
+                float y;
+                float b[3];
+
+                float ar;
+                float ap;
+
+                last_print = 0.0f;
+                pw_ahrs_euler(&ah, &r, &p, &y);
+                pw_ahrs_bias(&ah, b);
+
+                /* 交叉校验：直接用加速度计解算静止倾角（不依赖 AHRS）。
+                 * 静止时两者应一致；不一致就说明滤波器或数据有问题。 */
+
+                ar = atan2f(a[1], a[2]) * 57.29578f;
+                ap = atan2f(-a[0], sqrtf(a[1] * a[1] + a[2] * a[2])) *
+                     57.29578f;
+
+                printf("ahrs t=%5.1fs n=%d mag=%s "
+                       "roll=%+7.2f pitch=%+7.2f yaw=%+7.2f "
+                       "| accel-tilt r=%+7.2f p=%+7.2f "
+                       "| bias(dps)=%+.3f %+.3f %+.3f\n",
+                       (double)((float)n * 0.02f), n,
+                       have_mag ? "on" : "off", (double)r, (double)p,
+                       (double)y, (double)ar, (double)ap,
+                       (double)(b[0] * 57.29578f),
+                       (double)(b[1] * 57.29578f),
+                       (double)(b[2] * 57.29578f));
+              }
+
+            if (n >= secs * 50)
+              {
+                break;
+              }
+
+            usleep(20 * 1000);
+          }
+
+        printf("ahrs done: %d samples, %d with mag\n", n, nmag);
+      }
+
+      pw_sensors_close();
+      return EXIT_SUCCESS;
+    }
+
+  /* 子命令：phywear calib —— 标定数学自检（一维/二维拟合、六面法、磁椭球、陀螺零偏） */
+
+  if (argc > 1 && strcmp(argv[1], "calib") == 0)
+    {
+      float err = 0.0f;
+      int   rc = pw_calib_selftest(&err);
+
+      printf("calib selftest: rc=%d worst_rel_err=%.4f\n", rc, (double)err);
+      return rc == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+
+  /* 模拟器专用触摸注入：phywear tap <x> <y>
+   *
+   * 模拟器没有真实触摸（goldfish 的 utouch 是 UInput 注入设备），无头验证"点击
+   * 切换视图"这类交互时，主机侧没法点屏幕。这里往 /dev/utouch 写一个
+   * touch_sample_s：先 DOWN、隔 ~150ms 再 UP，保证 LVGL 的 indev 轮询能分别看到
+   * 按下与抬起，从而产生一次真正的 CLICKED（一次同时带 DOWN|UP 的样本不可靠）。
+   * 真机不开 UINPUT_TOUCH，所以这段只在模拟器编进去；真机点击靠手指验证。 */
+
+#ifdef CONFIG_UINPUT_TOUCH
+  if (argc > 3 && strcmp(argv[1], "tap") == 0)
+    {
+      struct touch_sample_s smp;
+      int fd;
+      int x = atoi(argv[2]);
+      int y = atoi(argv[3]);
+      int pass;
+
+      fd = open("/dev/utouch", O_WRONLY);
+      if (fd < 0)
+        {
+          printf("tap: open /dev/utouch failed: %d\n", errno);
+          return EXIT_FAILURE;
+        }
+
+      for (pass = 0; pass < 2; pass++)
+        {
+          memset(&smp, 0, sizeof(smp));
+          smp.npoints = 1;
+          smp.point[0].id = 0;
+          smp.point[0].x = (int16_t)x;
+          smp.point[0].y = (int16_t)y;
+          smp.point[0].h = 1;
+          smp.point[0].w = 1;
+          smp.point[0].flags = TOUCH_ID_VALID | TOUCH_POS_VALID |
+                               (pass == 0 ? TOUCH_DOWN : TOUCH_UP);
+          (void)write(fd, &smp, SIZEOF_TOUCH_SAMPLE_S(1));
+          usleep(pass == 0 ? 300000 : 60000);   /* 按下保持 300ms：LVGL indev 轮询周期内必然能看到按下与抬起各一次 */
+        }
+
+      close(fd);
+      printf("tap: (%d,%d) injected\n", x, y);
+      return EXIT_SUCCESS;
+    }
+#endif
+
+  if (argc > 1 && strcmp(argv[1], "micread") == 0)
+    {
+      int n = (argc > 2) ? atoi(argv[2]) : 20;
+      int fd = open("/dev/mic0", O_RDONLY);
+      int i;
+
+      if (fd < 0)
+        {
+          printf("micread: open /dev/mic0 failed: %d\n", errno);
+          return EXIT_FAILURE;
+        }
+
+      for (i = 0; i < n; i++)
+        {
+          int16_t buf[1024];
+          ssize_t r = read(fd, buf, sizeof(buf));
+
+          if (r == (ssize_t)sizeof(buf))
+            {
+              long sum = 0;
+              int peak = 0;
+              int j;
+
+              for (j = 0; j < 1024; j++)
+                {
+                  int v = buf[j] < 0 ? -buf[j] : buf[j];
+
+                  sum += (long)buf[j] * buf[j];
+                  if (v > peak)
+                    {
+                      peak = v;
+                    }
+                }
+
+              /* 零交叉估主频：用于核对"麦克风采样率/频谱轴"是否准
+               * （样本率 16 kHz、每次 1024 样本 → 分辨率 15.6 Hz） */
+
+              {
+                int zc = 0;
+                int prev = 0;
+                int jj;
+
+                for (jj = 0; jj < 1024; jj++)
+                  {
+                    if (buf[jj] > 300)
+                      {
+                        if (prev < 0)
+                          {
+                            zc++;
+                          }
+
+                        prev = 1;
+                      }
+                    else if (buf[jj] < -300)
+                      {
+                        prev = -1;
+                      }
+                  }
+
+                printf("mic %2d: peak=%5d (%6.1f dBFS)  rms=%6.1f  ~%5.1f Hz\n",
+                       i, peak,
+                       (peak > 0)
+                           ? 20.0 * log10((double)peak / 32768.0)
+                           : -99.0,
+                       sqrt((double)sum / 1024.0),
+                       zc * 16000.0 / 1024.0);
+              }
+            }
+          else
+            {
+              printf("mic %2d: read failed (%d)\n", i, (int)r);
+            }
+        }
+
+      close(fd);
+      return EXIT_SUCCESS;
+    }
+
+  /* 子命令：phywear tone <Hz> [ms] [dB] → 扬声器自检（发一段正弦） */
+
+  if (argc > 2 && strcmp(argv[1], "tone") == 0)
+    {
+      uint32_t freq = (uint32_t)atoi(argv[2]);
+      int ms = (argc > 3) ? atoi(argv[3]) : 2000;
+      int db = (argc > 4) ? atoi(argv[4]) : INT32_MIN;
+      int amp = (argc > 5) ? atoi(argv[5]) : 0;
+      int rc;
+
+      if (ms <= 0)
+        {
+          ms = 2000;
+        }
+
+      rc = pw_tone_beep(freq, ms, db);
+      printf("tone: %s (freq=%u ms=%d db=%d rc=%d errno=%d)\n",
+             rc == 0 ? "ok" : "failed", (unsigned)freq, ms, db, rc, errno);
+      return rc == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+
+  /* 子命令：phywear pendulum [L] → 摆测 g 实验 */
+
+  if (argc > 1 && strcmp(argv[1], "pendulum") == 0)
+    {
+      return phywear_pendulum(argc, argv);
+    }
+
+  /* 子命令：phywear spring [秒] → 弹簧振子实验（串口文本输出） */
+
+  if (argc > 1 && strcmp(argv[1], "spring") == 0)
+    {
+      return phywear_spring(argc, argv);
+    }
+
+  /* 子命令：phywear centripetal [秒] → 向心加速度实验（串口文本输出） */
+
+  if (argc > 1 && strcmp(argv[1], "centripetal") == 0)
+    {
+      return phywear_centripetal(argc, argv);
+    }
+
+  /* 子命令：phywear magread [次数,默认20] → 连续读地磁原始读数（mG） */
+
+  if (argc > 1 && strcmp(argv[1], "magread") == 0)
+    {
+      return phywear_magread(argc, argv);
+    }
+
+  /* 打开传感器（失败即退出，避免 UI 无数据空转；模拟器模式仅告警继续） */
+
+  if (pw_sensors_open() < 0)
+    {
+#ifndef CONFIG_EXAMPLES_PHYWEAR_SIM
+      printf("ERROR: 传感器打开失败\n");
+      return EXIT_FAILURE;
+#else
+      printf("WARN(sim): 传感器不可用 - 模拟器模式继续（无实时数据）\n");
+#endif
+    }
+
+  /* 初始化 LVGL */
+
+  lv_init();
+
+  lv_nuttx_dsc_init(&info);
+
+#ifdef CONFIG_LV_USE_NUTTX_LCD
+  info.fb_path = "/dev/lcd0";
+#endif
+
+  lv_nuttx_init(&info, &result);
+  if (result.disp == NULL)
+    {
+      printf("ERROR: LVGL 显示初始化失败\n");
+      return EXIT_FAILURE;
+    }
+
+  /* FPS 探针：替换 flush 统计实际渲染帧率（性能验证用） */
+  pw_fps_init(result.disp);
+
+  /* 主菜单根屏（板块宫格）；各板块按需构建子屏 */
+
+#if defined(CONFIG_LV_USE_DEMO_BENCHMARK)
+  if (lvbench_mode)
+    {
+      /* benchmark 自己建屏、自己排场景；主循环负责驱动 LVGL */
+
+      printf("[LVBENCH] start (LVGL %d.%d.%d)\n", LVGL_VERSION_MAJOR,
+             LVGL_VERSION_MINOR, LVGL_VERSION_PATCH);
+      fflush(stdout);
+      lv_demo_benchmark();
+    }
+  else
+#endif
+  if (cap_screen)
+    {
+      /* 截图专用：打开指定屏（无注入、不自动翻页） */
+      if (!pw_cap_open(cap_screen))
+        {
+          printf("WARN(cap): 未知屏 '%s'\n", cap_screen);
+        }
+    }
+  else if (open_raw)
+    {
+      pw_scr_open(pw_raw_screen());
+    }
+  else
+    {
+      pw_ui_root();
+
+      /* 纯 GUI：后台起蓝牙（理由见 PW_BT_AUTOSTART 的注释）。
+       * 只放在这一支 —— `phywear shot/cap` 是取证入口，串口要被像素文本流独占，
+       * BT 日志会撕行导致截图被拒（docs/07 坑 ②），所以那些模式绝不自动起栈。 */
+#if PW_BT_AUTOSTART
+      pw_bt_init_async();
+#endif
+    }
+
+  /* 自动演示：开始自导航（前沿根屏运行，lv_timer 逐步打开/返回） */
+  if (demo_mode)
+    {
+      pw_ui_demo_start();
+    }
+
+  /* bench：自动打开目标实验页并注入合成信号。
+   * pendbench → Pendulum；specbench/micspecbench → 频谱页。 */
+
+  if (bench_mode)
+    {
+      lv_obj_t *scr;
+
+      /* 先开 bench 注入再建屏（频谱页据 g_bench_on 决定是否起 mic 线程） */
+      if (spec_bench_mode)
+        {
+          pw_spec_bench(1, bench_interval, bench_page);
+          scr = spec_bench_mic ? pw_spec_mic_screen() :
+                spec_bench_mag ? pw_spec_mag_screen() :
+                                 pw_spec_accel_screen();
+        }
+      else if (spring_bench_mode)
+        {
+          scr = pw_spring_screen();
+          pw_spring_bench(1, bench_interval, bench_page);
+        }
+      else if (centri_bench_mode)
+        {
+          scr = pw_centri_screen();
+          pw_centri_bench(1, bench_interval, bench_page);
+        }
+      else if (incline_bench_mode)
+        {
+          scr = pw_incline_screen();
+          pw_incline_bench(1, bench_interval, bench_page);
+        }
+      else if (ruler_bench_mode)
+        {
+          scr = pw_ruler_screen();
+          pw_ruler_bench(1, bench_interval, bench_page);
+        }
+      else if (time_bench_mode)
+        {
+          pw_time_bench(1, bench_interval, bench_page);
+          scr = (time_bench_kind == 1) ? pw_light_gate_screen() :
+                (time_bench_kind == 2) ? pw_acoustic_gate_screen() :
+                                         pw_motion_stopwatch_screen();
+        }
+      else if (life_bench_mode)
+        {
+          pw_applause_bench(1, bench_interval, bench_page);
+          scr = pw_applause_screen();
+        }
+      else
+        {
+          scr = pw_pendulum_screen();
+          pw_pend_bench(1, bench_interval, bench_page);
+        }
+
+      pw_scr_open(scr);
+    }
+
+  /* Shot plan: which pages this run visits, and where it stops. */
+
+  if (!shot_once && (shot_sweep || shot_p2))
+    {
+      shot_first = shot_sweep ? 0 : PW_SHOT_MAIN_COUNT;
+      shot_last = shot_p2 ? PW_SHOT_MAIN_COUNT + PW_SHOT_P2_COUNT
+                          : PW_SHOT_MAIN_COUNT;
+
+      if (shot_p2_only >= 0)
+        {
+          shot_first = PW_SHOT_MAIN_COUNT + shot_p2_only;
+          shot_last = shot_first + 1;
+        }
+      shot_idx = shot_first;
+
+      /* The default startup path already opened the root screen (= shot index
+       * 0), so only a plan that does not start there needs an explicit open. */
+
+      if (shot_first != 0)
+        {
+          pw_shot_goto(shot_first);
+        }
+    }
+
+  /* 把 PhyWear 的 Markdown Skill 发布到 AI Agent 的技能目录。
+   * 真机 /data 是 tmpfs，掉电即空，所以每次启动都要装一遍。 */
+
+  pw_skill_install();
+
+  /* 主动场景：摆动检测（每 100 ms 采一次加速度，持续摆动就通知 Agent） */
+
+  pw_watch_init();
+
+  /* 主循环：驱动 LVGL。pendbench 模式附带每 2s 帧节奏/空闲堆统计。 */
+
+  {
+    struct timespec tmark;
+    struct timespec dmark;
+    unsigned long loop = 0;
+
+    clock_gettime(CLOCK_MONOTONIC, &tmark);
+    clock_gettime(CLOCK_MONOTONIC, &dmark);
+
+    /* GUI 心跳（每 30 s 一行）：真机排查卡死时用来判断 GUI 线程是否还活着 */
+
+    time_t alive_mark = 0;
+    unsigned long alive_frames = 0;
+    uint32_t alive_flush_mark = 0;
+
+    /* 告诉 AI Agent 桥：GUI 主循环开始跑，可以受理"打开某页"请求了 */
+
+    pw_ai_set_gui_running(true);
+    pw_ai_note_screen("root");
+
+    /* Start the settle timer for --shot / --sweep / --p2 from the moment the
+     * first page is on screen. */
+
+    clock_gettime(CLOCK_MONOTONIC, &shot_t0);
+    shot_bt_conn_ms = 0;
+    shot_bt_phase = 0;
+
+#if PW_PERF_PROBE
+    struct timespec perf_mark = shot_t0;
+    uint32_t perf_loop_mark = 0;
+#endif
+
+    while (1)
+      {
+        struct timespec tn;
+        struct timespec dn;
+
+        /* P0：用 LVGL 自己给出的"下次定时器还有多久"来休眠，而不是固定 10 ms。
+         * 动机：固定 10 ms 会给每一帧叠加最多 10 ms 的处理延迟（在 35 ms/帧的
+         * 实时页上占 ~30%）。LVGL 的 lv_timer_handler() 返回距下一个定时器的毫秒数，
+         * 拿它当休眠上限即可"该睡就睡、该画就画"。
+         * 回退：把 PW_LOOP_SLEEP_MAX_MS 设成 10 即恢复原来的固定 10 ms 行为。 */
+
+        {
+          uint32_t nxt = lv_timer_handler();
+
+          loop++;
+          alive_frames++;
+          g_loop_next_ms = nxt;
+        }
+
+        {
+          struct timespec an;
+
+          clock_gettime(CLOCK_MONOTONIC, &an);
+          if (an.tv_sec - alive_mark >= 30)
+            {
+              /* 注意：这里统计的是 GUI 主循环次数（≈渲染帧率的 2 倍），
+               * 不是屏幕刷新率，故记作 loops/s；真实帧率见 benchmark。 */
+
+              uint32_t fc = g_fps_cnt;
+
+              /* 两个口径都打，别混用：
+               *   loops/s = GUI 主循环次数（不是屏幕刷新率）
+               *   fps     = 本窗口实际推屏帧数/秒 —— 帧率是否退化看这个 */
+
+              syslog(LOG_INFO,
+                     "[phywear] alive t=%lds loops/s=%lu fps=%u\n",
+                     (long)an.tv_sec,
+                     (unsigned long)(alive_frames / 30),
+                     (unsigned)((fc - alive_flush_mark) / 30u));
+              alive_mark = an.tv_sec;
+              alive_frames = 0;
+              alive_flush_mark = fc;
+            }
+        }
+
+        /* AI Agent 桥：执行挂起的"打开某页"请求（必须在 GUI 线程内） */
+
+        pw_ai_poll();
+
+        /* 主动场景：自己发现"手表在持续摆动"，并把事件推给 AI Agent。
+         * 内部按 100 ms 限频，不参与截图/实验页的采样节奏。 */
+
+        pw_watch_poll();
+
+        /* Console screenshot: let the page settle, stream one frame to the
+         * host, then either finish (--shot) or advance (--sweep / --p2). */
+
+        if (shot_once || shot_sweep || shot_p2)
+          {
+            struct timespec sh;
+            int settle = (shot_idx >= PW_SHOT_MAIN_COUNT) ? shot_p2_settle_ms
+                                                          : shot_settle_ms;
+            long waited;
+
+            clock_gettime(CLOCK_MONOTONIC, &sh);
+            waited = ((sh.tv_sec - shot_t0.tv_sec) * 1000 +
+                      (sh.tv_nsec - shot_t0.tv_nsec) / 1000000);
+
+            /* 蓝牙页的取证等待（**仅 shot 模式**）。
+             *
+             * 为什么需要：这几页要证明的恰恰是"连上/断开之后长什么样" ——
+             * 未连接时点是灰的、日志是空的，截出来什么都证明不了；
+             * 而"连上/断开"都是**外部行为**（宿主的 BLE 中心设备发起），
+             * 板子只能等。等的时候 LVGL 照常跑，指示点/状态字本来就会
+             * 随 pw_bt_link() 自己醒/变蓝。
+             *
+             * 三个入口，语义不同：
+             *   btlink / bthome ：等**连上** → 静默 PW_SHOT_BT_QUIET_MS → 出图
+             *   btafter         ：等连上 → 等**断开** → 再静默 → 出图
+             *                     （用户报的就是"断开后还显示已连接"，
+             *                       所以要拍的是断开之后那一刻）
+             *
+             * 为什么要静默：BT 侧在连接/订阅/读写的每一步都会往控制台打日志，
+             * 而截图是把上千行像素以**文本**形式从同一个控制台流出去的 ——
+             * 两者一交叉就撕掉像素行，pwshot 逐行校验会直接拒收整帧。
+             *
+             * 超时都照出图并打印原因，免得把"没连上"伪装成"连上了"。 */
+            if (shot_once && cap_screen != NULL &&
+                (strcmp(cap_screen, "btlink") == 0 ||
+                 strcmp(cap_screen, "bthome") == 0 ||
+                 strcmp(cap_screen, "btafter") == 0 ||
+                 strcmp(cap_screen, "btlog") == 0))
+              {
+                int after = (strcmp(cap_screen, "btafter") == 0 ||
+                             strcmp(cap_screen, "btlog") == 0);
+                int conn = pw_bt_link()->connected ? 1 : 0;
+
+                if (after && shot_bt_phase == 0)
+                  {
+                    /* 阶段 0：等连上（证明链路真的建立过） */
+                    if (!conn)
+                      {
+                        if (waited < settle + PW_SHOT_BT_WAIT_MS)
+                          {
+                            continue;
+                          }
+
+                        printf("[phywear] BT shot(btafter): 一直没连上，"
+                               "按未连接出图\n");
+                        fflush(stdout);
+                      }
+                    else
+                      {
+                        shot_bt_phase = 1;
+                        shot_bt_conn_ms = 0;
+                        printf("[phywear] BT shot(btafter): 已连上，"
+                               "等它断开 ……\n");
+                        fflush(stdout);
+                        continue;               /* 立刻接着等断开 */
+                      }
+                  }
+                else if (after && shot_bt_phase == 1)
+                  {
+                    /* 阶段 1：等断开，断开后再静默一会儿才出图 */
+                    if (conn)
+                      {
+                        if (waited < settle + PW_SHOT_BT_WAIT_MS)
+                          {
+                            continue;
+                          }
+
+                        printf("[phywear] BT shot(btafter): 等断开超时，"
+                               "仍连着（这次拍不到断开后的样子）\n");
+                        fflush(stdout);
+                      }
+                    else
+                      {
+                        if (shot_bt_conn_ms == 0)
+                          {
+                            shot_bt_conn_ms = waited;
+                            printf("[phywear] BT shot(btafter): 已断开，"
+                                   "静默 %d ms 后出图\n", PW_SHOT_BT_QUIET_MS);
+                            fflush(stdout);
+                          }
+
+                        if (waited < shot_bt_conn_ms + PW_SHOT_BT_QUIET_MS)
+                          {
+                            continue;
+                          }
+                      }
+                  }
+                else
+                  {
+                    /* btlink / bthome：等连上 → 静默 → 出图 */
+                    if (!conn)
+                      {
+                        if (waited < settle + PW_SHOT_BT_WAIT_MS)
+                          {
+                            if (waited >= settle && waited - settle < 1000)
+                              {
+                                printf("[phywear] BT shot: 等链路起来 ……\n");
+                                fflush(stdout);
+                              }
+
+                            continue;
+                          }
+
+                        printf("[phywear] BT shot: WAIT-TIMEOUT 未连上，"
+                               "按未连接状态出图\n");
+                        fflush(stdout);
+                      }
+                    else
+                      {
+                        if (shot_bt_conn_ms == 0)
+                          {
+                            shot_bt_conn_ms = waited;
+                          }
+
+                        if (waited < shot_bt_conn_ms + PW_SHOT_BT_QUIET_MS)
+                          {
+                            continue;
+                          }
+                      }
+                  }
+              }
+
+            if (waited >= settle)
+              {
+                const char *sname;
+
+                if (shot_once)
+                  {
+                    sname = (cap_screen != NULL) ? cap_screen : "page";
+                  }
+                else
+                  {
+                    sname = pw_shot_label(shot_idx);
+                  }
+
+                pw_shot_dump(sname, PW_SHOT_SRC_AUTO);
+
+                if (shot_once)
+                  {
+                    printf("SHOTMODE DONE %s\n", sname);
+                    fflush(stdout);
+                    break;
+                  }
+
+                shot_idx++;
+                if (shot_idx >= shot_last)
+                  {
+                    printf("SHOTSWEEP DONE %d pages\n", shot_idx - shot_first);
+                    fflush(stdout);
+                    break;
+                  }
+
+                printf("SHOTNEXT %d %s\n", shot_idx, pw_shot_label(shot_idx));
+                fflush(stdout);
+                pw_shot_goto(shot_idx);
+                clock_gettime(CLOCK_MONOTONIC, &shot_t0);
+              }
+          }
+
+#ifdef CONFIG_EXAMPLES_PHYWEAR_SIM_ZH_DEMO
+        /* capsweep：每 cap_sweep_dwell 秒切到下一页，并把页名打印到控制台，
+         * 宿主机据此按固定节奏抓 /dev/fb0，一轮跑完全部页面。 */
+        if (cap_sweep)
+          {
+            struct timespec cs;
+
+            clock_gettime(CLOCK_MONOTONIC, &cs);
+            if (cap_sweep_last == 0 ||
+                (cs.tv_sec - cap_sweep_last) >= cap_sweep_dwell)
+              {
+                if (cap_sweep_idx >=
+                    (int)(sizeof(g_cap_seq) / sizeof(g_cap_seq[0])))
+                  {
+                    printf("CAPSWEEP DONE (%d pages)\n", cap_sweep_idx);
+                    fflush(stdout);
+                    break;
+                  }
+
+                printf("CAPSWEEP %d %s\n", cap_sweep_idx,
+                       g_cap_seq[cap_sweep_idx]);
+                fflush(stdout);
+                pw_cap_open(g_cap_seq[cap_sweep_idx]);
+                cap_sweep_idx++;
+                cap_sweep_last = cs.tv_sec;
+              }
+          }
+#endif
+
+        /* demo：按时间逐步自导航（每 ~2.3s 推进一步），播完自动退出 */
+        if (demo_mode)
+          {
+            clock_gettime(CLOCK_MONOTONIC, &dn);
+            if ((dn.tv_sec - dmark.tv_sec) >= 2)
+              {
+                pw_ui_demo_step();
+                clock_gettime(CLOCK_MONOTONIC, &dmark);
+              }
+            if (pw_ui_demo_done())
+              {
+                break;
+              }
+          }
+
+        clock_gettime(CLOCK_MONOTONIC, &tn);
+        if (bench_mode && (tn.tv_sec - tmark.tv_sec) >= 2)
+          {
+            struct mallinfo mi = mallinfo();
+            uint32_t fps = g_fps_cnt / 2u;
+
+            printf("perf loops=%lu idleheap=%u fps=%u\n", loop,
+                   (unsigned)(mi.fordblks > 0 ? mi.fordblks : 0),
+                   (unsigned)fps);
+            g_fps_cnt = 0;
+            fflush(stdout);
+            tmark = tn;
+            loop = 0;
+          }
+
+#if PW_PERF_PROBE
+        /* 每秒一行：瞬时 fps + 渲染耗时。fps 用**1 s 窗口**，避免 30 s 平均把
+         * "图线 10 Hz 才重绘"的空闲时间摊进来（那会掩盖瞬时能力）。 */
+
+        {
+          struct timespec pn;
+
+          clock_gettime(CLOCK_MONOTONIC, &pn);
+          if ((pn.tv_sec - perf_mark.tv_sec) >= 1)
+            {
+              uint32_t n = g_perf_n;
+              uint32_t lps = loop - perf_loop_mark;
+
+              printf("[PERF] fps=%u render_avg=%uus render_max=%uus loops=%u\n",
+                     (unsigned)g_fps_cnt,
+                     (unsigned)(n > 0 ? g_perf_us_sum / n : 0),
+                     (unsigned)g_perf_us_max, (unsigned)lps);
+              fflush(stdout);
+
+              g_fps_cnt = 0;
+              g_perf_n = 0;
+              g_perf_us_sum = 0;
+              g_perf_us_max = 0;
+              perf_mark = pn;
+              perf_loop_mark = loop;
+            }
+        }
+#endif
+
+        /* 休眠：不超过 PW_LOOP_SLEEP_MAX_MS，也不超过 LVGL 说的"下次还有多久"。
+         * 下限 1 ms：避免空转把 CPU 吃满（本板还有 50 Hz 采样线程要跑）。 */
+
+        {
+          uint32_t slp = g_loop_next_ms;
+
+          if (slp > PW_LOOP_SLEEP_MAX_MS)
+            {
+              slp = PW_LOOP_SLEEP_MAX_MS;
+            }
+
+          if (slp < 1)
+            {
+              slp = 1;
+            }
+
+          usleep(slp * 1000);
+        }
+      }
+
+    pw_ai_set_gui_running(false);
+  }
+  return EXIT_SUCCESS;
+}

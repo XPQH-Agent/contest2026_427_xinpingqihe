@@ -1,0 +1,1 @@
+ai_agent &  # start on-device AI agent (needed by the PhyWear proactive scenario); this file is C-preprocessed, so no leading-# comments

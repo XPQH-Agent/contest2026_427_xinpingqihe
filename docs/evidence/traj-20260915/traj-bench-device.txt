@@ -1,0 +1,48 @@
+[TRAJ] aligning n=25 bias=0.05 dps
+[TRAJ] aligning n=50 bias=0.08 dps
+[TRAJ] aligning n=75 bias=0.12 dps
+[TRAJ] aligning n=100 bias=0.21 dps
+[TRAJ] aligning n=125 bias=0.24 dps
+[TRAJ] aligning n=150 bias=0.19 dps
+[TRAJ] t=0.66 x=+0.0 y=+0.0 z=+0.0 cm v=0.0 cm/s still=1 n=25 |a|=1.000g |w|=0.0dps bad=0 bias=0.17dps
+[TRAJ] t=1.31 x=+0.0 y=+0.0 z=+0.0 cm v=0.0 cm/s still=1 n=50 |a|=1.000g |w|=0.0dps bad=0 bias=0.08dps
+[TRAJ] t=1.96 x=-16.6 y=+30.1 z=-2.8 cm v=147.8 cm/s still=0 n=75 |a|=1.019g |w|=16.3dps bad=0 bias=0.16dps
+[TRAJ] t=2.63 x=-76.7 y=+81.0 z=-13.9 cm v=0.0 cm/s still=1 n=100 |a|=1.000g |w|=0.0dps bad=0 bias=0.23dps
+[TRAJ] t=3.28 x=-76.7 y=+81.0 z=-13.9 cm v=0.0 cm/s still=1 n=125 |a|=1.000g |w|=0.0dps bad=0 bias=0.24dps
+[TRAJ] t=3.93 x=-76.7 y=+81.0 z=-13.9 cm v=0.0 cm/s still=1 n=150 |a|=1.000g |w|=0.0dps bad=0 bias=0.30dps
+[TRAJ] t=4.59 x=-62.1 y=+87.6 z=-14.1 cm v=12.8 cm/s still=0 n=175 |a|=1.019g |w|=16.3dps bad=0 bias=0.29dps
+[TRAJ] t=5.25 x=-72.9 y=+70.5 z=-17.2 cm v=0.0 cm/s still=1 n=200 |a|=1.000g |w|=0.0dps bad=0 bias=0.36dps
+[TRAJ] t=5.91 x=-72.9 y=+70.5 z=-17.2 cm v=0.0 cm/s still=1 n=225 |a|=1.000g |w|=0.0dps bad=0 bias=0.35dps
+[TRAJ] t=6.55 x=-72.9 y=+70.5 z=-17.2 cm v=0.0 cm/s still=1 n=250 |a|=1.000g |w|=0.0dps bad=0 bias=0.23dps
+[TRAJ] t=7.21 x=-38.7 y=+53.7 z=-20.6 cm v=95.8 cm/s still=0 n=275 |a|=1.019g |w|=16.3dps bad=0 bias=0.21dps
+[TRAJ] t=7.88 x=-14.9 y=+18.4 z=-24.3 cm v=0.0 cm/s still=1 n=300 |a|=1.000g |w|=0.0dps bad=0 bias=0.26dps
+[TRAJ] t=8.52 x=-14.9 y=+18.4 z=-24.3 cm v=0.0 cm/s still=1 n=325 |a|=1.000g |w|=0.0dps bad=0 bias=0.38dps
+[TRAJ] t=9.18 x=-14.9 y=+18.4 z=-24.3 cm v=0.0 cm/s still=1 n=350 |a|=1.000g |w|=0.0dps bad=0 bias=0.42dps
+[TRAJ] t=9.85 x=-3.3 y=+39.8 z=-25.5 cm v=32.5 cm/s still=0 n=375 |a|=1.019g |w|=16.3dps bad=0 bias=0.40dps
+[TRAJ] t=10.51 x=+11.3 y=+32.4 z=-28.1 cm v=0.0 cm/s still=1 n=400 |a|=1.000g |w|=0.0dps bad=0 bias=0.50dps
+[TRAJ] t=11.16 x=+11.3 y=+32.4 z=-28.1 cm v=0.0 cm/s still=1 n=425 |a|=1.000g |w|=0.0dps bad=0 bias=0.49dps
+[TRAJ] t=11.82 x=+11.3 y=+32.4 z=-28.1 cm v=0.0 cm/s still=1 n=450 |a|=1.000g |w|=0.0dps bad=0 bias=0.57dps
+[TRAJ] t=12.48 x=+2.4 y=+47.0 z=-27.7 cm v=46.1 cm/s still=0 n=475 |a|=1.019g |w|=16.3dps bad=0 bias=0.58dps
+[TRAJ] t=13.14 x=-13.9 y=+63.6 z=-26.7 cm v=0.0 cm/s still=1 n=500 |a|=1.000g |w|=0.0dps bad=0 bias=0.53dps
+[TRAJ] t=13.80 x=-13.9 y=+63.6 z=-26.7 cm v=0.0 cm/s still=1 n=525 |a|=1.000g |w|=0.0dps bad=0 bias=0.50dps
+[TRAJ] t=14.46 x=-13.9 y=+63.6 z=-26.7 cm v=0.0 cm/s still=1 n=550 |a|=1.000g |w|=0.0dps bad=0 bias=0.48dps
+[TRAJ] t=15.12 x=-26.8 y=+70.9 z=-27.2 cm v=87.7 cm/s still=0 n=575 |a|=1.019g |w|=16.3dps bad=0 bias=0.56dps
+[TRAJ] t=15.78 x=-75.1 y=+54.8 z=-33.3 cm v=0.0 cm/s still=1 n=600 |a|=1.000g |w|=0.0dps bad=0 bias=0.61dps
+[TRAJ] t=16.44 x=-75.1 y=+54.8 z=-33.3 cm v=0.0 cm/s still=1 n=625 |a|=1.000g |w|=0.0dps bad=0 bias=0.58dps
+[TRAJ] t=17.09 x=-75.1 y=+54.8 z=-33.3 cm v=0.0 cm/s still=1 n=650 |a|=1.000g |w|=0.0dps bad=0 bias=0.63dps
+[TRAJ] t=17.74 x=-57.2 y=+59.4 z=-33.5 cm v=36.9 cm/s still=0 n=675 |a|=1.019g |w|=16.3dps bad=0 bias=0.64dps
+[TRAJ] t=18.41 x=-48.4 y=+38.2 z=-35.1 cm v=0.0 cm/s still=1 n=700 |a|=1.000g |w|=0.0dps bad=0 bias=0.73dps
+[TRAJ] t=19.07 x=-48.4 y=+38.2 z=-35.1 cm v=0.0 cm/s still=1 n=725 |a|=1.000g |w|=0.0dps bad=0 bias=0.74dps
+[TRAJ] t=19.73 x=-48.4 y=+38.2 z=-35.1 cm v=0.0 cm/s still=1 n=750 |a|=1.000g |w|=0.0dps bad=0 bias=0.75dps
+[TRAJ] t=20.40 x=-11.8 y=+33.3 z=-38.2 cm v=118.9 cm/s still=0 n=775 |a|=1.019g |w|=16.3dps bad=0 bias=0.87dps
+[TRAJ] t=21.06 x=+28.6 y=-2.8 z=-44.2 cm v=0.0 cm/s still=1 n=800 |a|=1.000g |w|=0.0dps bad=0 bias=0.90dps
+[TRAJ] t=21.71 x=+28.6 y=-2.8 z=-44.2 cm v=0.0 cm/s still=1 n=825 |a|=1.000g |w|=0.0dps bad=0 bias=0.94dps
+[TRAJ] t=22.36 x=+28.6 y=-2.8 z=-44.2 cm v=0.0 cm/s still=1 n=850 |a|=1.000g |w|=0.0dps bad=0 bias=0.97dps
+[TRAJ] t=23.02 x=+28.8 y=+19.6 z=-45.0 cm v=29.5 cm/s still=0 n=875 |a|=1.019g |w|=16.3dps bad=0 bias=0.93dps
+[TRAJ] t=23.69 x=+26.4 y=+22.9 z=-45.8 cm v=0.0 cm/s still=1 n=900 |a|=1.000g |w|=0.0dps bad=0 bias=0.97dps
+[TRAJ] t=24.34 x=+26.4 y=+22.9 z=-45.8 cm v=0.0 cm/s still=1 n=925 |a|=1.000g |w|=0.0dps bad=0 bias=0.93dps
+[TRAJ] t=25.00 x=+26.4 y=+22.9 z=-45.8 cm v=0.0 cm/s still=1 n=950 |a|=1.000g |w|=0.0dps bad=0 bias=0.95dps
+[TRAJ] t=25.66 x=+6.6 y=+38.0 z=-46.6 cm v=48.0 cm/s still=0 n=975 |a|=1.019g |w|=16.3dps bad=0 bias=0.96dps
+[TRAJ] t=26.32 x=-6.5 y=+42.3 z=-46.7 cm v=0.0 cm/s still=1 n=1000 |a|=1.000g |w|=0.0dps bad=0 bias=0.96dps
+[TRAJ] t=26.97 x=-6.5 y=+42.3 z=-46.7 cm v=0.0 cm/s still=1 n=1025 |a|=1.000g |w|=0.0dps bad=0 bias=0.97dps
+[TRAJ] t=27.63 x=-6.5 y=+42.3 z=-46.7 cm v=0.0 cm/s still=1 n=1050 |a|=1.000g |w|=0.0dps bad=0 bias=0.98dps

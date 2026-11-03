@@ -1,0 +1,18 @@
+No,Upstream Category,Intensity Tier,Trigger (upstream),Trigger (LVGL board),Curve,Curve Params,Duration (ms),Property,Guard,Source Row,Status
+1,Hover Micro-interaction,Subtle,hover,press（手指按下）,C1 settle,ζ=0.70 ω=12（无过冲）,150,y ±2 px + 背景色（禁 transform/scale）,≤320ms；不循环；同屏并发≤1；禁 transform/圆角/阴影,1,adapted
+2,Hover Micro-interaction,Standard,hover,press（手指按下）,C1 settle,ζ=0.70 ω=12（无过冲）,200,y ±2 px + 背景色（禁 transform/scale）,≤320ms；不循环；同屏并发≤1；禁 transform/圆角/阴影,2,adapted
+3,Hover Micro-interaction,Complex,hover + mousemove,press（手指按下）,C3 bounce,ζ=0.25 ω=14（过冲≈45%）,300,y ±2 px + 背景色（禁 transform/scale）,≤320ms；不循环；同屏并发≤1；禁 transform/圆角/阴影,3,adapted
+4,Scroll Reveal,Subtle,scroll (viewport enter),页面/子页进入,C1 settle,ζ=0.70 ω=12（无过冲）,300,y（+10 px → 0），可叠不透明度,≤320ms；不循环；同屏并发≤1；禁 transform/圆角/阴影,4,adapted
+5,Scroll Reveal,Standard,scroll (viewport enter),页面/子页进入,C1 settle,ζ=0.70 ω=12（无过冲）,320,y（+10 px → 0），可叠不透明度,≤320ms；不循环；同屏并发≤1；禁 transform/圆角/阴影,5,adapted
+6,Scroll Reveal,Complex,scroll (continuous scrub),裁掉（本板无滚动）,—,裁掉,—,y（+10 px → 0），可叠不透明度,—,6,dropped
+7,Stagger List,Subtle,load or scroll,宫格/列表入场（错峰）,C1 settle,ζ=0.70 ω=12（无过冲）,250,y（+10 px → 0），逐块起始错峰 +50 ms,≤320ms；不循环；同屏并发≤1；禁 transform/圆角/阴影,7,adapted
+8,Stagger List,Standard,load or scroll,宫格/列表入场（错峰）,C2 soft,ζ=0.45 ω=12（过冲≈20%）,300,y（+10 px → 0），逐块起始错峰 +50 ms,≤320ms；不循环；同屏并发≤1；禁 transform/圆角/阴影,8,adapted
+9,Stagger List,Complex,load or scroll,宫格/列表入场（错峰）,C4 snap,ζ=0.90 ω=16（短促）,320,y（+10 px → 0），逐块起始错峰 +50 ms,≤320ms；不循环；同屏并发≤1；禁 transform/圆角/阴影,9,adapted
+10,Page Transition,Subtle,route change,屏幕切换（只动内容层）,C1 settle,ζ=0.70 ω=12（无过冲）,200,y 或不透明度（只动内容层，不做整屏转场）,≤320ms；不循环；同屏并发≤1；禁 transform/圆角/阴影,10,adapted
+11,Page Transition,Standard,route change,屏幕切换（只动内容层）,C1 settle,ζ=0.70 ω=12（无过冲）,320,y 或不透明度（只动内容层，不做整屏转场）,≤320ms；不循环；同屏并发≤1；禁 transform/圆角/阴影,11,adapted
+12,Page Transition,Complex,route change,屏幕切换（只动内容层）,C4 snap,ζ=0.90 ω=16（短促）,320,y 或不透明度（只动内容层，不做整屏转场）,≤320ms；不循环；同屏并发≤1；禁 transform/圆角/阴影,12,adapted
+13,Parallax Scroll,Subtle,scroll (continuous),裁掉（本板无滚动）,—,裁掉,—,裁掉,—,13,dropped
+14,Parallax Scroll,Standard,scroll (continuous),裁掉（本板无滚动）,—,裁掉,—,裁掉,—,14,dropped
+15,Loading / Skeleton,Subtle,on mount / async wait,进度反馈（一次性不循环）,D1 pulse,decay a=6 f=2（对称振荡，一次性）,320,不透明度（进度变化时淡入）,≤320ms；不循环；同屏并发≤1；禁 transform/圆角/阴影,15,adapted
+16,Loading / Skeleton,Standard,on mount / async wait,进度反馈（一次性不循环）,C1 settle,ζ=0.70 ω=12（无过冲）,320,不透明度（进度变化时淡入）,≤320ms；不循环；同屏并发≤1；禁 transform/圆角/阴影,16,adapted
+17,Carousel / Auto-Rotation,Standard,timer / focus / hover / visibility,裁掉（本板无轮播/无焦点态）,—,裁掉,—,裁掉,—,17,dropped

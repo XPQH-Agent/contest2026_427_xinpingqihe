@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<!--
+  PhyWear v3 交互原型（网页仿真，用于上板前评审）
+  ------------------------------------------------------------------
+  这是"完全重构"的交互仿真稿：不是换色/微调，而是把导航模型换掉 ——
+    主页：2×4 等权宫格  →  横向卡片流（中心聚焦 + 液态指示器 + 磁吸吸附 + 速度形变 + 视差）
+    进入：直接切屏      →  共享元素展开（卡片矩形 → 页面矩形）
+    返回：点"<"        →  右拖手势转场（进度跟手 / 距离+速度决定完成或取消 / 磁吸落点提示）
+    读数：圆点分页      →  液态分页指示器 + 迷你图 → 全屏图（共享元素展开，下拉收起）
+  交互选型依据：用户提供的 spt-tactile-interactions 描述（8 种质感动效）+ ui-ux-pro-max 数据。
+  选 6 种、弃 2 种，理由与"上板可行性"见右侧面板 —— 网页能做到的（真 skew/scale）上板不一定能做，
+  每一条都标了 LVGL/EPIC 约束下的落法，避免"网页好看、上板做不到"。
+  直接双击本文件即可在浏览器里拖动体验（也支持触屏）。
+-->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>PhyWear v3 交互原型（网页仿真）</title>
+<style>
+  :root{
+    --bg:#0F172A; --card:#1B2336; --muted:#272F42; --fg:#F8FAFC; --dim:#94A3B8; --faint:#64748B;
+    --line:rgba(71,85,105,.55); --accent:#22C55E;
+    --raw:#4FC3F7; --mech:#81C784; --acou:#FFB74D; --tool:#BA68C8;
+    --time:#4DD0E1; --every:#FF8A65; --custom:#90A4AE; --ai:#F06292;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none}
+  body{background:#070B14;color:var(--fg);
+       font-family:"Noto Sans CJK SC","Source Han Sans SC","PingFang SC",system-ui,sans-serif;
+       padding:26px 30px;display:flex;gap:34px;align-items:flex-start;flex-wrap:wrap}
+  h1{font-size:19px;font-weight:600;letter-spacing:.02em}
+  h1 span{color:var(--dim);font-size:13px;font-weight:400;margin-left:10px}
+  .hint{margin-top:8px;font-size:13px;color:var(--faint);line-height:1.7}
+  .hint b{color:var(--dim);font-weight:500}
+
+  /* ---------------- 手表画布 ---------------- */
+  .stage{display:flex;flex-direction:column;gap:14px;align-items:center}
+  .watch{width:390px;height:450px;background:var(--bg);position:relative;overflow:hidden;
+         border-radius:26px;border:1px solid #22304A;box-shadow:0 20px 50px rgba(0,0,0,.6);
+         transform:scale(1.28);transform-origin:top center;touch-action:none;cursor:grab}
+  .watch.dragging{cursor:grabbing}
+  .stage-pad{height:120px}
+  .screen{position:absolute;inset:0;display:none;overflow:hidden}
+  .screen.on{display:block}
+
+  /* ---------------- 顶部条 ---------------- */
+  .topbar{height:54px;display:flex;align-items:center;padding:0 12px;position:relative;z-index:5}
+  .back{width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:24px;
+        border-radius:12px;transition:background .12s,transform .12s}
+  .back:active{background:var(--muted);transform:translateY(2px)}
+  .ttl{position:absolute;left:0;right:0;text-align:center;font-size:20px;font-weight:600}
+  .clock{position:absolute;right:14px;font-size:14px;color:var(--faint);font-variant-numeric:tabular-nums}
+
+  /* ---------------- 主页：横向卡片流 ---------------- */
+  #bgLayer{position:absolute;inset:0;transition:background .25s}
+  .car-title{position:absolute;left:0;right:0;top:56px;text-align:center;z-index:6;pointer-events:none}
+  .car-title .pos{font-size:14px;color:var(--faint);letter-spacing:.08em;font-variant-numeric:tabular-nums}
+  .car-title .s{font-size:14px;color:var(--dim);margin-top:6px}
+  .carousel{position:absolute;left:0;right:0;top:146px;height:224px;z-index:6}
+  .gcard{position:absolute;left:50%;top:0;width:252px;height:216px;margin-left:-126px;
+         background:var(--card);border:1px solid var(--line);border-radius:16px;
+         padding:16px;display:flex;flex-direction:column;gap:12px;will-change:transform,opacity}
+  .gcard .hd{display:flex;align-items:center;gap:11px}
+  .gcard .chip{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+               font-size:17px;flex:none}
+  .gcard .nm{font-size:20px;font-weight:600}
+  .gcard .sub{font-size:14px;color:var(--dim)}
+  .gcard .tag{font-size:13px;color:var(--faint);margin-top:3px}
+  .gcard .desc{font-size:14px;color:var(--dim);line-height:1.6;min-height:44px}
+  .gcard .wave{height:34px;margin-top:auto}
+  .gcard .wave svg{width:100%;height:34px;opacity:.75}
+  .gcard .bar{height:3px;border-radius:2px;width:38px;transition:width .18s}
+  .gcard.center{border-color:currentColor}
+  .gcard.center .bar{width:64px}
+
+  /* 液态指示器 */
+  .ltab{position:absolute;left:0;right:0;bottom:22px;height:26px;z-index:7;display:flex;
+        align-items:center;justify-content:center}
+  .ltab .track{position:relative;height:8px;width:186px}
+  .ltab .dot{position:absolute;top:1.5px;width:5px;height:5px;border-radius:2.5px;background:#3E4C63;
+             transition:background .2s}
+  .ltab .pill{position:absolute;top:0;height:8px;border-radius:4px;background:var(--accent);
+              will-change:left,width}
+
+  /* ---------------- 板块页 ---------------- */
+  .cat-wrap{padding:6px 12px 0;position:relative;height:390px}
+  .sec{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--dim);margin:2px 0 10px}
+  .sec .b{width:3px;height:13px;border-radius:2px;background:var(--accent)}
+  .sec .r{flex:1;height:1px;background:var(--line);opacity:.6}
+  .row{background:var(--card);border:1px solid var(--line);border-radius:14px;height:62px;
+       display:flex;align-items:center;gap:10px;padding:0 14px;margin-bottom:9px;
+       transition:transform .12s,background .12s}
+  .row:active{transform:translateY(2px);background:var(--muted)}
+  .row .st{width:3px;height:34px;border-radius:2px;flex:none}
+  .row .g{flex:1;min-width:0}
+  .row .n{display:block;font-size:20px;font-weight:600}
+  .row .d{display:block;font-size:14px;color:var(--dim);margin-top:3px}
+  .row .c{color:var(--faint);font-size:18px}
+  .rows{display:block}
+
+  /* ---------------- 读数页 ---------------- */
+  .read-wrap{padding:4px 12px 0}
+  .kv{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:2px 14px}
+  .kvr{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;
+       border-bottom:1px solid var(--line)}
+  .kvr:last-child{border-bottom:0}
+  .kvr .k{font-size:14px;color:var(--dim)}
+  .kvr .v{font-size:28px;font-weight:600;font-variant-numeric:tabular-nums}
+  .kvr .u{font-size:14px;color:var(--dim);margin-left:6px}
+  .live{display:inline-flex;align-items:center;gap:7px;font-size:14px;color:var(--dim)}
+  .dot-live{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:breathe 2.4s infinite}
+  @keyframes breathe{0%,100%{opacity:1}50%{opacity:.45}}
+  .chart{position:relative;height:132px;border-radius:12px;overflow:hidden;margin-top:12px;
+         background:linear-gradient(180deg,rgba(39,47,66,.6),rgba(27,35,54,.25));border:1px solid var(--line)}
+  .chart .gl{position:absolute;left:0;right:0;height:1px;background:var(--line);opacity:.5}
+  .chart .cap{position:absolute;left:10px;top:8px;font-size:14px;color:var(--dim)}
+  .chart .tap{position:absolute;right:10px;bottom:8px;font-size:13px;color:var(--faint)}
+  .pages{position:absolute;inset:0}
+  .page{position:absolute;inset:0;padding:58px 12px 0}   /* 让开 54px 顶栏 */
+
+  /* 全屏图表（共享元素展开的目标） */
+  .fullchart{position:absolute;left:0;top:0;width:390px;height:450px;background:var(--bg);z-index:20;
+             display:none;padding:14px 12px 0;border-radius:0}
+  .fullchart.on{display:block}
+  .fullchart .box{position:relative;height:300px;border-radius:14px;overflow:hidden;
+                  background:linear-gradient(180deg,rgba(39,47,66,.75),rgba(27,35,54,.3));border:1px solid var(--line)}
+  .fullchart .axis{position:absolute;left:12px;right:12px;bottom:10px;display:flex;justify-content:space-between;
+                   font-size:13px;color:var(--faint)}
+  .fullchart .top{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:14px;color:var(--dim)}
+
+  /* 共享元素动画层 */
+  .flip{position:absolute;z-index:30;pointer-events:none;border-radius:16px;opacity:.97;
+        transition:all .34s cubic-bezier(.22,1,.36,1)}
+  .flip.flat{border-radius:0;transition:all .34s cubic-bezier(.22,1,.36,1)}
+
+  /* 切屏按钮（评审用，不在手表 UI 里） */
+  .switch{display:flex;gap:8px}
+  .switch button{background:#141C2E;color:var(--dim);border:1px solid #22304A;border-radius:9px;
+                 padding:7px 13px;font-size:13px;cursor:pointer}
+  .switch button.on{color:var(--fg);border-color:#3B4C6B;background:#1B2336}
+
+  /* ---------------- 右侧选型面板 ---------------- */
+  .spec{width:520px;max-width:100%}
+  .spec h2{font-size:15px;margin:0 0 10px;font-weight:600}
+  .spec table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.65}
+  .spec th,.spec td{border:1px solid #1E2A42;padding:8px 10px;vertical-align:top;text-align:left}
+  .spec th{background:#121A2B;color:var(--dim);font-weight:500}
+  .spec td.k{width:118px;color:var(--fg)}
+  .spec .yes{color:#7ee0a3}
+  .spec .no{color:#ff9a9a}
+  .spec .mid{color:#ffce7a}
+  .note{margin-top:14px;font-size:13px;color:var(--dim);line-height:1.8}
+  .note b{color:var(--fg);font-weight:600}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div>
+    <h1>PhyWear v3 交互原型 <span>网页仿真 · 上板前评审</span></h1>
+    <div class="hint">
+      <b>拖动</b>卡片流 / <b>点</b>中间卡片进板块 / 在板块页<b>右拖</b>返回 / 读数页<b>左右拖</b>翻页 /
+      <b>点</b>迷你图看全屏图、再<b>下拉</b>收起。触屏与鼠标都可以。
+    </div>
+  </div>
+
+  <div class="watch" id="watch">
+    <!-- ============ 主页：卡片流 ============ -->
+    <section class="screen on" id="scr-home">
+      <div id="bgLayer"></div>
+      <div class="topbar">
+        <div class="ttl" style="text-align:left;left:14px;font-size:24px;font-weight:700">PhyWear</div>
+        <div class="clock">腕上物理工坊</div>
+      </div>
+      <div class="car-title"><div class="pos" id="carPos">01 / 08 · 左右滑动</div></div>
+      <div class="carousel" id="carousel"></div>
+      <div class="ltab"><div class="track" id="trackHome"></div></div>
+    </section>
+
+    <!-- ============ 板块页 ============ -->
+    <section class="screen" id="scr-cat">
+      <div class="topbar">
+        <div class="back" id="catBack">‹</div>
+        <div class="ttl" id="catTitle">工具</div>
+        <div class="clock">1:11</div>
+      </div>
+      <div class="cat-wrap">
+        <div class="sec"><span class="b" id="catBar"></span><span id="catSec">5 个可用</span><span class="r"></span></div>
+        <div class="rows" id="catRows"></div>
+      </div>
+    </section>
+
+    <!-- ============ 读数页 ============ -->
+    <section class="screen" id="scr-read">
+      <div class="topbar">
+        <div class="back" id="readBack">‹</div>
+        <div class="ttl">原始传感器</div>
+        <div class="clock">0:42</div>
+      </div>
+      <div class="pages" id="pages"></div>
+      <div class="ltab"><div class="track" id="trackRead"></div></div>
+    </section>
+
+    <!-- 共享元素展开的目标：全屏图表 -->
+    <div class="fullchart" id="fullchart">
+      <div class="top"><span class="b" style="width:3px;height:13px;border-radius:2px;background:var(--raw)"></span>
+        曲线 · 加速度合矢量</div>
+      <div class="box" id="fullBox">
+        <div class="gl" style="top:25%"></div><div class="gl" style="top:50%"></div><div class="gl" style="top:75%"></div>
+        <svg viewBox="0 0 366 300" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+          <polyline id="fullLine" fill="none" stroke="#4FC3F7" stroke-width="2" points=""/>
+        </svg>
+        <div class="axis"><span>−2.4 s</span><span>现在</span></div>
+      </div>
+      <div class="hint" style="margin-top:12px;text-align:center">下拉收起</div>
+    </div>
+
+    <div class="flip" id="flipLayer" style="display:none"></div>
+  </div>
+
+  <div class="stage-pad"></div>
+  <div class="switch">
+    <button data-scr="home" class="on">主页（卡片流）</button>
+    <button data-scr="cat">板块页</button>
+    <button data-scr="read">读数页</button>
+    <button id="resetBtn">回到初始</button>
+  </div>
+</div>
+
+<!-- ============ 右侧：选型说明 ============ -->
+<aside class="spec">
+  <h2>交互选型（依据你给的 8 种质感动效描述；只选合适的，不堆满）</h2>
+  <table>
+    <tr><th>效果</th><th>用在哪 / 为什么</th><th>关键规则</th><th>上板可行性</th></tr>
+    <tr>
+      <td class="k">液态 Tab<br>指示器</td>
+      <td>主页与读数页的分页指示</td>
+      <td>拖动时前后缘节奏不同（先拉长再收拢）；连续快速切换从当前形态接续，最后跟随最后一次选择</td>
+      <td class="yes">★★★ 纯几何（left/width）+ 圆角，EPIC 友好</td>
+    </tr>
+    <tr>
+      <td class="k">中心聚焦<br>Center-focus</td>
+      <td>主页卡片流：8 个板块原本等权、无层级，改成卡片流后"当前项"自然突出</td>
+      <td>按到容器中心的距离映射缩放/透明度；**视觉焦点 ≠ 业务选择**，不自动改选中项</td>
+      <td class="mid">★★☆ 真缩放不行（LVGL 子件不随父缩放）→ 上板落成"卡片框宽高 + 邻卡降透明 + 描边/底纹"</td>
+    </tr>
+    <tr>
+      <td class="k">手势转场<br>Gesture transition</td>
+      <td>板块页右拖返回；读数页左右拖翻页</td>
+      <td>位移映射进度、跟手；松手按<b>距离+速度</b>决定完成/取消；保留普通返回按钮；边界不突变</td>
+      <td class="yes">★★★ 纯几何（当前就是靠 set_pos 动画实现）</td>
+    </tr>
+    <tr>
+      <td class="k">共享元素<br>展开</td>
+      <td>点卡片 → 板块页；点迷你图 → 全屏图</td>
+      <td>源/目标矩形明确对应；关闭回到仍存在的源；中途取消稳定；文字不跟着被拉伸</td>
+      <td class="yes">★★★ 一个矩形动几何 + 底色，无模糊无阴影</td>
+    </tr>
+    <tr>
+      <td class="k">磁吸吸引<br>Magnetic</td>
+      <td>右拖返回的落点提示（过阈值后向"返回"目标吸）；卡片流吸附</td>
+      <td>进入范围后距离越小吸得越明显、边缘不突跳；<b>拖动中保留控制感</b>；取消不误提交</td>
+      <td class="yes">★★★ 位移混合（视觉位移 ≠ 输入位移，不改输入事件）</td>
+    </tr>
+    <tr>
+      <td class="k">速度形变<br>Velocity deform</td>
+      <td>卡片流快速滑动时卡片轻微拉伸</td>
+      <td>速度 = 位置差 ÷ 时间差 并平滑；幅度有上限；停手即恢复；<b>正文保持可读</b>、命中区不动</td>
+      <td class="mid">★★☆ 网页是真 skew/scale；上板只能"卡下强调条按速度伸缩 + 卡片宽度微变"</td>
+    </tr>
+    <tr>
+      <td class="k">3D 视差</td>
+      <td colspan="3" class="no">✗ 不选：手表没有指针；唯一可用驱动是姿态传感器，而该 Skill 明确不建议默认用传感器驱动运动，且会与横滑抢手势。若以后上"抬腕/倾斜浏览"，再单独评审。</td>
+    </tr>
+    <tr>
+      <td class="k">碰撞推挤<br>Collision</td>
+      <td colspan="3" class="no">✗ 不选：当前界面没有自由浮动元素，加物理引擎属于纯装饰（Skill 也要求"减少元素数量优先于无条件加入物理"）。回弹本身已用在按压与回位。</td>
+    </tr>
+  </table>
+
+  <div class="note">
+    <b>这版"重构"到底改了什么（不是换色）：</b><br>
+    ① 导航模型：等权 2×4 宫格 → <b>横向卡片流</b>（有当前项、有方向、有吸附）；<br>
+    ② 层级：卡片 → 板块页 → 读数页，进出都走<b>共享元素展开</b>，不再是硬切屏；<br>
+    ③ 返回：底部"&lt; &gt;"按钮 → <b>右拖手势</b>（按钮保留作为备用入口）；<br>
+    ④ 分页：静态圆点 → <b>液态指示器</b>；<br>
+    ⑤ 图表：点一下切换视图 → <b>迷你图展开成全屏</b>（下拉收起）。<br><br>
+    <b>上板前要确认的三件事：</b>
+    ① 这个卡片流方向对不对（还是你更想要"列表 + 分组"）？
+    ② 中心聚焦在上板要做降级（缩放→框宽高+透明度），能接受吗？
+    ③ 速度形变上板只能做成"强调条伸缩"，要还是不要？
+  </div>
+</aside>
+
+<script>
+/* =====================================================================
+   基础设施：弹簧动画 / 速度估计 / 共享元素 FLIP
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+
+/** 一维弹簧积分（stiffness/damping 可调，和上板用的 C1~C4 曲线一一对应） */
+function spring(o){
+  const st = Object.assign({from:0,to:0,stiffness:170,damping:26,onUpdate:()=>{}}, o);
+  let x = st.from, v = 0, last = performance.now(), raf;
+  const step = now => {
+    const dt = Math.min(34, now-last)/1000; last = now;
+    const a = -st.stiffness*(x-st.to) - st.damping*v;
+    v += a*dt; x += v*dt;
+    st.onUpdate(x);
+    if (Math.abs(x-st.to) < .35 && Math.abs(v) < 4){ st.onUpdate(st.to); return; }
+    raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+  return {stop:()=>cancelAnimationFrame(raf), get x(){return x}, set to(t){st.to=t}, get to(){return st.to}};
+}
+
+/** 指针拖动统一入口（鼠标 + 触屏） */
+function draggable(el, {onStart,onMove,onEnd}){
+  let sx=0, sy=0, t0=0, active=false, moved=0;
+  const down = e => {
+    active = true; moved = 0; t0 = performance.now();
+    sx = e.clientX; sy = e.clientY; el.classList.add('dragging');
+    onStart && onStart({x:sx,y:sy,t:t0});
+  };
+  const move = e => {
+    if(!active) return;
+    const dx = e.clientX-sx, dy = e.clientY-sy;
+    moved = Math.hypot(dx,dy);
+    onMove && onMove({dx,dy,x:e.clientX,y:e.clientY,dt:Math.max(1,performance.now()-t0)/1000});
+  };
+  const up = e => {
+    if(!active) return;
+    active = false; el.classList.remove('dragging');
+    const dx = (e.clientX||sx)-sx, dy = (e.clientY||sy)-sy;
+    onEnd && onEnd({dx,dy,tap:moved<6,dt:Math.max(1,performance.now()-t0)/1000});
+  };
+  el.addEventListener('pointerdown', e=>{ el.setPointerCapture(e.pointerId); down(e); });
+  el.addEventListener('pointermove', move);
+  el.addEventListener('pointerup', up);
+  el.addEventListener('pointercancel', up);
+}
+
+/** 闭式收尾曲线（≈上板 C2/C4 观感：轻微过冲、末帧严格到位） */
+function tweenSpring(from,to,onUpdate,dur=360){
+  const t0=performance.now();
+  const tick=now=>{
+    const p=Math.min(1,(now-t0)/dur);
+    const e=1-Math.cos(p*Math.PI*1.06)*Math.exp(-p*3.4);
+    onUpdate(from+(to-from)*Math.min(1.04,e));
+    if(p<1) requestAnimationFrame(tick); else onUpdate(to);
+  };
+  requestAnimationFrame(tick);
+}
+/** 卡片里的装饰波形（纯装饰，上板可放真正的 scope 数据） */
+function spark(seed){
+  let p=[];
+  for(let i=0;i<=20;i++){
+    const y=17+Math.sin(i*0.7+seed)*9+Math.sin(i*0.23+seed*2)*4;
+    p.push(`${i*10},${Math.round(y)}`);
+  }
+  return p.join(' ');
+}
+
+/* =====================================================================
+   数据：8 个板块（与手表一致）
+   ===================================================================== */
+const BOARDS = [
+  {n:'原始传感器', s:'6 页实时数据',            c:'--raw',    g:'◉', d:'加速度 / 陀螺 / 磁场 / 光 / 麦克风 / 扬声器', items:['加速度计','陀螺仪','磁力计','光线','麦克风','扬声器']},
+  {n:'力学',       s:'3 可用 · 1 规划',          c:'--mech',   g:'◍', d:'单摆 / 弹簧 / 向心力', items:['单摆','弹簧','向心力','碰撞（规划）']},
+  {n:'声学',       s:'2 可用 · 2 规划',          c:'--acou',   g:'♪', d:'频谱 / 音调 / 音高 / 多普勒', items:['频谱','音调','音高（规划）','多普勒（规划）']},
+  {n:'工具',       s:'5 个可用',                c:'--tool',   g:'✎', d:'频谱 / 倾角 / 标尺 / 磁场 / 惯性', items:['加速度频谱','倾角','磁性标尺','磁场频谱','惯性标尺']},
+  {n:'计时器',     s:'3 个可用',                c:'--time',   g:'◔', d:'运动秒表 / 光门 / 声门', items:['运动秒表','光门','声门']},
+  {n:'生活',       s:'1 个可用',                c:'--every',  g:'⌂', d:'掌声测量', items:['掌声']},
+  {n:'自定义',     s:'构建器规划中',             c:'--custom', g:'＋', d:'自己拼一个实验', items:['构建器（规划）']},
+  {n:'AI 教练',    s:'端侧 Agent',              c:'--ai',     g:'⋯', d:'描述现象，Agent 选实验并跑', items:['开始对话']},
+];
+const cssv = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+/* =====================================================================
+   液态指示器：拖动时"先拉长、再收拢"，落定后收缩到目标宽度
+   ===================================================================== */
+function liquidTab(trackEl, n, accent){
+  trackEl.innerHTML = '';
+  const dots = [];
+  for (let i=0;i<n;i++){
+    const d = document.createElement('span');
+    d.className='dot'; d.style.left=(i*(186/n)+(186/n)/2-2.5)+'px';
+    trackEl.appendChild(d); dots.push(d);
+  }
+  const pill = document.createElement('span');
+  pill.className='pill'; pill.style.background = accent; trackEl.appendChild(pill);
+  let left=0, width=26;
+  const layout = (posFloat, stretch) => {
+    const step = 186/n, half = 2;
+    const cx = posFloat*step + step/2;
+    const w = Math.max(16, width + stretch);
+    left = cx - w/2;
+    pill.style.left = left+'px'; pill.style.width = w+'px';
+  };
+  layout(0,0);
+  return {
+    set(posFloat, stretch=0){
+      layout(posFloat, stretch);
+      dots.forEach((d,i)=> d.style.background = (Math.abs(i-posFloat)<0.5) ? accent : '#334155');
+    },
+    /** 点选时的"先拉长再收拢"：从当前到目标的跨度先铺满，再缩回 */
+    moveTo(fromPos, toPos){
+      const step = 186/n;
+      const span = Math.abs(toPos-fromPos)*step + 26;
+      const t0 = performance.now(), dur = 320;
+      const tick = now => {
+        const p = Math.min(1,(now-t0)/dur);
+        const ease = 1-Math.pow(1-p,3);
+        const cur = fromPos + (toPos-fromPos)*ease;
+        const stretch = span*(1-ease)*0.9;         /* 先长后收 */
+        layout(cur, stretch);
+        dots.forEach((d,i)=> d.style.background = (Math.abs(i-cur)<0.5) ? accent : '#334155');
+        if (p<1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+  };
+}
+
+/* =====================================================================
+   主页：卡片流（吸附 + 中心聚焦 + 速度形变 + 视差 + 液态指示）
+   ===================================================================== */
+const SPACING = 262;
+const carousel = $('#carousel'), bgLayer = $('#bgLayer');
+const tabHome = liquidTab($('#trackHome'), BOARDS.length, cssv('--accent'));
+let offset = 0, active = 0;
+const cards = [];
+
+BOARDS.forEach((b,i)=>{
+  const el = document.createElement('div');
+  el.className='gcard'; el.style.color = cssv(b.c);
+  el.innerHTML = `<div class="hd"><div class="chip" style="background:${hexA(cssv(b.c),.18)};color:${cssv(b.c)}">${b.g}</div>
+                    <div><div class="nm" style="color:var(--fg)">${b.n}</div><div class="tag">${b.s}</div></div></div>
+                  <div class="desc">${b.d}</div>
+                  <div class="wave"><svg viewBox="0 0 200 34" preserveAspectRatio="none">
+                    <polyline fill="none" stroke="${cssv(b.c)}" stroke-width="2" points="${spark(i)}"/></svg></div>
+                  <div class="bar" style="background:${cssv(b.c)}"></div>`;
+  el.addEventListener('pointerup', ()=>{ if (Math.abs(offset - i*SPACING) < 8 && Math.abs(dragDX)<6) openBoard(i); });
+  carousel.appendChild(el); cards.push(el);
+});
+function hexA(hex,a){
+  const h = hex.replace('#',''); const n = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h,16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+}
+
+function renderHome(stretch=0){
+  const center = -offset/SPACING;
+  cards.forEach((el,i)=>{
+    const dist = i - center;
+    const k = Math.max(0, 1 - Math.abs(dist)*0.6);            /* 中心聚焦权重 */
+    const scale = 0.80 + 0.20*k;
+    const op    = 0.34 + 0.66*k;
+    const stretchX = 1 + Math.min(0.06, Math.abs(stretch)*0.00045)*Math.sign(1);
+    const skew = Math.max(-2.2, Math.min(2.2, stretch*0.004));
+    el.style.transform = `translateX(${dist*SPACING}px) scale(${scale*stretchX},${scale*(2-stretchX)}) skewX(${skew}deg)`;
+    el.style.opacity = op;
+    el.classList.toggle('center', Math.abs(dist)<0.5);
+    el.style.zIndex = String(100 - Math.round(Math.abs(dist)*10));
+  });
+  /* 视差：背景随位移缓慢漂移，颜色跟着当前板块 */
+  const near = Math.round(center);
+  const accent = cssv(BOARDS[Math.max(0,Math.min(BOARDS.length-1,near))].c);
+  bgLayer.style.background =
+    `radial-gradient(320px 240px at ${50 - (center-near)*8}% 18%, ${hexA(accent,.22)}, transparent 70%),
+     radial-gradient(420px 320px at ${50 + (center-near)*6}% 92%, ${hexA(accent,.12)}, transparent 72%)`;
+  carousel.style.filter = `drop-shadow(0 12px 26px rgba(0,0,0,.5))`;
+  tabHome.set(Math.max(0,Math.min(BOARDS.length-1,center)), stretch*0.25);
+  const idx = Math.max(0, Math.min(BOARDS.length-1, near));
+  $('#carPos').textContent =
+    String(idx+1).padStart(2,'0')+' / '+String(BOARDS.length).padStart(2,'0')+' · 左右滑动';
+  active = idx;
+}
+
+let dragDX = 0, dragV = 0;
+draggable($('#watch'), {
+  onStart: ()=>{ dragDX = 0; dragV = 0; },
+  onMove: ({dx,dt})=>{
+    if ($('#fullchart').classList.contains('on')) { fullDrag(dx); return; }
+    if ($('#scr-cat').classList.contains('on'))   { catDrag(dx); return; }
+    if ($('#scr-read').classList.contains('on'))  { readDrag(dx); return; }
+    dragDX = dx;
+    dragV = dragV*0.72 + (dx/(dt*1000))*0.28;      /* 平滑速度 */
+    offset = dragBase + dx;
+    const lim = (BOARDS.length-1)*SPACING;
+    if (offset < -0) offset = -Math.min(60, -offset*0.3)*-1;   /* 边界阻尼 */
+    if (offset > lim) offset = lim + (offset-lim)*0.3;
+    renderHome(dragV*260);
+  },
+  onEnd: ({dx,dt,tap})=>{
+    if ($('#fullchart').classList.contains('on')) { fullEnd(dx); return; }
+    if ($('#scr-cat').classList.contains('on'))   { catEnd(dx,dt,tap); return; }
+    if ($('#scr-read').classList.contains('on'))  { readEnd(dx,dt); return; }
+    if (tap) { tweenSpring(offset, -active*SPACING, x=>{ offset=x; renderHome(0); }); return; }
+    /* 磁吸吸附：先按速度预测落点，再对最近格位做吸引混合 */
+    let idx = Math.round(-(offset - dragV*140)/SPACING);
+    idx = Math.max(0, Math.min(BOARDS.length-1, idx));
+    const target = -idx*SPACING;
+    const frac = Math.abs(offset-target)/SPACING;
+    /* 磁吸：0.28 起开始吸引（不足则弹回、过半则吸过去），避免范围边缘突跳 */
+    const pull = frac < 0.28 ? 0.55 : (frac > 0.5 ? 1.0 : 0.5 + (frac-0.28)*1.6);
+    const to = offset + (target-offset)*pull;
+    const fromPos = Math.max(0, Math.min(BOARDS.length-1, -offset/SPACING));
+    tweenSpring(offset, to, x => { offset = x; renderHome((x-target)*3); });
+    tabHome.moveTo(fromPos, idx);
+    active = idx; dragV = 0;
+  }
+});
+let dragBase = 0;
+/* 每次按下时把弹簧当前位置作为基准 */
+$('#watch').addEventListener('pointerdown', ()=>{ dragBase = offset; });
+
+/* =====================================================================
+   共享元素展开：卡片 → 板块页（FLIP：源矩形动画到目标矩形）
+   ===================================================================== */
+const flip = $('#flipLayer');
+function flipExpand(fromRect, toRect, color, onMid){
+  if (window.__STILL){ onMid && onMid(); return; }   /* 静态取证模式：不做动画 */
+  flip.style.display='block';
+  flip.classList.toggle('flat', toRect.flat===true);
+  flip.style.transition='none';
+  flip.style.left = fromRect.left+'px'; flip.style.top = fromRect.top+'px';
+  flip.style.width = fromRect.width+'px'; flip.style.height = fromRect.height+'px';
+  flip.style.background = color; flip.style.borderRadius = (fromRect.r??16)+'px';
+  flip.getBoundingClientRect();
+  requestAnimationFrame(()=>{
+    flip.style.transition='all .34s cubic-bezier(.22,1,.36,1)';
+    flip.style.left = toRect.left+'px'; flip.style.top = toRect.top+'px';
+    flip.style.width = toRect.width+'px'; flip.style.height = toRect.height+'px';
+    flip.style.borderRadius = (toRect.r??0)+'px';
+  });
+  setTimeout(()=>{ onMid && onMid(); flip.style.opacity='0'; }, 190);
+  setTimeout(()=>{ flip.style.display='none'; flip.style.opacity='.97'; }, 360);
+}
+
+let screenStack = ['home'];
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id==='scr-'+id));
+  document.querySelectorAll('.switch button[data-scr]').forEach(b=>b.classList.toggle('on', b.dataset.scr===id));
+}
+function openBoard(i){
+  const b = BOARDS[i];
+  $('#catTitle').textContent = b.n;
+  $('#catSec').textContent = b.s.replace(' · ',' · ');
+  $('#catBar').style.background = cssv(b.c);
+  const rows = $('#catRows'); rows.innerHTML='';
+  b.items.forEach((it,k)=>{
+    const planned = it.includes('规划');
+    const r = document.createElement('div');
+    r.className='row';
+    r.innerHTML = `<span class="st" style="background:${planned?'#475569':cssv(b.c)}"></span>
+      <span class="g"><span class="n" style="color:${planned?'var(--faint)':'var(--fg)'}">${it}</span>
+      <span class="d">${planned?'规划中':b.d.split(' / ')[k]||''}</span></span>
+      <span class="c">${planned?'':'›'}</span>`;
+    rows.appendChild(r);
+    if (window.__STILL){ r.style.opacity=1; r.style.transform='none'; }      /* 取证模式：跳过错峰 */
+    else {
+      r.style.opacity = 0; r.style.transform = 'translateY(12px)';
+      setTimeout(()=>{ r.style.transition='all .26s cubic-bezier(.22,1,.36,1)'; r.style.opacity=1; r.style.transform='translateY(0)'; }, 30+k*40);
+    }
+  });
+  const wr = $('#watch').getBoundingClientRect();
+  const cr = cards[Math.max(0,Math.min(cards.length-1,active))].getBoundingClientRect();
+  const scale = wr.width/390;
+  flipExpand(
+    {left:(cr.left-wr.left)/scale, top:(cr.top-wr.top)/scale, width:cr.width/scale, height:cr.height/scale, r:16},
+    {left:0, top:0, width:390, height:450, r:0},
+    hexA(cssv(b.c), .22),
+    ()=>showScreen('cat')
+  );
+  screenStack.push('cat');
+}
+
+/* ---------------- 板块页：右拖返回（手势 + 磁吸） ---------------- */
+let catX = 0;
+function catDrag(dx){
+  catX = Math.max(0, dx);
+  const th = 130;                                   /* 提交阈值 */
+  /* 磁吸：接近阈值时把视觉位移往"返回"目标拉，提示"可以放下" */
+  const pull = catX > th*0.45 ? (catX-th*0.45)*0.35 : 0;
+  const disp = Math.min(catX+pull, 300);
+  $('#scr-cat').style.transform = `translateX(${disp}px)`;
+  $('#scr-cat').style.transition = 'none';
+  $('#scr-home').style.transform = `translateX(${-60+disp*0.22}px) scale(${0.96+disp*0.00012})`;
+  $('#scr-home').style.transition = 'none';
+}
+function catEnd(dx,dt,tap){
+  if (screenStack[screenStack.length-1]!=='cat') return;
+  const v = dx/dt;
+  const done = catX>130 || v>0.5;
+  const from = catX;
+  const t0 = performance.now(), dur = done?280:320;
+  const tick = now=>{
+    const p = Math.min(1,(now-t0)/dur);
+    const ease = done ? 1-Math.pow(1-p,3) : Math.sin(p*Math.PI/2);
+    const x = done ? from+(390-from)*ease : from*(1-ease);
+    const s = 0.96+(x/390)*0.04;
+    $('#scr-cat').style.transform=`translateX(${x}px)`;
+    $('#scr-home').style.transform=`translateX(${-60+(x/390)*60}px) scale(${s})`;
+    if(p<1) requestAnimationFrame(tick);
+    else { $('#scr-cat').style.transition=''; $('#scr-home').style.transition='';
+           if(done){ screenStack.pop(); showScreen('home'); $('#scr-home').style.transform='';
+                     $('#scr-cat').style.transform=''; } }
+  };
+  requestAnimationFrame(tick);
+  catX = 0;
+}
+
+/* =====================================================================
+   读数页：液态分页 + 左右拖动翻页 + 迷你图共享元素展开
+   ===================================================================== */
+const SENSORS = [
+  {n:'加速度计', u:'g',   v:['−0.19','−0.32','−0.95'], acc:'--raw',  color:'#4FC3F7'},
+  {n:'陀螺仪',   u:'dps', v:['+1.2','−0.4','+0.1'],   acc:'--raw',  color:'#64B5F6'},
+  {n:'磁力计',   u:'mG',  v:['−131','+47','−318'],    acc:'--raw',  color:'#AED581'},
+  {n:'光线',     u:'lx',  v:['+128'],                 acc:'--raw',  color:'#FFB74D'},
+  {n:'麦克风',   u:'dBFS',v:['−42.5'],                acc:'--acou', color:'#FFB74D'},
+  {n:'扬声器',   u:'dBFS',v:['−58.0'],                acc:'--acou', color:'#FFB74D'},
+];
+const N = SENSORS.length;
+const tabRead = liquidTab($('#trackRead'), N, cssv('--raw'));
+let pageX = 0, pageIdx = 0;
+function buildPages(){
+  const wrap = $('#pages'); wrap.innerHTML='';
+  SENSORS.forEach((s,i)=>{
+    const p = document.createElement('div');
+    p.className='page'; p.dataset.i=i;
+    const rows = s.v.map((v,k)=>`<div class="kvr"><span class="k">${['X','Y','Z'][k]||''}</span>
+        <span><span class="v">${v}</span><span class="u">${s.u}</span></span></div>`).join('');
+    p.innerHTML = `<div class="read-wrap">
+      <div class="sec"><span class="b" style="background:${cssv(s.acc)}"></span>${s.n}
+        <span class="r"></span><span class="live"><span class="dot-live"></span>实时</span></div>
+      <div class="kv">${rows}</div>
+      <div class="chart" data-chart="${i}">
+        <div class="gl" style="top:33%"></div><div class="gl" style="top:66%"></div>
+        <svg viewBox="0 0 366 132" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+          <polyline fill="none" stroke="${cssv(s.acc)}" stroke-width="2" points="${wave(i)}"/>
+        </svg>
+        <div class="cap">最近 2.4 s</div><div class="tap">点一下放大 ›</div>
+      </div>
+    </div>`;
+    p.querySelector('[data-chart]').addEventListener('click', ev=>{
+      ev.stopPropagation(); openFullChart(i);
+    });
+    p.style.transform = `translateX(${i*390}px)`;
+    wrap.appendChild(p);
+  });
+}
+function wave(seed){
+  let pts=[];
+  for(let i=0;i<=24;i++){
+    const y = 66 + Math.sin((i+seed*3)*0.55)*18 + Math.sin((i+seed)*0.17)*9;
+    pts.push(`${Math.round(i*366/24)},${Math.round(y)}`);
+  }
+  return pts.join(' ');
+}
+function renderRead(){
+  document.querySelectorAll('#pages .page').forEach(p=>{
+    const i = +p.dataset.i;
+    const dist = i - (pageX/390);
+    const k = Math.max(0, 1-Math.abs(dist)*0.7);
+    p.style.transform = `translateX(${i*390 - pageX}px) scale(${0.92+0.08*k})`;
+    p.style.opacity = 0.35+0.65*k;
+  });
+  tabRead.set(Math.max(0,Math.min(N-1,pageX/390)));
+  /* 迷你图数值动画：让页面"活"起来 */
+  const t = performance.now()/900;
+  document.querySelectorAll('#pages polyline').forEach((pl,i)=>{
+    if (Math.abs(i - pageX/390) < 0.6) pl.setAttribute('points', wave(i + Math.round(t*2)));
+  });
+}
+function readDrag(dx){ pageX = Math.max(-40, Math.min((N-1)*390+40, pageIdx*390 - dx)); renderRead(); }
+function readEnd(dx,dt){
+  const v = dx/dt;
+  let idx = Math.round((pageX - v*120)/390);
+  idx = Math.max(0, Math.min(N-1, idx));
+  const from = pageX, to = idx*390;
+  const t0 = performance.now(), dur = 300;
+  const tick = now=>{
+    const p = Math.min(1,(now-t0)/dur);
+    const ease = 1-Math.pow(1-p,3);
+    pageX = from+(to-from)*ease; renderRead();
+    if(p<1) requestAnimationFrame(tick); else { pageIdx = idx; tabRead.moveTo(from/390, idx); }
+  };
+  requestAnimationFrame(tick);
+  pageIdx = idx;
+}
+
+/* ---------------- 迷你图 → 全屏图（共享元素） ---------------- */
+let fullOpen=false;
+function openFullChart(i){
+  const src = document.querySelector(`#pages .page[data-i="${i}"] .chart`).getBoundingClientRect();
+  const wr = $('#watch').getBoundingClientRect(); const k = wr.width/390;
+  const s = SENSORS[i];
+  $('#fullLine').setAttribute('stroke', cssv(s.acc));
+  $('#fullLine').setAttribute('points', wave(i).replace(/(\d+),(\d+)/g,(m,x,y)=>`${x},${Math.round(y*2.2)}`));
+  fullOpen = true;
+  $('#fullchart').classList.add('on');
+  $('#fullchart').style.transition='none'; $('#fullchart').style.opacity='0.2';
+  flipExpand(
+    {left:(src.left-wr.left)/k, top:(src.top-wr.top)/k, width:src.width/k, height:src.height/k, r:12},
+    {left:0, top:56, width:390, height:300, r:14},
+    hexA(cssv(s.acc),.16),
+    ()=>{}
+  );
+  requestAnimationFrame(()=>{ $('#fullchart').style.transition='opacity .26s'; $('#fullchart').style.opacity='1'; });
+}
+let fullY=0;
+function fullDrag(dx){ /* 下拉收起：这里用纵向位移，横拖忽略 */ }
+$('#fullchart').addEventListener('pointerdown', e=>{ $('#fullchart').dataset.y = e.clientY; $('#fullchart').dataset.t = performance.now(); });
+$('#fullchart').addEventListener('pointermove', e=>{
+  if(!fullOpen) return;
+  const dy = Math.max(0, e.clientY - +$('#fullchart').dataset.y);
+  fullY = dy;
+  $('#fullBox').style.transform = `translateY(${dy}px) scale(${1-dy/2400})`;
+  $('#fullBox').style.opacity = String(1-dy/400);
+});
+$('#fullchart').addEventListener('pointerup', e=>{
+  if(!fullOpen) return;
+  const dt = Math.max(1, performance.now()-+$('#fullchart').dataset.t)/1000;
+  const dy = fullY, v = dy/dt;
+  const done = dy>90 || v>0.45;
+  const from = dy, dur = 260, t0 = performance.now();
+  const tick = now=>{
+    const p = Math.min(1,(now-t0)/dur);
+    const x = done ? from*(1-p) : from*(1-p);          /* 数值上都在回，语义不同 */
+    $('#fullBox').style.transform = `translateY(${x}px) scale(${1-x/2400})`;
+    $('#fullBox').style.opacity = String(1-x/400);
+    if(p<1) requestAnimationFrame(tick);
+    else {
+      $('#fullBox').style.transform=''; $('#fullBox').style.opacity='';
+      if(done){ fullOpen=false; $('#fullchart').classList.remove('on'); }
+    }
+  };
+  requestAnimationFrame(tick); fullY=0;
+});
+
+/* =====================================================================
+   入口与切屏按钮
+   ===================================================================== */
+document.querySelectorAll('.switch button[data-scr]').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const id = b.dataset.scr;
+    if (id==='cat') openBoard(active);
+    else { $('#fullchart').classList.remove('on'); showScreen(id); }
+  });
+});
+$('#catBack').addEventListener('click', ()=>{ screenStack.pop(); showScreen('home'); $('#scr-home').style.transform=''; $('#scr-cat').style.transform=''; });
+$('#readBack').addEventListener('click', ()=>{ screenStack.pop(); showScreen('home'); });
+$('#resetBtn').addEventListener('click', ()=>{ offset=0; active=0; dragBase=0; pageX=0; pageIdx=0;
+  $('#scr-home').style.transform=''; $('#scr-cat').style.transform=''; $('#fullchart').classList.remove('on');
+  showScreen('home'); renderHome(); renderRead(); });
+
+buildPages(); renderHome(); renderRead();
+/* 评审/截图入口：prototype.html#cat  #read  #full（加 ?still 则跳过动画，便于截图） */
+if (location.search.indexOf('still') >= 0) window.__STILL = true;
+const H=(location.hash||'').replace('#','');
+if (H==='cat') openBoard(3);
+else if (H==='read'){ screenStack.push('read'); showScreen('read'); }
+else if (H==='full'){ screenStack.push('read'); showScreen('read'); setTimeout(()=>openFullChart(0),260); }
+setInterval(renderRead, 120);
+</script>
+</body>
+</html>

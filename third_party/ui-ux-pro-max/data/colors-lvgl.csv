@@ -1,0 +1,40 @@
+Product Type,Role,Hex,RGB565,Contrast vs BG,Use,Token
+Financial Dashboard,Background,#020617,0x0022,1.00,仅装饰/背景,PW_COL_BG
+Financial Dashboard,Foreground,#F8FAFC,0xFFDF,19.28,正文可用,PW_COL_TEXT
+Financial Dashboard,Card,#0E1223,0x0884,1.08,仅装饰/背景,PW_COL_CARD
+Financial Dashboard,Card Foreground,#F8FAFC,0xFFDF,19.28,正文可用,PW_COL_TEXT
+Financial Dashboard,Muted,#1A1E2F,0x18E5,1.22,仅装饰/背景,PW_COL_CARD_LT
+Financial Dashboard,Muted Foreground,#94A3B8,0x9517,7.87,正文可用,PW_COL_DIM
+Financial Dashboard,Border,#334155,0x320A,1.95,仅装饰/背景,PW_COL_GRID
+Financial Dashboard,Accent,#22C55E,0x262B,8.85,正文可用,PW_ACC_RAW
+Financial Dashboard,Primary,#0F172A,0x08A5,1.13,仅装饰/背景,（未采用）
+Financial Dashboard,Secondary,#1E293B,0x1947,1.38,仅装饰/背景,（未采用）
+Analytics Dashboard,Background,#F8FAFC,0xFFDF,1.00,仅装饰/背景,PW_COL_BG
+Analytics Dashboard,Foreground,#1E3A8A,0x19D1,9.90,正文可用,PW_COL_TEXT
+Analytics Dashboard,Card,#FFFFFF,0xFFFF,1.05,仅装饰/背景,PW_COL_CARD
+Analytics Dashboard,Card Foreground,#1E3A8A,0x19D1,9.90,正文可用,PW_COL_TEXT
+Analytics Dashboard,Muted,#E9EEF6,0xEF7E,1.11,仅装饰/背景,PW_COL_CARD_LT
+Analytics Dashboard,Muted Foreground,#475569,0x42AD,7.24,正文可用,PW_COL_DIM
+Analytics Dashboard,Border,#DBEAFE,0xDF5F,1.17,仅装饰/背景,PW_COL_GRID
+Analytics Dashboard,Accent,#D97706,0xDBA0,3.04,大字/次要可用,PW_ACC_RAW
+Analytics Dashboard,Primary,#1E40AF,0x1A15,8.34,正文可用,（未采用）
+Analytics Dashboard,Secondary,#3B82F6,0x3C1E,3.52,大字/次要可用,（未采用）
+Smart Home/IoT Dashboard,Background,#0F172A,0x08A5,1.00,仅装饰/背景,PW_COL_BG
+Smart Home/IoT Dashboard,Foreground,#F8FAFC,0xFFDF,17.06,正文可用,PW_COL_TEXT
+Smart Home/IoT Dashboard,Card,#1B2336,0x1906,1.14,仅装饰/背景,PW_COL_CARD
+Smart Home/IoT Dashboard,Card Foreground,#F8FAFC,0xFFDF,17.06,正文可用,PW_COL_TEXT
+Smart Home/IoT Dashboard,Muted,#272F42,0x2168,1.34,仅装饰/背景,PW_COL_CARD_LT
+Smart Home/IoT Dashboard,Muted Foreground,#94A3B8,0x9517,6.96,正文可用,PW_COL_DIM
+Smart Home/IoT Dashboard,Border,#475569,0x42AD,2.36,仅装饰/背景,PW_COL_GRID
+Smart Home/IoT Dashboard,Accent,#22C55E,0x262B,7.83,正文可用,PW_ACC_RAW
+Smart Home/IoT Dashboard,Primary,#1E293B,0x1947,1.22,仅装饰/背景,（未采用）
+Smart Home/IoT Dashboard,Secondary,#334155,0x320A,1.72,仅装饰/背景,（未采用）
+Timer & Pomodoro,Background,#0F172A,0x08A5,1.00,仅装饰/背景,PW_COL_BG
+Timer & Pomodoro,Foreground,#FFFFFF,0xFFFF,17.85,正文可用,PW_COL_TEXT
+Timer & Pomodoro,Card,#192134,0x1906,1.11,仅装饰/背景,PW_COL_CARD
+Timer & Pomodoro,Card Foreground,#FFFFFF,0xFFFF,17.85,正文可用,PW_COL_TEXT
+Timer & Pomodoro,Muted,#1F1829,0x18C5,1.04,仅装饰/背景,PW_COL_CARD_LT
+Timer & Pomodoro,Muted Foreground,#94A3B8,0x9517,6.96,正文可用,PW_COL_DIM
+Timer & Pomodoro,Accent,#059669,0x04AD,4.74,正文可用,PW_ACC_RAW
+Timer & Pomodoro,Primary,#DC2626,0xD924,3.70,大字/次要可用,（未采用）
+Timer & Pomodoro,Secondary,#EF4444,0xEA28,4.74,正文可用,（未采用）

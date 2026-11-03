@@ -1,0 +1,45 @@
+[central] adapter = /org/bluez/hci0
+[central] 清掉缓存记录 'PhyWear' @ /org/bluez/hci0/dev_5A_58_62_96_E7_57（随机地址可能已变）
+[central] 开始扫描，找名字含 'PhyWear' 的设备 ……
+[central] 找到：'PhyWear' @ /org/bluez/hci0/dev_5A_58_62_96_E7_57（UUID 命中=True）
+[central] 发起连接（第 1 次）……
+[central] 已连接且服务已解析（5A:58:62:96:E7:57）
+[host-ppp] 设备上报 MTU=517 ⇒ 每次写 514 B
+[host-ppp] 已订阅设备→主机 通知；本进程作为 PPP 对端（192.168.7.1 ↔ 192.168.7.2）
+[host-ppp] 设备侧现在可以跑： phywear btppp &  然后 ifconfig / ping 192.168.7.1
+[host-ppp] TX LCP Configure-Request id=1 len=14 opts=010405dc0506a1b2c3d4 [MRU=05dc] [Magic-Number=161.178.195.212]
+[host-ppp] RX LCP Terminate-Request id=1 len=4 opts=
+[host-ppp] TX LCP Terminate-Ack id=1 len=4 opts=
+[host-ppp] RX LCP Terminate-Request id=2 len=4 opts=
+[host-ppp] TX LCP Terminate-Ack id=2 len=4 opts=
+[host-ppp] TX LCP Configure-Request id=1 len=14 opts=010405dc0506a1b2c3d4 [MRU=05dc] [Magic-Number=161.178.195.212]
+[host-ppp] TX LCP Configure-Request id=1 len=14 opts=010405dc0506a1b2c3d4 [MRU=05dc] [Magic-Number=161.178.195.212]
+[host-ppp] RX LCP Configure-Ack id=1 len=14 opts=010405dc0506a1b2c3d4 [MRU=05dc] [Magic-Number=161.178.195.212]
+[host-ppp] ★ LCP UP
+[host-ppp] TX IPCP Configure-Request id=2 len=10 opts=0306c0a80701 [IP-Address=192.168.7.1]
+[host-ppp] RX LCP Configure-Ack id=1 len=14 opts=010405dc0506a1b2c3d4 [MRU=05dc] [Magic-Number=161.178.195.212]
+[host-ppp] RX LCP Configure-Ack id=1 len=14 opts=010405dc0506a1b2c3d4 [MRU=05dc] [Magic-Number=161.178.195.212]
+[host-ppp] RX LCP Configure-Request id=0 len=10 opts=0206ffffffff [ACCM=ffffffff]
+[host-ppp] TX LCP Configure-Ack id=0 len=10 opts=0206ffffffff [ACCM=ffffffff]
+[host-ppp] RX IPCP Configure-Ack id=2 len=10 opts=0306c0a80701 [IP-Address=192.168.7.1]
+[host-ppp] ★ IPCP UP（对端地址 192.168.7.1，设备应拿到 192.168.7.2）
+[host-ppp] RX IPCP Configure-Request id=0 len=10 opts=030600000000 [IP-Address=0.0.0.0]
+[host-ppp] TX IPCP Configure-Nak id=0 len=10 opts=0306c0a80702 [IP-Address=192.168.7.2]
+[host-ppp]   设备请求 IP=0.0.0.0 ⇒ Nak 成 192.168.7.2
+[host-ppp] RX IPCP Configure-Request id=1 len=10 opts=0306c0a80702 [IP-Address=192.168.7.2]
+[host-ppp] TX IPCP Configure-Ack id=1 len=10 opts=0306c0a80702 [IP-Address=192.168.7.2]
+[host-ppp] RX LCP Echo-Request id=1 len=8 opts=00000000
+[host-ppp] TX LCP Echo-Reply id=1 len=8 opts=00000000
+[host-ppp] RX LCP Echo-Request id=2 len=8 opts=00000000
+[host-ppp] TX LCP Echo-Reply id=2 len=8 opts=00000000
+[host-ppp] RX IP 84 B payload=45000054000140004001ab54c0a80702c0a8070108007d68
+[host-ppp] TX IP 84 B payload=45000054000140004001ab54c0a80701c0a8070200008568
+[host-ppp]   ICMP Echo-Request ← 192.168.7.2 ⇒ 已回 Echo-Reply
+[host-ppp] RX IP 84 B payload=45000054000240004001ab53c0a80702c0a8070108007d67
+[host-ppp] TX IP 84 B payload=45000054000240004001ab53c0a80701c0a8070200008567
+[host-ppp]   ICMP Echo-Request ← 192.168.7.2 ⇒ 已回 Echo-Reply
+[host-ppp] RX LCP Echo-Request id=3 len=8 opts=00000000
+[host-ppp] TX LCP Echo-Reply id=3 len=8 opts=00000000
+[host-ppp] RX IP 84 B payload=45000054000340004001ab52c0a80702c0a8070108007d66
+[host-ppp] TX IP 84 B payload=45000054000340004001ab52c0a80701c0a8070200008566
+[host-ppp]   ICMP Echo-Request ← 192.168.7.2 ⇒ 已回 Echo-Reply

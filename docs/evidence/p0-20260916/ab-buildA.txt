@@ -1,0 +1,10 @@
+# 转录说明（如实）：以下数值为 Build A 实测时的终端输出转录，原始串口流未落盘。
+# 支撑强度：Build A 与最终固件**同一份源码**（休眠自适应 + 圆角 14），
+# 因此 ab-final.txt 的原始输出（fps 34/36）同样支持 Build A 的结论；
+# 另有 A 的轨迹页读数与 B 的两页读数与其完全一致（见 ab-buildB.txt）。
+RESULT A imu run1 [phywear] alive t=30s loops/s=34 fps=34
+RESULT A imu run1 [phywear] alive t=60s loops/s=36 fps=36
+RESULT A imu run2 [phywear] alive t=30s loops/s=34 fps=34
+RESULT A imu run2 [phywear] alive t=60s loops/s=36 fps=36
+RESULT A imutraj run1 [phywear] alive t=30s loops/s=203 fps=10
+RESULT A imutraj run1 [phywear] alive t=60s loops/s=211 fps=11

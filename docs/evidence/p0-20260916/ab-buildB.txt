@@ -1,0 +1,8 @@
+# 转录说明（如实）：以下数值为 Build B（= A + 卡片 radius 0）实测时的终端输出转录，原始串口流未落盘。
+# 用途：证明"圆角 14 → 0"在两页上都**测不到收益**（与 A 逐项相同）。
+RESULT B imu run1 [phywear] alive t=30s loops/s=34 fps=34
+RESULT B imu run1 [phywear] alive t=60s loops/s=36 fps=36
+RESULT B imu run2 [phywear] alive t=30s loops/s=34 fps=34
+RESULT B imu run2 [phywear] alive t=60s loops/s=36 fps=36
+RESULT B imutraj run1 [phywear] alive t=30s loops/s=202 fps=10
+RESULT B imutraj run1 [phywear] alive t=60s loops/s=211 fps=11

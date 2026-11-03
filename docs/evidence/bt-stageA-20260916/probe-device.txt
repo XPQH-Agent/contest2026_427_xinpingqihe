@@ -1,0 +1,37 @@
+vela> ls /dev
+/dev:
+ adc0
+ buttons
+ config0
+ console
+ gpio0
+ gpio1
+ gpio2
+ i2c0
+ i2c1
+ input0
+ lcd0
+ lcdlight
+ light0
+ lsm6dsl0
+ mag0
+ mic0
+ mmcsd0
+ null
+ pwm0
+ ram0
+ rtc0
+ spi1
+ spk0
+ timer0
+ ttyACM0
+ ttyHCI0
+ ttyS0
+ urandom
+ watchdog0
+nsh> phywear bthci
+[BTHCI] /dev/ttyHCI0 opened
+[BTHCI] write HCI_Reset -> 4
+[BTHCI] tx (4 B): 01 03 0c 00
+[BTHCI] rx (7 B): 04 0e 04 06 03 0c 00
+[BTHCI] 判据③：HCI 链路通（Command Complete, opcode=0x0c03, status=0）
