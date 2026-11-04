@@ -39,6 +39,7 @@
 #include <nuttx/ioexpander/gpio.h>
 
 #include "pw_power.h"
+#include "pw_settings.h"
 
 #ifdef CONFIG_EXAMPLES_PHYWEAR_POWER
 
@@ -370,3 +371,61 @@ void pw_power_report(void)
 }
 
 #endif /* CONFIG_EXAMPLES_PHYWEAR_POWER */
+
+/****************************************************************************
+ * 关机 / 重启（长按电源键菜单）
+ *
+ * HAL_PMU_* 在 vendor 的 HAL 里，apps 侧没有稳定头文件，这里只做外部声明：
+ * 链接时由 vendor 的 HAL 库提供（bsp_power.c 里已经在用同一套 PMU 代码）。
+ ****************************************************************************/
+
+/* 直接操作 PMUC 寄存器：不引 vendor 头（apps 侧 include 路径里没有 bf0_hal.h），
+ * 也不调 HAL_PMU_*（它们会先 WakeCore 等 LCPU，本板单核必死等）。
+ * 地址与位定义来自 vendor/sifli/chips/drivers/cmsis/sf32lb52x/{register.h,pmuc.h}。
+ */
+
+#define PW_PMUC_BASE        0x500CA000UL
+#define PW_PMUC_CR          (*(volatile uint32_t *)(PW_PMUC_BASE + 0x00))
+#define PW_PMUC_WSR         (*(volatile uint32_t *)(PW_PMUC_BASE + 0x08))
+#define PW_PMUC_WCR         (*(volatile uint32_t *)(PW_PMUC_BASE + 0x0c))
+#define PW_PMUC_CR_HIBER_EN (1u << 1)
+
+#define PW_AIRCR            (*(volatile uint32_t *)0xE000ED0Cu)
+#define PW_AIRCR_SYSRESETREQ (1u << 2)
+#define PW_AIRCR_VECTKEY    (0x05FAu << 16)
+
+void pw_power_shutdown(void)
+{
+  /* **不要用 HAL_PMU_EnterShutdown()**：它内部先 HAL_HPAON_WakeCore(CORE_ID_LCPU)
+   * 并忙等 LCPU 唤醒，而黄山派是单核板（LCPU 没跑固件），这一等就是死等 ——
+   * 用户实测"点关机后屏幕卡住、整机无响应"，就是这个原因（与 ADC 标定那处同一个坑）。
+   * 这里照抄 SDK 里真正断电的那几步，跳过 LCPU 相关部分。
+   */
+
+  syslog(LOG_INFO, "[power] shutdown requested by user\n");
+
+  up_irq_save();
+
+  PW_PMUC_WCR = PW_PMUC_WSR;          /* 清 wakeup status（等价 HAL_PMU_CLEAR_WSR） */
+
+  /* 先拉低再拉高，产生足够宽的掉电脉冲（SDK 里那 100 ms 是有原因的） */
+
+  PW_PMUC_CR &= ~PW_PMUC_CR_HIBER_EN;
+  up_mdelay(100);
+  PW_PMUC_CR |= PW_PMUC_CR_HIBER_EN;
+
+  for (;;)
+    {
+    }
+}
+
+void pw_power_reboot(void)
+{
+
+  syslog(LOG_INFO, "[power] reboot requested by user\n");
+  HAL_PMU_Reboot();
+  for (;;)
+    {
+      usleep(1000000);
+    }
+}

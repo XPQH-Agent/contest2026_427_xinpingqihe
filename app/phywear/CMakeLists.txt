@@ -34,7 +34,10 @@ if(CONFIG_EXAMPLES_PHYWEAR)
     phywear.c
     pw_splash.c
     pw_power.c
+    pw_store.c
     pw_icons.c
+    pw_logos.c
+    pw_bounce.c
     phywear_i18n.c
     pw_ai.c
     pw_shot.c
