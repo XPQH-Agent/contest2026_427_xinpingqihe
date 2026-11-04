@@ -336,9 +336,7 @@ static int pan_on_frame(const uint8_t *data, uint32_t len)
 
 static int pan_l2cap_recv(struct bt_l2cap_chan *chan, struct net_buf *buf)
 {
-  /* [修复#2] rx 线程栈只有 CONFIG_BT_RX_STACK_SIZE(1200) B，
-   * 1600 B 局部数组必然压爆；BR/EDR 的 recv 是单线程同步回调，静态缓冲安全。 */
-  static uint8_t s_frame[PW_PAN_FRAME_MAX];
+  uint8_t  frame[PW_PAN_FRAME_MAX];
   uint32_t total;
   uint32_t off = 0;
   struct net_buf *f;
@@ -346,11 +344,10 @@ static int pan_l2cap_recv(struct bt_l2cap_chan *chan, struct net_buf *buf)
   (void)chan;
 
   total = net_buf_frags_len(buf);               /* [已核实] net_buf.h:2711 static inline size_t */
-  if (total > sizeof(s_frame))
+  if (total > sizeof(frame))
     {
       g_pan.rx_drop++;
-      /* [修复#1] BR/EDR host 在回调后无条件 net_buf_unref(buf)
-       * (l2cap_br.c:2104-2105)，应用不得再释放，否则 refcount 下溢。 */
+      net_buf_unref(buf);
       return 0;
     }
 
@@ -364,11 +361,11 @@ static int pan_l2cap_recv(struct bt_l2cap_chan *chan, struct net_buf *buf)
           n = total - off;
         }
 
-      memcpy(&s_frame[off], f->data, n);
+      memcpy(&frame[off], f->data, n);
       off += n;
     }
 
-  /* [修复#1] 同上：所有权在 host，应用不再 unref。 */
+  net_buf_unref(buf);
 
   if (off != total)
     {
@@ -376,7 +373,7 @@ static int pan_l2cap_recv(struct bt_l2cap_chan *chan, struct net_buf *buf)
       return 0;
     }
 
-  return pan_on_frame(s_frame, total);
+  return pan_on_frame(frame, total);
 }
 
 static void pan_l2cap_connected(struct bt_l2cap_chan *chan)
@@ -437,11 +434,6 @@ static uint8_t pan_sdp_done(struct bt_conn *conn, struct bt_sdp_client_result *r
 
   memset(&g_pan.chan, 0, sizeof(g_pan.chan));
   g_pan.chan.chan.ops = &g_pan_l2cap_ops;
-  /* [修复#3] l2cap_br.c:769-770 只在 rx.mtu != 672 时下发 MTU 选项；
-   * memset 后是 0 → 我们会在 wire 上宣告 MTU=0，对端一帧都不发。 */
-  g_pan.chan.rx.mtu = 1691;
-  /* [修复#13] 安全等级：memset 后是 0，l2cap_br.c:1733-1735 会抬到 L1(不加密)。 */
-  g_pan.chan.required_sec_level = BT_SECURITY_L2;
   g_pan.state = PW_PAN_L2CAP;
 
   err = bt_l2cap_chan_connect(conn, &g_pan.chan.chan, psm);

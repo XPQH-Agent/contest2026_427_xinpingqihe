@@ -389,13 +389,23 @@ void pw_power_report(void)
 #define PW_PMUC_WSR         (*(volatile uint32_t *)(PW_PMUC_BASE + 0x08))
 #define PW_PMUC_WCR         (*(volatile uint32_t *)(PW_PMUC_BASE + 0x0c))
 #define PW_PMUC_CR_HIBER_EN (1u << 1)
+#define PW_PMUC_CR_REBOOT   (1u << 2)
 
 #define PW_AIRCR            (*(volatile uint32_t *)0xE000ED0Cu)
 #define PW_AIRCR_SYSRESETREQ (1u << 2)
 #define PW_AIRCR_VECTKEY    (0x05FAu << 16)
 
+volatile int pw_pmu_keep_alive;   /* 只为保住 vendor PMU 段被链接进来 */
+
 void pw_power_shutdown(void)
 {
+  extern void HAL_PMU_EnterShutdown(void);
+
+  if (pw_pmu_keep_alive)
+    {
+      HAL_PMU_EnterShutdown();   /* 永不执行，仅阻止 --gc-sections 丢掉该段 */
+    }
+
   /* **不要用 HAL_PMU_EnterShutdown()**：它内部先 HAL_HPAON_WakeCore(CORE_ID_LCPU)
    * 并忙等 LCPU 唤醒，而黄山派是单核板（LCPU 没跑固件），这一等就是死等 ——
    * 用户实测"点关机后屏幕卡住、整机无响应"，就是这个原因（与 ADC 标定那处同一个坑）。
@@ -414,6 +424,16 @@ void pw_power_shutdown(void)
   up_mdelay(100);
   PW_PMUC_CR |= PW_PMUC_CR_HIBER_EN;
 
+  /* 保险：如果 PMU 没有真的切断电源（比如分区配置不对），
+   * 1 s 后用系统复位兜底，至少不会停在"黑屏不响应"。
+   */
+
+  for (volatile uint32_t spin = 0; spin < 60000000u; spin++)
+    {
+    }
+
+  PW_AIRCR = PW_AIRCR_VECTKEY | PW_AIRCR_SYSRESETREQ;
+
   for (;;)
     {
     }
@@ -421,6 +441,13 @@ void pw_power_shutdown(void)
 
 void pw_power_reboot(void)
 {
+  extern void HAL_PMU_Reboot(void);
+
+  if (pw_pmu_keep_alive)
+    {
+      HAL_PMU_Reboot();
+    }
+
 
   syslog(LOG_INFO, "[power] reboot requested by user\n");
   HAL_PMU_Reboot();
