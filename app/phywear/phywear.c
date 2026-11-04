@@ -1844,6 +1844,24 @@ int main(int argc, FAR char *argv[])
       return 0;
     }
 
+  /* 电源动作自测（无触摸时验证 HAL 路径是否可用） */
+
+  if (argc > 1 && strcmp(argv[1], "sysreboot") == 0)
+    {
+      printf("[power] sysreboot from shell\n");
+      fflush(stdout);
+      pw_power_reboot();
+      return 0;
+    }
+
+  if (argc > 1 && strcmp(argv[1], "syspoweroff") == 0)
+    {
+      printf("[power] syspoweroff from shell\n");
+      fflush(stdout);
+      pw_power_shutdown();
+      return 0;
+    }
+
   /* 电源菜单（没有物理长按也能验证 UI） */
 
   if (argc > 1 && strcmp(argv[1], "powermenu") == 0)
