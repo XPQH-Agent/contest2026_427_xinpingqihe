@@ -1,0 +1,28 @@
+diff --git a/chips/sf32lb52/sf32lb52_bt_adapter.c b/chips/sf32lb52/sf32lb52_bt_adapter.c
+index 25de553..64558ed 100644
+--- a/chips/sf32lb52/sf32lb52_bt_adapter.c
++++ b/chips/sf32lb52/sf32lb52_bt_adapter.c
+@@ -410,10 +410,19 @@ static size_t sf32lb52_bt_tx_chunk_len(const uint8_t *data,
+ {
+   size_t remaining = len - offset;
+ 
+-  if (offset == 0 && remaining > 1)
+-    {
+-      return 1;
+-    }
++  /* T-0013: 整帧一次写入邮箱 ring，禁止分块。
++   *
++   * 旧实现"先写 1 字节 H4 type、再写帧体"会让 LCPU 在两笔之间开始消费；
++   * 第二次 ring_write 结尾的 up_clean_dcache 把同一条 D-cache line 里
++   * 陈旧的 read_idx_mirror 写回，LCPU 读指针被回退 → H4 解析失同步 →
++   * Hardware_Error(0x10, code 0x00) → LCPU 停摆 → ACL 信用耗尽。
++   * 小包不易触发，DHCP/IP 大帧必中（181 队同板实测）。
++   *
++   * ring 数据区 492 B，单帧上限 487 B ACL，超长由 zblue 正常分片。
++   * 调用方 sf32lb52_bt_publish() 会先等 ring 排空，故一次写完必然成功。
++   */
++
++  (void)data;
+ 
+   return remaining;
+ }
