@@ -333,37 +333,48 @@ PY
 
 ## 五、AI Coding 使用说明
 
-本项目全程借助 AI 辅助开发（Claude Code / Codex 为官方支持工具；另有 DeepSeek Harness
-用于长周期规划，因非官方支持工具无法导入官方日志格式，已在下方如实说明）。
+本项目全程借助 AI 辅助开发。工具分两类，**统计口径严格分开**（规则见 5.4）：能进 `logs/` 的走官方口径，不能进的如实单列、绝不冒充官方工时。
 
-- **需求拆解 / 方案设计**：AI 协助把 phyphox 功能拆成板块 / 实验页清单，并对齐 UI 骨架规范。
-- **编码**：LVGL 应用页面、本队传感器驱动、FFT/自相关算法、UI/图表优化（`pw_scope`/`pw_graph`）由 AI 辅助编写并复核。（官方 EPIC 后端非本队编写。）
-- **调试**：FPS 探针、bench 注入、崩溃 triage（SFBL 卡死、触控、帧缓冲冻结定位）均借助 AI。
-- **文档**：README / 报告 / 本说明由 AI 协助整理。
+### 5.1 官方支持工具（会话已进 `logs/`，评委可直接审计）
 
-**完整对话日志**见 `logs/XPQHyue/`（claude-code + codex，**54 个会话 / 15,761 条事件 / 12.2 MiB**，官方 `validate-log.py` 输出 **✅ ALL OK**）。
+- **Claude Code + 小米 MiMo（`mimo-v2.5-pro`）**：主力编码、二次复核、源码考古与并行调研；
+- **Codex**：代码校对与历史检索。
 
-**Token 用量（真实数据）**：
+采集器按天把真实会话落盘到 `logs/XPQHyue/<date>/<tool>__<session>.jsonl`，`logs/XPQHyue/manifest.json` 现登记 **111 个会话（claude-code 72 + codex 39）/ 20,702 条事件 / 20.2 MiB**；
+其中 **2026-11-04 单日新增 55 个会话 / 4,727 条事件**（初赛后集中补录：多 agent 并行调研与蓝牙取证都在里面）。
 
-| 工具 | Tokens | 计入官方 logs/ | 证据 |
+### 5.2 非官方支持工具（如实声明，不进 `logs/`）
+
+- **DeepSeek Harness（DSH）**：既当"手"（编译 / 烧录 / 上板 / 串口取证 / 截图），也当"协调者"（任务板、裁决台账、防冲突）。它的 `tool` 不在 `event.schema.json` 枚举内，**无法导入官方日志格式**，会话摘要置于 `supplementary/dsh-logs/`，仅作补充佐证。
+- 初赛之后，我们把 DSH 扩成了**多端并行协作**：DSH 原体（Windows，统筹/仲裁）、VM 端（虚拟机内，持代码唯一事实源，构建烧录上板）、WORK 端（验收与取证）、K3DSH（只读调研）、MiMo 舰队（50 + 16 路并行调研，产出 9 份专题报告）。**这些并行 run 里由 Claude Code 执行的部分，会话照样进 `logs/`。**
+
+### 5.3 Token 用量（只有官方口径进这张表）
+
+| 工具 | Tokens | 计入官方 `logs/` | 证据 |
 |---|---|---|---|
-| **小米 MiMo**（Claude Code 所用模型 `mimo-v2.5-pro`） | **451,358,504**（5,398 次请求） | ✅ 是（Claude Code 为官方支持工具） | 控制台导出 `docs/token_usage/token_plan_usage_data_202601_202612_2625305870.xlsx` |
-| **DeepSeek Harness** | **4,197,874,171**（13,905 次请求；区间 2026-08-21 ~ 09-18） | ❌ 否（非官方支持工具） | `docs/token_usage/dsh/`（用量 CSV）+ `supplementary/dsh-logs/` |
-| **合计** | **4,649,232,675（约 46.5 亿）** | — | — |
-> ✅ Token 数字**完全由导出文件支撑、逐行解析、无估算**：
-> MiMo 451,358,504（5,398 次请求，2026-08/09 月度记录，**导出截至 2026-09-11**）；DSH 4,197,874,171（13,905 次请求，**区间 2026-08-21 ~ 09-18**，费用 327.98 CNY）。
-> 详见 `docs/token_usage/README.md`。
+| **小米 MiMo**（Claude Code 所用模型 `mimo-v2.5-pro`） | **451,358,504**（5,398 次请求，2026-08/09 平台账单） | ✅ 是 | `docs/token_usage/token_plan_usage_data_202601_202612_2625305870.xlsx` |
+| **Claude Code 会话**（2026-09-13 → 11-04） | `tokens_in` **2,751,460**（1,426 次请求） | ✅ 是 | `logs/XPQHyue/**/*.jsonl` |
+| **DeepSeek Harness**（截至 2026-09-18） | **4,197,874,171**（13,905 次请求，费用 327.98 CNY） | ❌ 否（非官方支持工具） | `docs/token_usage/dsh/` |
 
-> **如实声明**：我们另通过 **DeepSeek Harness** 进行过规划与长周期任务。它**不在官方
-> 支持的 4 种工具（claude-code / opencode / codex / kiro）之列**，其会话**无法导入官方
-> 事件 schema**（`event.schema.json` 的 `tool` 枚举不含 harness），因此其会话置于
-> `supplementary/dsh-logs/`，**仅补充佐证 AI**；其 **4,197,874,171 tokens** 用量已如实单列。
-> 本仓 AI Coding 日志仅含官方支持工具（claude-code / codex）的实际会话。为体现该通道的开发过程与
-> 工作量，特将 DSH 会话整理为可读摘要置于 `supplementary/dsh-logs/DSH_SESSIONS_SUMMARY.md`。
+> 说明：MiMo 账单导出截至 2026-09-11；09-13 之后由 `logs/` 里的 Claude Code 原始 JSONL 接续核验。
+> **09-18 之后 DSH 等五端仍在继续工作**，其完整用量记在**项目内部台账**，**不进本仓**（规则见 5.4）——
+> 本表只放能在 `logs/` 或 `docs/token_usage/` 找到出处的数字，不做估算、不把内部台账当官方工时。
 
----
+### 5.4 两套口径的硬规则
 
-> **队内协作模式（2026-09-14）**：主力为 DeepSeek Harness（实现/构建/烧录/真机验证/文档/提交）；Claude Code + 小米 MiMo 在本机以**辅助**身份参与（独立复核、二次校对、产出可入 `logs/` 的日志）。`logs/` 只收白名单工具的真实会话，**禁止为凑数刷日志**；DSH 记录放 `supplementary/dsh-logs/`，**仅补充佐证 AI**。项目记忆见根目录 `CLAUDE.md`。
+1. **官方口径**：仓库里出现的每一个 AI 会话 / 用量数字，必须能在 `logs/XPQHyue/`（原始 JSONL + manifest）或 `docs/token_usage/`（平台导出账单）找到出处。
+2. **非官方台账**：DSH 原体 / VM 端 / WORK 端 / K3DSH 的完整用量只记在项目本机台账，**不写进 README、不写进 PPT、不进口播**。
+3. **禁止为凑数刷日志**：`logs/` 只收白名单工具的真实会话；这条从初赛执行至今，没有例外。
+
+### 5.5 AI 具体做了什么
+
+- **需求拆解 / 方案设计**：把 phyphox 功能拆成板块与实验页清单，对齐 UI 骨架规范；
+- **编码**：LVGL 页面、本队传感器驱动、FFT / 自相关算法、`pw_scope` / `pw_graph` 曲线控件（官方 EPIC 后端非本队编写）；
+- **调试**：FPS 探针、bench 注入、崩溃 triage（SFBL 卡死、触控、帧缓冲冻结定位）；
+- **蓝牙**：HCI emulate 表逐条取证与放行（14 条）、BNEP/PAN 帧层与 41 项单测、MIoT 广播 19 项单测、PANU 六处缺陷定位（含 `rx.mtu=0` 这种"反向坑"：不设值反而主动宣告 MTU=0）；
+- **文档与材料**：README / 技术报告 / 答辩稿 / 视频脚本；初赛后的口径由"唯一口径表 + 裁决台账"约束，避免同一数字多处不一致。
+
+> **队内协作模式（2026-11-04 更新）**：主力为 DeepSeek Harness 多端协作（DSH 原体统筹 + VM 端持代码 + WORK 端验收 + K3DSH 只读调研 + MiMo 舰队并行调研）；官方白名单工具 **Claude Code + 小米 MiMo** 承担可审计的编码与会话留痕。`logs/` 只收白名单工具的真实会话，**禁止为凑数刷日志**；DSH 记录放 `supplementary/dsh-logs/`，**仅补充佐证 AI**。项目记忆见根目录 `CLAUDE.md`。
 
 ## 六、自建 Skill
 
