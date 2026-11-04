@@ -137,7 +137,7 @@ int32_t pw_bnep_parse_setup_rsp(const uint8_t *buf, uint32_t len, uint16_t *code
 int32_t pw_bnep_build_filter_set(uint8_t *buf, uint32_t cap,
                                  const struct pw_bnep_ftype *ranges, uint8_t nranges)
 {
-  uint32_t need = 2u + (uint32_t)nranges * 4u;
+  uint32_t need = 4u + (uint32_t)nranges * 4u;
   uint8_t  i;
 
   if (buf == NULL || ranges == NULL || nranges == 0 || cap < need)
@@ -148,10 +148,15 @@ int32_t pw_bnep_build_filter_set(uint8_t *buf, uint32_t cap,
   buf[0] = PW_BNEP_CONTROL;              /* 不带 UUID */
   buf[1] = PW_BNEP_CTL_FILTER_SET;
 
+  /* 2 字节「过滤器列表长度」= 字节数（4 * nranges），不是条目个数。
+   * 依据 AOSP Fluoride bnep_utils.cc:264-272（UINT16_TO_BE_STREAM(4 * nfilters)），
+   * 接收侧 :786-802 也是先读 len 再跳 len 字节。缺它 → 对端判 bad length。 */
+  bnep_put_be16(&buf[2], (uint16_t)(4u * (uint32_t)nranges));
+
   for (i = 0; i < nranges; i++)
     {
-      bnep_put_be16(&buf[2 + i * 4], ranges[i].start);
-      bnep_put_be16(&buf[2 + i * 4 + 2], ranges[i].end);
+      bnep_put_be16(&buf[4 + i * 4], ranges[i].start);
+      bnep_put_be16(&buf[4 + i * 4 + 2], ranges[i].end);
     }
 
   return (int32_t)need;
