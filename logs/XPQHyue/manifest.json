@@ -565,7 +565,17 @@
       "collection_mode": "cli",
       "health": "ok",
       "model": "mimo-v2.5-pro"
+    },
+    {
+      "session_id": "4bcc6388-4a81-4df6-bd96-f201e6841aac",
+      "tool": "claude-code",
+      "started_at": "2026-11-03T12:55:14.728Z",
+      "last_event_at": "2026-11-03T13:07:13.894Z",
+      "event_count": 214,
+      "file_path": "logs/XPQHyue/2026-11-03/claude-code__4bcc6388-4a81-4df6-bd96-f201e6841aac.jsonl",
+      "collection_mode": "cli",
+      "health": "ok"
     }
   ],
-  "updated_at": "2026-09-18T10:04:55.591888+00:00"
+  "updated_at": "2026-11-04T08:43:55.425835+00:00"
 }
