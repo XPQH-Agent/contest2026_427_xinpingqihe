@@ -88,6 +88,7 @@
 #include "pw_analysis.h"
 #include "phywear_sensors.h"
 #include "phywear_ui.h"
+#include "pw_bounce.h"
 #include "pw_splash.h"
 #include "pw_power.h"
 #include "pw_btprobe.h"
@@ -116,6 +117,8 @@
 #include "pw_shot.h"
 #include "pw_skill.h"
 #include "pw_watch.h"
+#include "pw_store.h"
+#include "pw_settings.h"
 #include "pw_tone.h"
 #include "phywear_raw.h"
 
@@ -154,7 +157,11 @@ static struct timespec   g_perf_t0;       /* 本轮渲染起点 */
 
 /* 默认开着：用户现在就要用眼睛验证"卡不卡"，而他没有终端敲命令。
  * 提交前改回 0（或用 `phywear fps off` 临时关掉）。 */
-static volatile int g_fps_show = 0;   /* 默认关：仪表只在 `phywear fps on` 时出现 */
+static volatile int g_fps_show = 0;
+
+/* 长按电源键：按键线程只置请求，菜单必须由 GUI 线程创建 */
+
+static volatile int g_power_req;   /* 默认关：仪表只在 `phywear fps on` 时出现 */
 static lv_obj_t    *g_fps_lab;
 static uint32_t     g_stat_win_ms;      /* 本统计窗口起点 */
 static uint32_t     g_stat_win_frames;  /* 窗口起点时的帧计数 */
@@ -345,6 +352,158 @@ static void pw_pin_sync(void)
       lv_tick_get() > g_pin_deadline_ms)
     {
       lv_obj_add_flag(g_pin_lab, LV_OBJ_FLAG_HIDDEN);
+    }
+}
+
+
+/****************************************************************************
+ * 设置落盘（掉电保留）
+ *
+ * pw_store 只认一个 24 字节的结构；这里负责把"当前 UI 状态"收集起来，
+ * 以及开机时把它套回去。fps 开关是本文件里的 static，所以放在这里做。
+ ****************************************************************************/
+
+static void pw_settings_collect(struct pw_store_state_s *st)
+{
+  memset(st, 0, sizeof(*st));
+  st->theme    = (uint8_t)(pw_ui_theme() != 0);
+  st->zh       = (uint8_t)(pw_i18n_is_zh() ? 1 : 0);
+  st->fps_show = (uint8_t)(g_fps_show ? 1 : 0);
+}
+
+void pw_settings_save(void)
+{
+  struct pw_store_state_s st;
+
+  pw_settings_collect(&st);
+  pw_store_save(&st);
+}
+
+/* 后台读 flash：**不能在 main 里同步读**。
+ * T-0017 实测：main 早期或稍后直接 open("/dev/config0") 都会把整机挂死
+ * （串口只有 SFBL/ABCD，连 NSH 都起不来）；而从 NSH 另起一个进程读同一个
+ * 设备却完全正常。差别在任务上下文，不在设备本身。故改为"延时 + 独立任务"，
+ * 读到之后再交给 GUI 线程应用（LVGL 对象只许 GUI 线程碰）。
+ */
+
+static volatile int g_set_ready;      /* 后台任务已读到记录 */
+static volatile int g_set_theme;      /* 读到主题（-1 = 无记录） */
+static volatile int g_set_zh;
+static volatile int g_set_fps;
+
+static void pw_settings_async_task(void)
+{
+  struct pw_store_state_s st;
+
+  usleep(2500 * 1000);
+
+  if (pw_store_load(&st) < 0)
+    {
+      g_set_theme = -1;
+      g_set_ready = 1;
+      return;
+    }
+
+  g_set_theme = st.theme ? 1 : 0;
+  g_set_zh    = st.zh ? 1 : 0;
+  g_set_fps   = st.fps_show ? 1 : 0;
+  g_set_ready = 1;
+}
+
+void pw_settings_load_async(void)
+{
+  nxtask_create("pwset", 110, NULL, 4096,
+                (main_t)pw_settings_async_task, NULL, NULL);
+}
+
+/****************************************************************************
+ * 长按电源键监视
+ *
+ * /dev/buttons 每次 read 返回一个 32 位按钮位图（btn_buttonset_t）。
+ * 本板只注册了 KEY2 一颗，bit0。按住超过 PW_PWR_HOLD_MS 就请求弹菜单。
+ * 之所以要抢在 PMU 之前：硬件长按会直接掉电、松手又起来，用户看到"自动重启"。
+ ****************************************************************************/
+
+#define PW_PWR_HOLD_MS  1200
+#define PW_PWR_POLL_MS  50
+
+static void *pw_key_monitor(void *arg)
+{
+  uint32_t mask = 0;
+  int64_t press_ms = 0;
+  bool pressed = false;
+  int fd;
+
+  (void)arg;
+
+  fd = open("/dev/buttons", O_RDONLY | O_NONBLOCK);
+  if (fd < 0)
+    {
+      syslog(LOG_WARNING, "[key] /dev/buttons 打开失败 %d，长按菜单不可用\n",
+             -errno);
+      return NULL;
+    }
+
+  for (;;)
+    {
+      uint32_t v = 0;
+      ssize_t n = read(fd, &v, sizeof(v));
+
+      if (n == (ssize_t)sizeof(v))
+        {
+          bool down = (v & 1u) != 0;
+
+          if (down && !pressed)
+            {
+              pressed = true;
+              struct timespec ts;
+              clock_gettime(CLOCK_MONOTONIC, &ts);
+              press_ms = (int64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+            }
+          else if (!down && pressed)
+            {
+              pressed = false;
+            }
+        }
+
+      if (pressed && g_power_req == 0)
+        {
+          struct timespec ts;
+          int64_t now;
+
+          clock_gettime(CLOCK_MONOTONIC, &ts);
+          now = (int64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+
+          if (now - press_ms >= PW_PWR_HOLD_MS)
+            {
+              g_power_req = 1;
+              pressed = false;  /* 一次长按只弹一次 */
+            }
+        }
+
+      usleep(PW_PWR_POLL_MS * 1000);
+    }
+
+  (void)mask;
+  return NULL;
+}
+
+static void pw_key_monitor_start(void)
+{
+  static bool started;
+  pthread_t tid;
+
+  if (started)
+    {
+      return;
+    }
+
+  if (pthread_create(&tid, NULL, pw_key_monitor, NULL) == 0)
+    {
+      pthread_detach(tid);
+      started = true;
+      syslog(LOG_INFO, "[key] 长按电源键监视已启动（%d ms）\n",
+             PW_PWR_HOLD_MS);
     }
 }
 
@@ -1160,6 +1319,7 @@ int pw_cap_open(const char *name)
   else if (strcmp(name, "pendulum")  == 0) scr = pw_pendulum_screen();
   else if (strcmp(name, "spring")    == 0) scr = pw_spring_screen();
   else if (strcmp(name, "centri")    == 0) scr = pw_centri_screen();
+  else if (strcmp(name, "bounce")    == 0) scr = pw_bounce_screen();
   else if (strcmp(name, "incline")   == 0) scr = pw_incline_screen();
   else if (strcmp(name, "ruler")     == 0) scr = pw_ruler_screen();
   else if (strcmp(name, "spec_accel")== 0) scr = pw_spec_accel_screen();
@@ -1326,6 +1486,19 @@ static FAR const char *pw_shot_label(int idx)
 
 static volatile int g_gui_up;                 /* GUI thread has LVGL up */
 static volatile int g_cap_req_state = PW_SHOT_REQ_IDLE;
+
+/* 主题切换请求（-1=无请求，0=方格，1=单排）。NSH 里改不了 LVGL 对象，
+ * 所以命令只置这个标志，真正的重建在 GUI 主循环里做。 */
+
+static volatile int g_theme_req = -1;
+
+/* 弹跳测距的在线请求：0=无，1=开始，2=停止。
+ * 必须交给 GUI 进程执行 —— NSH 里 `phywear bounce on` 是**另一个进程**，
+ * 它起的 pthread 会在命令返回、进程退出时被一起干掉（实测：打印 started
+ * 但一条 impact 都没有）。 */
+
+static volatile int g_bounce_req = 0;
+static volatile int g_bounce_auto = 0;   /* 自动连测：一次结果出完 2 s 后自动重开 */
 static char         g_cap_req_page[32];
 static struct timespec g_cap_req_t0;
 
@@ -1627,6 +1800,58 @@ int main(int argc, FAR char *argv[])
       return pw_bt_bredr_probe();
     }
 
+  /* 掉电保留设置：查看当前 flash 记录 */
+
+  if (argc > 1 && strcmp(argv[1], "store") == 0)
+    {
+      return pw_store_report() < 0 ? 1 : 0;
+    }
+
+  /* 读设置：给 GUI 用的"无 flash 访问"版本 —— GUI 进程碰 /dev/config0 会挂死，
+   * 所以设置一律由独立进程读写，GUI 只负责 spawn + 读 /tmp 结果文件。 */
+
+  if (argc > 1 && strcmp(argv[1], "sget") == 0)
+    {
+      struct pw_store_state_s st;
+
+      if (pw_store_load(&st) < 0)
+        {
+          printf("none\n");
+        }
+      else
+        {
+          printf("%u %u %u\n", st.theme, st.zh, st.fps_show);
+        }
+
+      fflush(stdout);
+      return 0;
+    }
+
+  /* 写设置：phywear ssave <theme> <zh> <fps> */
+
+  if (argc > 1 && strcmp(argv[1], "ssave") == 0)
+    {
+      struct pw_store_state_s st;
+
+      memset(&st, 0, sizeof(st));
+      st.theme    = (uint8_t)(argc > 2 ? atoi(argv[2]) : 0);
+      st.zh       = (uint8_t)(argc > 3 ? atoi(argv[3]) : 1);
+      st.fps_show = (uint8_t)(argc > 4 ? atoi(argv[4]) : 0);
+
+      printf("[store] save theme=%u zh=%u fps=%u -> %d\n",
+             st.theme, st.zh, st.fps_show, pw_store_save(&st));
+      fflush(stdout);
+      return 0;
+    }
+
+  /* 电源菜单（没有物理长按也能验证 UI） */
+
+  if (argc > 1 && strcmp(argv[1], "powermenu") == 0)
+    {
+      g_power_req = 1;
+      return 0;
+    }
+
   if (argc > 1 && strcmp(argv[1], "bthci") == 0)
     {
       pw_bt_probe();
@@ -1635,6 +1860,79 @@ int main(int argc, FAR char *argv[])
 
   /* 电源快照（T-0002）：随时可读，串口核对电量/充电/引脚原始 mV。
    * 与开机那一行同一个函数，便于"插拔前后各打一次"做对比。 */
+
+  if (argc > 1 && strcmp(argv[1], "bounce") == 0)
+    {
+      const char *sub = argc > 2 ? argv[2] : "status";
+
+      if (strcmp(sub, "on") == 0)
+        {
+          g_bounce_req = 1;
+
+          for (int i = 0; i < 50 && g_bounce_req != 0; i++)
+            {
+              usleep(20 * 1000);
+            }
+
+          printf("[bounce] start requested (running=%d)\n", pw_bounce_active());
+        }
+      else if (strcmp(sub, "auto") == 0)
+        {
+          g_bounce_auto = 1;
+          printf("[bounce] auto=on（每 2 s 自动重开一次测量）\n");
+        }
+      else if (strcmp(sub, "off") == 0)
+        {
+          g_bounce_auto = 0;
+          g_bounce_req = 2;
+
+          for (int i = 0; i < 100 && g_bounce_req != 0; i++)
+            {
+              usleep(20 * 1000);
+            }
+
+          printf("[bounce] stop requested\n");
+        }
+
+      pw_bounce_report();
+      return OK;
+    }
+
+  if (argc > 1 && strcmp(argv[1], "theme") == 0)
+    {
+      int want = -1;
+
+      if (argc > 2)
+        {
+          if (strcmp(argv[2], "list") == 0 || strcmp(argv[2], "1") == 0)
+            {
+              want = 1;
+            }
+          else if (strcmp(argv[2], "grid") == 0 || strcmp(argv[2], "0") == 0)
+            {
+              want = 0;
+            }
+        }
+
+      if (want < 0)
+        {
+          printf("[theme] 当前=%s（用法：phywear theme grid|list）\n",
+                 pw_ui_theme() ? "单排列表" : "方格宫格");
+          return OK;
+        }
+
+      /* 交给 GUI 线程重建；这里只等它生效，便于脚本下一步就截图 */
+
+      g_theme_req = want;
+
+      for (int i = 0; i < 50 && g_theme_req >= 0; i++)
+        {
+          usleep(20 * 1000);
+        }
+
+      printf("[theme] -> %s\n", want ? "单排列表" : "方格宫格");
+      return OK;
+    }
 
   if (argc > 1 && strcmp(argv[1], "power") == 0)
     {
@@ -2328,6 +2626,7 @@ int main(int argc, FAR char *argv[])
   /* 之后 `phywear shot` 从别的任务进来时，只投请求、不再初始化显示 */
 
   g_gui_up = 1;
+  pw_key_monitor_start();
 
   /* 主菜单根屏（板块宫格）；各板块按需构建子屏 */
 
@@ -2361,10 +2660,19 @@ int main(int argc, FAR char *argv[])
        * 只走"正常启动"这一支，截图/bench/raw 等取证模式不插广告。
        */
 
+      /* 掉电保留：在第一次建根屏之前套用上次的设置（主题/语言/帧率表） */
+
+
       pw_splash_show(2800);
 
       pw_ui_root();
       pw_splash_release();
+
+      /* 掉电保留：放到 UI 起来之后再读 flash。
+       * 早期读 /dev/config0 会把整机挂住（T-0017 排查记录），
+       * 此时驱动与缓存都已就绪，实测可正常返回。 */
+
+      pw_settings_load_async();
 
       /* [AGENT-WIN11] 电源快照：电量 / 充电状态，串口可核对 */
       pw_power_report();
@@ -2560,6 +2868,74 @@ int main(int argc, FAR char *argv[])
             }
         }
 
+        /* 弹跳测距自动连测：结果出完（线程退出）2 s 后自动开始下一次 */
+
+        if (g_bounce_auto && g_bounce_req == 0 && !pw_bounce_active())
+          {
+            static int64_t auto_last;
+
+            struct timespec an;
+
+            clock_gettime(CLOCK_MONOTONIC, &an);
+
+            int64_t nowms = (int64_t)an.tv_sec * 1000 + an.tv_nsec / 1000000;
+
+            if (nowms - auto_last > 2000)
+              {
+                auto_last = nowms;
+                pw_bounce_start();
+              }
+          }
+
+        /* 弹跳测距：由 GUI 进程真正起停采样线程 */
+
+        if (g_bounce_req != 0)
+          {
+            if (g_bounce_req == 1)
+              {
+                pw_bounce_start();
+              }
+            else
+              {
+                pw_bounce_stop();
+              }
+
+            g_bounce_req = 0;
+          }
+
+        /* 后台读到的掉电保留设置：在这里套用（GUI 线程） */
+
+        if (g_set_ready)
+          {
+            int theme = g_set_theme;
+
+            g_set_ready = 0;
+            if (theme >= 0)
+              {
+                pw_i18n_set_zh(g_set_zh != 0);
+                g_fps_show = g_set_fps ? 1 : 0;
+                if (pw_ui_theme() != theme)
+                  {
+                    pw_ui_set_theme(theme);
+                    pw_ui_root();
+                  }
+                printf("[store] loaded theme=%d zh=%d fps=%d\n",
+                       theme, g_set_zh, g_set_fps);
+                fflush(stdout);
+              }
+          }
+
+        /* 主题切换请求：立刻重建根屏（RAM 里生效，重启回方格） */
+
+        if (g_theme_req >= 0)
+          {
+            pw_ui_set_theme(g_theme_req);
+            printf("[theme] %s\n", g_theme_req ? "单排列表" : "方格宫格");
+            fflush(stdout);
+            g_theme_req = -1;
+            pw_ui_root();
+          }
+
         /* 远程截图（T-0004）：建屏 → 等 400 ms 让这一屏画稳 → 出图 */
 
         if (g_cap_req_state == PW_SHOT_REQ_PENDING)
@@ -2595,6 +2971,14 @@ int main(int argc, FAR char *argv[])
         /* AI Agent 桥：执行挂起的"打开某页"请求（必须在 GUI 线程内） */
 
         pw_ai_poll();
+
+        /* 长按电源键：菜单只能在 GUI 线程里建 */
+
+        if (g_power_req != 0)
+          {
+            g_power_req = 0;
+            pw_ui_power_menu();
+          }
 
         /* 主动场景：自己发现"手表在持续摆动"，并把事件推给 AI Agent。
          * 内部按 100 ms 限频，不参与截图/实验页的采样节奏。 */

@@ -40,6 +40,8 @@
 
 #include "phywear_ui.h"
 #include "pw_icons.h"
+#include "pw_logos.h"
+#include "pw_bounce.h"
 #include "phywear_imu.h"
 #include "phywear_i18n.h"
 #include "pw_graph.h"
@@ -57,6 +59,7 @@
 #include "pw_bt.h"
 #include "pw_btgatt.h"
 #include "pw_power.h"
+#include "pw_settings.h"
 
 /****************************************************************************
  * Private Definitions
@@ -1040,7 +1043,7 @@ static lv_obj_t *ui_mech_open(void)
     { PW_STR(EXP_PENDULUM_NAME), PW_STR(EXP_PENDULUM_DESC), pw_pendulum_screen },
     { PW_STR(SPRING_TITLE),      PW_STR(EXP_SPRING_DESC),   pw_spring_screen },
     { PW_STR(CENTRI_TITLE),      PW_STR(EXP_CENTRI_DESC),   pw_centri_screen },
-    { PW_STR(EXP_BOUNCE_NAME),   PW_STR(EXP_BOUNCE_DESC),   NULL },
+    { PW_STR(EXP_BOUNCE_NAME),   PW_STR(EXP_BOUNCE_DESC),   pw_bounce_screen },
   };
   return pw_board_list(PW_STR(UI_MECHANICS), PW_ACC_MECH,
                        items, sizeof(items) / sizeof(items[0]));
@@ -1097,12 +1100,37 @@ static lv_obj_t *ui_every_open(void)
 
 static lv_obj_t *ui_custom_open(void)
 {
-  const struct pw_exp_s items[] =
-  {
-    { PW_STR(EXP_BUILDER_NAME), PW_STR(EXP_BUILDER_DESC), NULL },
-  };
-  return pw_board_list(PW_STR(UI_CUSTOM), PW_ACC_CUSTOM,
-                       items, sizeof(items) / sizeof(items[0]));
+  /* 自定义板块：本轮只做诚实标注（T-0016 §30.4），不加实验搭建器功能。
+   * 入口做成可点，进去看到的是"为什么现在只有一条 + 去用哪个板块"，
+   * 比一个点了没反应的置灰卡片更清楚。 */
+
+  lv_obj_t *scr = pw_scr_new();
+  lv_obj_t *cont = pw_topbar(scr, PW_STR(UI_CUSTOM));
+  lv_obj_t *row;
+  lv_obj_t *lab;
+
+  row = pw_card_new(cont, PW_SCREEN_W - 2 * MENU_X0, 64, PW_COL_CARD);
+  lv_obj_set_pos(row, MENU_X0, MENU_GAP);
+  lv_obj_set_style_bg_color(row, PW_COL_CARD, LV_STATE_PRESSED);
+
+  lab = pw_label_new(row, PW_STR(EXP_BUILDER_NAME), PW_FNT_MED, PW_COL_FAINT);
+  lv_obj_set_pos(lab, 22, 9);
+
+  lab = pw_label_new(row, PW_STR(EXP_BUILDER_DESC), PW_FNT_BODY, PW_COL_FAINT);
+  lv_obj_set_pos(lab, 22, 34);
+
+  lab = pw_label_new(row, PW_STR(UI_PLANNED), PW_FNT_BODY, PW_COL_FAINT);
+  lv_obj_align(lab, LV_ALIGN_RIGHT_MID, -14, 0);
+
+  /* 一句话说明 + 替代路径（用字都在字库子集内） */
+
+  lab = pw_label_new(cont, "当前请用工具板块的 IMU / 倾角 / 尺子",
+                     PW_FNT_BODY, PW_COL_DIM);
+  lv_obj_set_pos(lab, MENU_X0 + 4, MENU_GAP + 64 + 16);
+  lv_obj_set_width(lab, PW_SCREEN_W - 2 * MENU_X0 - 8);
+  lv_label_set_long_mode(lab, LV_LABEL_LONG_WRAP);
+
+  return scr;
 }
 
 int pw_ui_open_board(int idx)
@@ -1239,8 +1267,12 @@ static lv_obj_t *ui_ai_open(void)
                              PW_COL_DIM);
   lv_obj_set_pos(g_ai_status, 120, 10);
 
+  lab = pw_label_new(card, "设备无网络，需手机 PPP 链路启用", PW_FNT_BODY,
+                     PW_COL_FAINT);
+  lv_obj_set_pos(lab, 14, 62);
+
   lab = pw_label_new(card, PW_STR(AICOACH_LATEST), PW_FNT_BODY, PW_COL_DIM);
-  lv_obj_set_pos(lab, 14, 38);
+  lv_obj_set_pos(lab, 14, 88);
 
   g_ai_latest = pw_label_new(card, PW_STR(AICOACH_EMPTY), PW_FNT_SMALL,
                              PW_ACC_ACTIVE);
@@ -1295,6 +1327,7 @@ static void ui_lang_cb(lv_event_t *e)
   bool zh = (lv_event_get_user_data(e) != NULL);
 
   pw_i18n_set_zh(zh);
+  pw_settings_save();
   /* 延迟到下一轮回调重建根屏，避免在对象删除回调里改树 *  */
   lv_async_call(pw_ui_rebuild_root, NULL);
 }
@@ -1607,6 +1640,65 @@ lv_obj_t *pw_voice_screen(void)
   return scr;
 }
 
+/* ── 主题与图标色相 ─────────────────────────────────────────────────
+ *
+ * 主题两套：方格（2×4 宫格，B 方案）/ 单排（分栏列表，A 方案）。
+ * 只存在 RAM 里 —— 本板没有 NVS 后端（CONFIG_SETTINGS 未开），重启回方格。
+ *
+ * 图标色相：8 个低饱和高明度的颜色，靠 image_recolor 运行时染色，
+ * 不占 flash。不用它时是单一中性色，用上之后仍能一眼分区。
+ */
+
+typedef enum
+{
+  PW_THEME_GRID = 0,
+  PW_THEME_LIST = 1
+} pw_theme_t;
+
+static pw_theme_t g_theme = PW_THEME_GRID;
+
+static const uint32_t k_icon_hue[8] =
+{
+  0x7DD3FC,   /* 原始传感器 天蓝 */
+  0x86EFAC,   /* 力学       薄荷绿 */
+  0xFCD34D,   /* 声学       琥珀 */
+  0xC4B5FD,   /* 工具       淡紫 */
+  0x67E8F9,   /* 计时       青 */
+  0xFDBA74,   /* 生活       杏 */
+  0x94A3B8,   /* 自定义     灰（未上线） */
+  0xF9A8D4,   /* AI 教练    粉 */
+};
+
+void pw_ui_set_theme(int list_mode)
+{
+  g_theme = list_mode ? PW_THEME_LIST : PW_THEME_GRID;
+}
+
+int pw_ui_theme(void)
+{
+  return (int)g_theme;
+}
+
+static void ui_theme_async(void *unused)
+{
+  (void)unused;
+  pw_ui_root();
+}
+
+static void ui_theme_cb(lv_event_t *e)
+{
+  g_theme = (lv_event_get_user_data(e) != NULL) ? PW_THEME_LIST
+                                                : PW_THEME_GRID;
+
+  /* 写 flash 会阻塞几十 ms，但只在用户点"方格/单排"时发生一次 */
+
+  pw_settings_save();
+
+  /* 不能在事件回调里直接删掉自己所在的屏，交给 LVGL 异步执行 */
+
+  lv_async_call(ui_theme_async, NULL);
+}
+
 lv_obj_t *pw_settings_screen(void)
 {
   lv_obj_t *scr;
@@ -1653,10 +1745,42 @@ lv_obj_t *pw_settings_screen(void)
   lv_obj_center(lab);
   lv_obj_add_event_cb(btn, ui_lang_cb, LV_EVENT_CLICKED, (void *)1);
 
+  /* --- 显示方式（主题） --- */
+
+  card = pw_card_new(cont, PW_SCREEN_W - 2 * MENU_X0, 118, PW_COL_CARD);
+  lv_obj_set_pos(card, MENU_X0, MENU_GAP + 130);
+
+  pw_section_bar(card, PW_ACC_ACTIVE, 16, 14);
+  lab = pw_label_new(card, "显示方式", PW_FNT_MED, PW_COL_TEXT);
+  lv_obj_set_pos(lab, 26, 12);
+
+  /* 提示行只用 ASCII：中文字库是 512 字子集，"宫/栏/列/界" 都不在，
+   * 实测会渲染成豆腐块（同关于页那次）。 */
+
+  lab = pw_label_new(card, "2x4 grid  /  1 column", PW_FNT_BODY,
+                     PW_COL_FAINT);
+  lv_obj_set_pos(lab, 16, 46);
+
+  btn = pw_card_new(card, 120, 40,
+                    g_theme == PW_THEME_GRID ? PW_COL_CARD_LT : PW_COL_CARD);
+  lv_obj_set_pos(btn, 16, 70);
+  lab = pw_label_new(btn, "方格", PW_FNT_MED,
+                     g_theme == PW_THEME_GRID ? PW_ACC_ACTIVE : PW_COL_DIM);
+  lv_obj_center(lab);
+  lv_obj_add_event_cb(btn, ui_theme_cb, LV_EVENT_CLICKED, NULL);
+
+  btn = pw_card_new(card, 120, 40,
+                    g_theme == PW_THEME_LIST ? PW_COL_CARD_LT : PW_COL_CARD);
+  lv_obj_set_pos(btn, 168, 70);
+  lab = pw_label_new(btn, "单排", PW_FNT_MED,
+                     g_theme == PW_THEME_LIST ? PW_ACC_ACTIVE : PW_COL_DIM);
+  lv_obj_center(lab);
+  lv_obj_add_event_cb(btn, ui_theme_cb, LV_EVENT_CLICKED, (void *)1);
+
   /* --- 关于 --- */
 
   card = pw_card_new(cont, PW_SCREEN_W - 2 * MENU_X0, 64, PW_COL_CARD);
-  lv_obj_set_pos(card, MENU_X0, MENU_GAP + 130);
+  lv_obj_set_pos(card, MENU_X0, MENU_GAP + 260);
 
   lab = pw_label_new(card, PW_STR(UI_ABOUT), PW_FNT_MED, PW_COL_TEXT);
   lv_obj_set_pos(lab, 16, 20);
@@ -1672,22 +1796,73 @@ lv_obj_t *pw_about_screen(void)
 {
   lv_obj_t *scr;
   lv_obj_t *cont;
-  lv_obj_t *card;
   lv_obj_t *lab;
+  lv_obj_t *img;
+  int i;
+
+  /* 关于页按 WORK 端 UI-SPEC §四 D 排：双标识 → 字标 → 副标 → 版本 → 键值行。
+   * 这一页是**唯一使用真实标识**的地方（MI 与 openvela 都是官方素材），
+   * 所以它不用卡片容器，直接排在页面底色上，留白按规格给。 */
+
+  /* 标签用字必须落在 pw_font_14 的 512 字子集里：芯(0x82AF)、玩(0x73A9)
+   * 都不在，实测会渲染成豆腐块；换成 主板(0x4E3B/0x677F)、可用(0x53EF/0x7528)
+   * 后正常。以后新增文案先查子集再写。 */
+
+  static const char *const kv_k[] =
+  {
+    "设备名", "固件", "主板", "板块",
+  };
+  static const char *const kv_v[] =
+  {
+    "PhyWear", "v0.1.0", "SF32LB52", "13 个可用",
+  };
 
   scr = pw_scr_new();
   cont = pw_topbar(scr, PW_STR(UI_ABOUT));
 
-  card = pw_card_new(cont, PW_SCREEN_W - 2 * MENU_X0, 330, PW_COL_CARD);
-  lv_obj_set_pos(card, MENU_X0, MENU_GAP);
+  /* 双标识：各 48px，间距 20，整体居中（116 宽 → x=137） */
 
-  lab = pw_label_new(card, "PhyWear v0.1", PW_FNT_LARGE, PW_ACC_ACTIVE);
-  lv_obj_set_pos(lab, 16, 14);
+  img = lv_image_create(cont);
+  lv_image_set_src(img, &pw_logo_mi_48);
+  lv_obj_set_pos(img, 137, 66 - PW_TOPBAR_H);
 
-  lab = pw_label_new(card, PW_STR(ABOUT_BODY), PW_FNT_BODY, PW_COL_DIM);
-  lv_obj_set_pos(lab, 16, 54);
-  lv_obj_set_width(lab, PW_SCREEN_W - 2 * MENU_X0 - 32);
-  lv_label_set_long_mode(lab, LV_LABEL_LONG_WRAP);
+  img = lv_image_create(cont);
+  lv_image_set_src(img, &pw_logo_ov_48);
+  lv_obj_set_pos(img, 137 + 48 + 20, 66 - PW_TOPBAR_H);
+
+  lab = pw_label_new(cont, "PhyWear", PW_FNT_LARGE, PW_COL_TEXT);
+  lv_obj_align(lab, LV_ALIGN_TOP_MID, 0, 128 - PW_TOPBAR_H);
+
+  lab = pw_label_new(cont, PW_STR(UI_SUBTITLE), PW_FNT_BODY, PW_COL_DIM);
+  lv_obj_align(lab, LV_ALIGN_TOP_MID, 0, 160 - PW_TOPBAR_H);
+
+  lab = pw_label_new(cont, "v0.1.0", PW_FNT_BODY, PW_COL_FAINT);
+  lv_obj_align(lab, LV_ALIGN_TOP_MID, 0, 182 - PW_TOPBAR_H);
+
+  /* 键值行：y=216 起，行距 34，分隔线 x 20→370 */
+
+  for (i = 0; i < 4; i++)
+    {
+      int y = 216 - PW_TOPBAR_H + i * 34;
+
+      lab = pw_label_new(cont, kv_k[i], PW_FNT_BODY, PW_COL_DIM);
+      lv_obj_set_pos(lab, 20, y);
+
+      lab = pw_label_new(cont, kv_v[i], PW_FNT_BODY, PW_COL_TEXT);
+      lv_obj_align(lab, LV_ALIGN_TOP_RIGHT, -20, y);
+
+      if (i < 3)
+        {
+          lv_obj_t *line = lv_obj_create(cont);
+          lv_obj_set_size(line, PW_SCREEN_W - 40, 1);
+          lv_obj_set_pos(line, 20, y + 26);
+          lv_obj_set_style_bg_color(line, PW_COL_LINE, 0);
+          lv_obj_set_style_bg_opa(line, LV_OPA_40, 0);
+          lv_obj_set_style_border_width(line, 0, 0);
+          lv_obj_set_style_radius(line, 0, 0);
+          lv_obj_remove_flag(line, LV_OBJ_FLAG_SCROLLABLE);
+        }
+    }
 
   return scr;
 }
@@ -1700,6 +1875,84 @@ lv_obj_t *pw_about_screen(void)
  *
  ****************************************************************************/
 
+/****************************************************************************
+ * Name: root_build_list
+ *
+ * Description:
+ *   分栏列表布局（UI-SPEC §四 A）。八行，行高 46，图标 24 @ x=20，
+ *   标题 16 / 副标 14 @ x=56，右侧 chevron，行间发丝线 x=56→376。
+ *
+ *   行本身是 390x46 的透明容器：整行可点（点击区远大于 44x44），
+ *   按压反馈用统一的 pw_press_style()。
+ *
+ ****************************************************************************/
+
+static void root_build_list(lv_obj_t *scr, const struct pw_board_s *boards,
+                            int nboards)
+{
+  int i;
+
+  for (i = 0; i < nboards; i++)
+    {
+      const struct pw_board_s *b = &boards[i];
+      int y = 74 + i * 46;
+      lv_obj_t *row = lv_obj_create(scr);
+      lv_obj_t *img;
+      lv_obj_t *lab;
+
+      lv_obj_set_size(row, PW_SCREEN_W, 46);
+      lv_obj_set_pos(row, 0, y);
+      lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
+      lv_obj_set_style_border_width(row, 0, 0);
+      lv_obj_set_style_pad_all(row, 0, 0);
+      lv_obj_set_style_radius(row, 0, 0);
+      lv_obj_remove_flag(row, LV_OBJ_FLAG_SCROLLABLE);
+
+      if (b->live)
+        {
+          lv_obj_add_event_cb(row, ui_tile_cb, LV_EVENT_CLICKED,
+                              (void *)b->open);
+          pw_press_style(row);
+        }
+
+      img = lv_image_create(row);
+      lv_image_set_src(img, b->icon);
+      lv_obj_set_pos(img, 20, 11);
+      lv_obj_set_style_image_recolor(
+          img, b->live ? lv_color_hex(k_icon_hue[i]) : PW_COL_FAINT, 0);
+      lv_obj_set_style_image_recolor_opa(img, LV_OPA_COVER, 0);
+
+      lab = pw_label_new(row, b->name, PW_FNT_SMALL,
+                         b->live ? PW_COL_TEXT : PW_COL_FAINT);
+      lv_obj_set_pos(lab, 56, 4);
+
+      lab = pw_label_new(row, b->info, PW_FNT_BODY,
+                         b->live ? PW_COL_DIM : PW_COL_FAINT);
+      lv_obj_set_pos(lab, 56, 25);
+
+      if (b->live)
+        {
+          img = lv_image_create(row);
+          lv_image_set_src(img, &pw_icon_chev_24);
+          lv_obj_set_pos(img, 352, 11);
+          lv_obj_set_style_image_recolor(img, PW_COL_FAINT, 0);
+          lv_obj_set_style_image_recolor_opa(img, LV_OPA_COVER, 0);
+        }
+
+      if (i < nboards - 1)
+        {
+          lv_obj_t *ln = lv_obj_create(scr);
+          lv_obj_set_size(ln, PW_SCREEN_W - 56 - 14, 1);
+          lv_obj_set_pos(ln, 56, y + 45);
+          lv_obj_set_style_bg_color(ln, PW_COL_LINE, 0);
+          lv_obj_set_style_bg_opa(ln, LV_OPA_40, 0);
+          lv_obj_set_style_border_width(ln, 0, 0);
+          lv_obj_set_style_radius(ln, 0, 0);
+          lv_obj_remove_flag(ln, LV_OBJ_FLAG_SCROLLABLE);
+        }
+    }
+}
+
 void pw_ui_root(void)
 {
   const struct pw_board_s boards[] =
@@ -1710,7 +1963,7 @@ void pw_ui_root(void)
     { PW_STR(UI_TOOLS),       PW_STR(UI_TOOLS_DESC),  0, true,  ui_tool_open,   &pw_icon_tools_24 },
     { PW_STR(UI_TIMERS),      PW_STR(UI_TIMERS_DESC), 0, true,  ui_time_open,   &pw_icon_timer_24 },
     { PW_STR(UI_EVERYDAY),    PW_STR(UI_EVERY_DESC),  0, true,  ui_every_open,  &pw_icon_daily_24 },
-    { PW_STR(UI_CUSTOM),      PW_STR(UI_CUSTOM_DESC), 0, false, ui_custom_open, &pw_icon_custom_24 },
+    { PW_STR(UI_CUSTOM),      PW_STR(UI_CUSTOM_DESC), 0, true,  ui_custom_open, &pw_icon_custom_24 },
     { PW_STR(UI_AI_COACH),    PW_STR(UI_AI_DESC),     0, true,  ui_ai_open,     &pw_icon_ai_24 },
   };
   const int nboards = sizeof(boards) / sizeof(boards[0]);
@@ -1825,6 +2078,15 @@ void pw_ui_root(void)
     lv_obj_set_style_image_recolor_opa(more, LV_OPA_COVER, 0);
   }
 
+  /* 分栏列表主题：布局完全不同，直接走另一条构建路径 */
+
+  if (g_theme == PW_THEME_LIST)
+    {
+      root_build_list(scr, boards, nboards);
+      pw_scr_open(scr);
+      return;
+    }
+
   /* 板块宫格 2×4 */
 
   for (i = 0; i < nboards; i++)
@@ -1857,20 +2119,23 @@ void pw_ui_root(void)
 
       lv_obj_t *img = lv_image_create(tile);
       lv_image_set_src(img, b->icon);
-      lv_obj_set_pos(img, 12, 14);
-      lv_obj_set_style_image_recolor(img,
-                                     b->live ? PW_COL_ICON : PW_COL_FAINT, 0);
+      /* ⑤ 卡片内边距 = 卡片间距(8)：图标从 (12,14) 收到 (8,12)，
+       * 文字相应左移到 40，视觉上四边留白一致。 */
+
+      lv_obj_set_pos(img, 8, 12);
+      lv_obj_set_style_image_recolor(
+          img, b->live ? lv_color_hex(k_icon_hue[i]) : PW_COL_FAINT, 0);
       lv_obj_set_style_image_recolor_opa(img, LV_OPA_COVER, 0);
 
       /* 名称 + 状态 */
 
       name = pw_label_new(tile, b->name, PW_FNT_MED,
                           b->live ? PW_COL_TEXT : PW_COL_FAINT);
-      lv_obj_set_pos(name, 52, 12);
+      lv_obj_set_pos(name, 40, 12);
 
       info = pw_label_new(tile, b->info, PW_FNT_BODY,
                           b->live ? PW_COL_DIM : PW_COL_FAINT);
-      lv_obj_set_pos(info, 50, 52);
+      lv_obj_set_pos(info, 40, 52);
     }
 
   pw_scr_open(scr);
@@ -1956,4 +2221,129 @@ void pw_ui_demo_start(void)
 bool pw_ui_demo_done(void)
 {
   return g_demo_done;
+}
+
+/****************************************************************************
+ * 长按电源键菜单：关机 / 重启 / 取消
+ *
+ * 背景：这块板子长按 KEY2 由 PMU/LCPU 直接掉电，随后电源键释放又会自己起来，
+ * 用户看到的就是"关机了但马上又自动重启"。所以在软件里先截住长按，让用户
+ * 明确选一次：关机（真断电，保持关）、重启（立刻重启）、取消。
+ *
+ * 实现上放在 layer_top 上做模态层，不切屏、不重建 UI；菜单存在时吞掉点击，
+ * 避免误触到下面的卡片。
+ ****************************************************************************/
+
+static lv_obj_t *g_pwr_menu;
+
+static void pw_pwr_menu_close(void)
+{
+  if (g_pwr_menu != NULL)
+    {
+      lv_obj_delete(g_pwr_menu);
+      g_pwr_menu = NULL;
+    }
+}
+
+static void ui_pwr_cancel_cb(lv_event_t *e)
+{
+  LV_UNUSED(e);
+  pw_pwr_menu_close();
+}
+
+static void ui_pwr_off_cb(lv_event_t *e)
+{
+  LV_UNUSED(e);
+
+  /* 先落盘再断电：否则下次上电又回到默认主题/语言 */
+
+  pw_pwr_menu_close();
+  pw_power_shutdown();
+}
+
+static void ui_pwr_reboot_cb(lv_event_t *e)
+{
+  LV_UNUSED(e);
+  pw_pwr_menu_close();
+  pw_power_reboot();
+}
+
+static lv_obj_t *pw_pwr_btn(lv_obj_t *parent, const char *text, int y,
+                            lv_color_t bg, lv_event_cb_t cb)
+{
+  lv_obj_t *btn = lv_obj_create(parent);
+
+  lv_obj_remove_style_all(btn);
+  lv_obj_set_size(btn, 190, 46);
+  lv_obj_set_pos(btn, 20, y);   /* 卡片 230 宽，按钮 190：左右各 20 */
+  lv_obj_set_style_radius(btn, 10, 0);
+  lv_obj_set_style_bg_color(btn, bg, 0);
+  lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, 0);
+  lv_obj_remove_flag(btn, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_add_flag(btn, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_add_event_cb(btn, cb, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_t *lab = pw_label_new(btn, text, PW_FNT_SMALL, PW_COL_TEXT);
+  lv_obj_center(lab);
+
+  return btn;
+}
+
+void pw_ui_power_menu(void)
+{
+  if (g_pwr_menu != NULL)
+    {
+      return;
+    }
+
+  g_pwr_menu = lv_obj_create(lv_layer_top());
+  lv_obj_remove_style_all(g_pwr_menu);
+  lv_obj_set_size(g_pwr_menu, 390, 450);
+  lv_obj_set_pos(g_pwr_menu, 0, 0);
+  lv_obj_set_style_bg_color(g_pwr_menu, lv_color_black(), 0);
+  lv_obj_set_style_bg_opa(g_pwr_menu, LV_OPA_70, 0);
+  lv_obj_remove_flag(g_pwr_menu, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_add_flag(g_pwr_menu, LV_OBJ_FLAG_CLICKABLE);
+
+  lv_obj_t *card = lv_obj_create(g_pwr_menu);
+  lv_obj_remove_style_all(card);
+  lv_obj_set_size(card, 230, 214);
+  lv_obj_align(card, LV_ALIGN_CENTER, 0, 0);
+  lv_obj_set_style_radius(card, 14, 0);
+  lv_obj_set_style_bg_color(card, PW_COL_CARD, 0);
+  lv_obj_set_style_bg_opa(card, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_width(card, 1, 0);
+  lv_obj_set_style_border_color(card, PW_COL_LINE, 0);
+  lv_obj_remove_flag(card, LV_OBJ_FLAG_SCROLLABLE);
+
+  lv_obj_t *title = pw_label_new(card,
+                                 pw_i18n_is_zh() ? "请选择" : "Power",
+                                 PW_FNT_MED, PW_COL_TEXT);
+  lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 16);
+
+  /* 说明一行：为什么长按不直接关机 */
+
+  lv_obj_t *hint = pw_label_new(card,
+                                pw_i18n_is_zh() ? "长按 KEY2" : "Long press KEY2",
+                                PW_FNT_BODY, PW_COL_DIM);
+  lv_obj_align(hint, LV_ALIGN_TOP_MID, 0, 46);
+
+  pw_pwr_btn(card, pw_i18n_is_zh() ? "关机" : "Power off", 76,
+             lv_color_hex(0x7F1D1D), ui_pwr_off_cb);
+  pw_pwr_btn(card, pw_i18n_is_zh() ? "重启" : "Reboot", 130,
+             lv_color_hex(0x1E3A8A), ui_pwr_reboot_cb);
+
+  lv_obj_t *cancel = lv_obj_create(card);
+  lv_obj_remove_style_all(cancel);
+  lv_obj_set_size(cancel, 190, 30);
+  lv_obj_set_pos(cancel, 20, 178);
+  lv_obj_add_flag(cancel, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_add_event_cb(cancel, ui_pwr_cancel_cb, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_t *clab = pw_label_new(cancel,
+                                pw_i18n_is_zh() ? "取消" : "Cancel",
+                                PW_FNT_BODY, PW_COL_DIM);
+  lv_obj_center(clab);
+
+  lv_obj_move_foreground(g_pwr_menu);
 }

@@ -1,0 +1,113 @@
+{
+  "schema_version": "1.0",
+  "project": {
+    "name": "my-project",
+    "repo": "owner/repo",
+    "roots": [
+      "E:\\work\\my-project",
+      "/home/user/work/my-project"
+    ],
+    "keywords": [
+      "my-project",
+      "keyword-a"
+    ],
+    "exclude_keywords": [
+      "unrelated"
+    ],
+    "since": null,
+    "until": null,
+    "timezone": "Asia/Shanghai",
+    "include_score": 50,
+    "exclude_score": 0
+  },
+  "agent_rules": [
+    {
+      "match": "you are named K3DSH",
+      "agent_id": "k3dsh",
+      "agent_name": "K3DSH (parallel agent)",
+      "platform": "Windows/local"
+    }
+  ],
+  "sources": [
+    {
+      "id": "dsh-origin",
+      "type": "dsh",
+      "enabled": true,
+      "path": "C:\\Users\\<you>\\.dsh",
+      "agent_name": "DSH origin",
+      "platform": "Windows/local",
+      "host": "MY-PC",
+      "official": false
+    },
+    {
+      "id": "workbuddy",
+      "type": "workbuddy",
+      "enabled": true,
+      "path": "C:\\Users\\<you>\\.workbuddy",
+      "agent_name": "WorkBuddy",
+      "platform": "Windows/local",
+      "host": "MY-PC",
+      "official": false
+    },
+    {
+      "id": "claude",
+      "type": "claude",
+      "enabled": true,
+      "path": "C:\\Users\\<you>\\.claude",
+      "agent_name": "Claude Code",
+      "platform": "Windows/local",
+      "host": "MY-PC",
+      "official": false,
+      "official_tool": true
+    },
+    {
+      "id": "codex",
+      "type": "codex",
+      "enabled": true,
+      "path": "C:\\Users\\<you>\\.codex",
+      "agent_name": "Codex",
+      "platform": "Windows/local",
+      "host": "MY-PC",
+      "official": false,
+      "official_tool": true
+    },
+    {
+      "id": "official-logs",
+      "type": "official_logs",
+      "enabled": true,
+      "path": "E:\\work\\repo\\logs\\<github_login>",
+      "agent_name": "official LOGS",
+      "platform": "official",
+      "official": true,
+      "official_tool": true,
+      "login": "<github_login>",
+      "team_id": "<team_id>"
+    }
+  ],
+  "manual_agents": [
+    {
+      "agent_id": "platform-billing",
+      "agent_name": "Platform billing (manual)",
+      "platform": "platform",
+      "official_tool": false,
+      "official_collectable": false,
+      "collection_mode": "platform-ledger",
+      "included_in_total": false,
+      "sessions": 0,
+      "requests": 0,
+      "prompt_tokens": 0,
+      "cached_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0,
+      "cost_cny": 0,
+      "period_start": "2026-08-01",
+      "period_end": "2026-08-31",
+      "source": "billing export",
+      "notes": "cross-check only; never add to local transcripts"
+    }
+  ],
+  "output": {
+    "dir": "E:\\work\\my-project\\token-usage"
+  }
+}

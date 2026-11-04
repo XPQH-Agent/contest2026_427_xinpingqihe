@@ -39,4 +39,53 @@ config EXAMPLES_PHYWEAR_SIM_ZH_DEMO
 		so every page can be captured from /dev/fb0 without interactive input.
 		Must be OFF on real device.
 
+# [AGENT-WIN11] 上电自启开关：由板级 board_late_initialize() 拉起 PhyWear，
+# 不再需要插 USB 串口、手敲 `phywear` 才能出界面。
+config EXAMPLES_PHYWEAR_AUTOSTART
+	bool "start phywear automatically at boot"
+	default n
+	depends on BOARD_LATE_INITIALIZE
+	---help---
+		Start the PhyWear GUI from board_late_initialize() so the device
+		boots straight into the watch UI without an NSH command or a USB
+		serial console attached.
+
+config EXAMPLES_PHYWEAR_AUTOSTART_KEY2_SKIP
+	bool "hold KEY2 at boot to skip autostart"
+	default n
+	depends on EXAMPLES_PHYWEAR_AUTOSTART
+	---help---
+		Read KEY2 (PA_43) in board_late_initialize() and skip the autostart
+		when it is held, so the board stays in NSH for debugging.
+
+		Enable only after confirming PA43 is not muxed onto the LCD 8080
+		bus in the active board configuration.
+
+# [AGENT-WIN11] 开机动画：上电后先放 logo + 进度条，覆盖 LCD 点亮到首帧的黑屏
+config EXAMPLES_PHYWEAR_SPLASH
+	bool "show boot splash before the main UI"
+	default y
+	---help---
+		Play a short LVGL splash (wordmark + progress bar) after the display
+		is up and before the main UI is created.  Pure vector drawing, no
+		image assets; costs about 1.8 s of boot time.
+
+# [AGENT-WIN11] 电源模块：VBAT 电量、VBUS_DET 充电检测、背光/息屏
+config EXAMPLES_PHYWEAR_POWER
+	bool "power monitor (battery / charger / backlight)"
+	default y
+	---help---
+		Read battery voltage from /dev/adc0 (the adc driver is bound to
+		ADC_CHAN_VBAT), detect charging via VBUS_DET on PA_44, and control
+		the backlight through /dev/lcdlight (0 = screen off).
+
+if EXAMPLES_PHYWEAR_POWER
+
+config EXAMPLES_PHYWEAR_POWER_BL_ON
+	int "backlight level when screen wakes (0-100)"
+	default 50
+	range 1 100
+
+endif # EXAMPLES_PHYWEAR_POWER
+
 endif # EXAMPLES_PHYWEAR

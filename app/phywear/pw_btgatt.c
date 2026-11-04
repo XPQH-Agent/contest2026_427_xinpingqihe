@@ -1145,6 +1145,18 @@ int pw_btgatt_start(void)
   rc = bt_set_name(PW_BT_NAME);
   printf("[bt] B2 set_name \"PhyWear\" rc=%d\n", rc);
 
+  /* [T-0012] AES-128 KAT：验 sys_crypto 的 ECB 与字节序（期望 d0bfe1c7...a729） */
+  {
+    static const uint8_t kat_k[16] = {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
+                                      0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f};
+    static const uint8_t kat_p[16] = {0x00,0x11,0x22,0x33,0x44,0x55,0x66,0x77,
+                                      0x88,0x99,0xaa,0xbb,0xcc,0xdd,0xee,0xff};
+    uint8_t kat_o[16];
+    int krc = bt_encrypt_le(kat_k, kat_p, kat_o);
+
+    printf("[KAT] rc=%d %s (expect d0bfe1c79a57a7e74b276e90cca5a729)\n",
+           krc, krc == 0 ? bt_hex(kat_o, 16) : "-");
+  }
 
   rc = bt_le_adv_start(BT_LE_ADV_CONN, pw_ad, ARRAY_SIZE(pw_ad), pw_sd,
                        ARRAY_SIZE(pw_sd));

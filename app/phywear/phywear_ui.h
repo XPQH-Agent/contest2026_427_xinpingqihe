@@ -160,6 +160,10 @@ lv_obj_t *pw_card_new(lv_obj_t *parent, int w, int h, lv_color_t bg);
  * pw_card_new() 已自动调用；非卡片的可点对象（自建 lv_obj_create）请手动调用。 */
 void pw_press_style(lv_obj_t *obj);
 
+/* 主界面主题：0=方格宫格，1=单排分栏列表（只存 RAM，重启回方格） */
+void pw_ui_set_theme(int list_mode);
+int  pw_ui_theme(void);
+
 /* 装饰性 obj（图标块/色条/网格线）取消 CLICKABLE：否则会把按压状态从卡片上抢走 */
 void pw_deco(lv_obj_t *obj);
 
@@ -244,6 +248,10 @@ int pw_ui_open_board(int idx);
 /* 自动演示（模拟验证/录屏用）：前台运行，自动"点击"依次打开各板块与实验页，
  * 播完自动回到根屏。pw_ui_demo_step() 推进一步（主循环按时间调用），
  * pw_ui_demo_done() 返回是否已播完（用于主循环退出）。 */
+/* 长按电源键弹出的菜单：关机 / 重启 / 取消（layer_top 上的模态层） */
+
+void pw_ui_power_menu(void);
+
 void pw_ui_demo_start(void);
 int  pw_ui_demo_step(void);
 bool pw_ui_demo_done(void);

@@ -62,5 +62,10 @@ int pw_power_screen_on(void);
 
 void pw_power_report(void);
 
+/* 长按电源键菜单里的两项。关机/重启前会先把设置落盘（pw_settings_save）。 */
+
+void pw_power_shutdown(void);
+void pw_power_reboot(void);
+
 #endif
 #endif /* __APPS_EXAMPLES_PHYWEAR_PW_POWER_H */
