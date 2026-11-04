@@ -34,6 +34,7 @@ PhyWear 把手机物理实验搬到腕上：在立创·黄山派（openvela + LV
 | [`docs/17_评分维度自评_20260918.md`](docs/17_评分维度自评_20260918.md) | **六维度自评 v3**（85.0，口径统一版）：分项得分 + 扣分点 + 提分性价比 + 数字附录 | 评委 |
 | [`docs/21_米家接入方案与准入清单.md`](docs/21_米家接入方案与准入清单.md) | **米家（Mi Home）接入方案**：MIoT 蓝牙广播协议层已实现（19 项单测，与官方举例逐字节一致）；进米家 App 需平台产品注册与认证（**本队无企业主体，未申请**）；准入清单与替代路径见文内 | 生态 |
 | [`docs/22_初赛至今主要更新.md`](docs/22_初赛至今主要更新.md) | **初赛（09-18）到 11-04 的主要更新**：开机即用 / 电池反标定 / HCI emulate 14 条 / BNEP 41 项 / MIoT 19 项 / PANU 六处修复（已合入 `a05c8cf`）/ `evt 0x08` 卡点与「PAN 在研」的如实交代 / 最新资源口径 | 评委 |
+| [`docs/patches/`](docs/patches/README.md) | **平台侧补丁**（不在本仓库内的两处）：H4 整帧写进邮箱 ring、zblue 的 net_buf 池登记；含根因、`git apply` 与幂等脚本，保证固件可重建 | 复现者 |
 | `.claude/skills/` | 自建 Skill ×4：`phywear-sf32lb52-devloop`（开发回环）/ `phywear-reproduce`（复现+进度检测）/ `phywear-submit`（提交流程）/ `phywear-migrate`（迁移与日志） | 复现者 |
 
 证据与数据：`docs/evidence/`（**41 组目录 + 4 个散落文件**：真机截图 26 张、声学、AI 教练、主动场景、LLM 联调、P0 性能、蓝牙 B1–B3 与 PPP-over-BLE、动效/UI v2、评分自评…）、`docs/figures/`（架构与数据流）、`docs/project/`（FPS 时间线）、`docs/token_usage/`（Token 用量）。
